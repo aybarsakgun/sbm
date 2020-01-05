@@ -1,0 +1,40 @@
+Options All -Indexes
+
+DirectoryIndex index.php
+
+RewriteEngine on
+
+RewriteRule ^home$ index.php?br=admin [L,QSA]
+RewriteRule ^signin$ signin.php?br=admin [L,QSA]
+RewriteRule ^sign-in$ ajax.php?s=sign-in&br=admin [L,QSA]
+RewriteRule ^sign-out$ ajax.php?s=sign-out&br=admin [L,QSA]
+RewriteRule ^admin-logon-records$ ajax.php?s=admin-logon-records&br=admin [L,QSA]
+RewriteRule ^create-school$ index.php?pr=create-school&br=admin [L,QSA]
+RewriteRule ^create-school-a$ ajax.php?s=create-school&br=admin [L,QSA]
+RewriteRule ^invite-teacher$ index.php?pr=invite-teacher&br=admin [L,QSA]
+RewriteRule ^invite-teacher-a$ ajax.php?s=invite-teacher&br=admin [L,QSA]
+RewriteRule ^invite-school-admin$ index.php?pr=invite-school-admin&br=admin [L,QSA]
+RewriteRule ^invite-school-admin-a$ ajax.php?s=invite-school-admin&br=admin [L,QSA]
+RewriteRule ^schools$ index.php?pr=schools&br=admin [L,QSA]
+RewriteRule ^schools-a$ ajax.php?s=schools&br=admin [L,QSA]
+RewriteRule ^students$ index.php?pr=students&br=admin [L,QSA]
+RewriteRule ^students-a$ ajax.php?s=students&br=admin [L,QSA]
+RewriteRule ^student-infos-([0-9]+)$ ajax.php?s=student-infos&id=$1&br=admin [L,QSA]
+RewriteRule ^edit-student$ ajax.php?s=edit-student&br=admin [L,QSA]
+
+RewriteRule ^teachers$ index.php?pr=teachers&br=admin [L,QSA]
+RewriteRule ^teachers-a$ ajax.php?s=teachers&br=admin [L,QSA]
+RewriteRule ^teacher-infos-([0-9]+)$ ajax.php?s=teacher-infos&id=$1&br=admin [L,QSA]
+RewriteRule ^edit-teacher$ ajax.php?s=edit-teacher&br=admin [L,QSA]
+
+RewriteRule ^classes$ index.php?pr=classes&br=admin [L,QSA]
+RewriteRule ^classes-a$ ajax.php?s=classes&br=admin [L,QSA]
+RewriteRule ^class-infos-([0-9]+)$ ajax.php?s=class-infos&id=$1&br=admin [L,QSA]
+RewriteRule ^edit-class$ ajax.php?s=edit-class&br=admin [L,QSA]
+
+RewriteRule ^edit-school$ ajax.php?s=edit-school&br=admin [L,QSA]
+RewriteRule ^edit-school-admin$ ajax.php?s=edit-school-admin&br=admin [L,QSA]
+RewriteRule ^get-classes$ ajax.php?s=get-classes&br=admin [L,QSA]
+
+RewriteRule ^report-([0-9]+)-([0-9]+)$ index.php?pr=report&id=$1&student_id=$2 [L,QSA]
+RewriteRule ^get-report-([0-9]+)$ ajax.php?s=get-report&student=$1 [L,QSA]

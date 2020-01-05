@@ -1,0 +1,101 @@
+Options All -Indexes
+
+DirectoryIndex index.php
+
+RewriteEngine on
+
+RewriteRule ^signin$ signin.php [L,QSA]
+RewriteRule ^signup-([0-9a-zA-Z-_]+)-gc-([0-9a-zA-Z-_]+)$ signup.php?email=$1&invite_token=$2&ur=teacher [L,QSA]
+RewriteRule ^signup-([0-9a-zA-Z-_]+)-st-([0-9a-zA-Z-_]+)$ signup.php?email=$1&invite_token=$2&ur=student [L,QSA]
+RewriteRule ^signup$ signup.php [L,QSA]
+RewriteRule ^signup-r$ signup.php?r=return [L,QSA]
+RewriteRule ^home$ index.php [L,QSA]
+RewriteRule ^logon-records$ ajax.php?pr=logon-records [L,QSA]
+RewriteRule ^gclassroom-sync$ ajax.php?pr=gclassroom-sync [L,QSA]
+RewriteRule ^gclassroom-classes$ ajax.php?pr=gclassroom-classes [L,QSA]
+RewriteRule ^create-class$ index.php?pr=create-class [L,QSA]
+RewriteRule ^create-class-a$ ajax.php?pr=create-class [L,QSA]
+RewriteRule ^add-class-a$ ajax.php?pr=add-class [L,QSA]
+RewriteRule ^add-behavior$ ajax.php?pr=add-behavior [L,QSA]
+RewriteRule ^give-behavior$ ajax.php?pr=give-behavior [L,QSA]
+RewriteRule ^give-behavior-multiple$ ajax.php?pr=give-behavior-multiple [L,QSA]
+RewriteRule ^signout$ ajax.php?pr=logout [L,QSA]
+RewriteRule ^get-students$ ajax.php?pr=get-students [L,QSA]
+
+RewriteRule ^sync-gc$ index.php?pr=sync-gc [L,QSA]
+RewriteRule ^add-student$ index.php?pr=add-student [L,QSA]
+RewriteRule ^add-student-a$ ajax.php?pr=add-student [L,QSA]
+RewriteRule ^import-student$ index.php?pr=import-student [L,QSA]
+RewriteRule ^import-student-a$ ajax.php?pr=import-student [L,QSA]
+RewriteRule ^edit-class-([0-9]+)$ index.php?pr=edit-class&id=$1 [L,QSA]
+RewriteRule ^edit-class-a-([0-9]+)$ ajax.php?pr=edit-class&id=$1 [L,QSA]
+RewriteRule ^student-feedback$ ajax.php?pr=student-feedback [L,QSA]
+RewriteRule ^class-([0-9a-zA-Z-_]+)-([0-9]+)$ index.php?pr=class&id=$2 [L,QSA]
+RewriteRule ^admin-logon-records$ ajax.php?pr=admin-logon-records [L,QSA]
+RewriteRule ^invite-teacher$ index.php?pr=invite-teacher [L,QSA]
+RewriteRule ^invite-teacher-a$ ajax.php?pr=invite-teacher [L,QSA]
+
+RewriteRule ^students$ index.php?pr=students [L,QSA]
+RewriteRule ^students-a$ ajax.php?pr=students [L,QSA]
+RewriteRule ^studentinfos-([0-9]+)$ ajax.php?pr=studentinfos&id=$1 [L,QSA]
+RewriteRule ^editstudent$ ajax.php?pr=editstudent [L,QSA]
+
+RewriteRule ^teachers$ index.php?pr=teachers [L,QSA]
+RewriteRule ^teachers-a$ ajax.php?pr=teachers [L,QSA]
+RewriteRule ^teacherinfos-([0-9]+)$ ajax.php?pr=teacherinfos&id=$1 [L,QSA]
+RewriteRule ^editteacher$ ajax.php?pr=editteacher [L,QSA]
+
+RewriteRule ^classes$ index.php?pr=classes [L,QSA]
+RewriteRule ^classes-a$ ajax.php?pr=classes [L,QSA]
+RewriteRule ^classinfos-([0-9]+)$ ajax.php?pr=classinfos&id=$1 [L,QSA]
+RewriteRule ^editclass$ ajax.php?pr=editclass [L,QSA]
+
+RewriteRule ^start-conversation$ ajax.php?pr=start-conversation [L,QSA]
+RewriteRule ^messages-([0-9a-zA-Z-_]+)-([0-9]+)-([0-9]+)-([0-9]+)$ index.php?pr=messages&classname=$1&classid=$2&user=$3&conversation=$4 [L,QSA]
+RewriteRule ^get-messages-(.*)$ ajax.php?pr=get-messages&c_id=$1 [L,QSA]
+RewriteRule ^send-message$ ajax.php?pr=send-message [L,QSA]
+RewriteRule ^notifications$ ajax.php?pr=notifications [L,QSA]
+RewriteRule ^conversations$ index.php?pr=conversations [L,QSA]
+
+RewriteRule ^start-conversation-modal$ ajax.php?pr=start-conversation-modal [L,QSA]
+RewriteRule ^start-conversation2$ ajax.php?pr=start-conversation2 [L,QSA]
+
+RewriteRule ^report-([0-9]+)-([0-9]+)$ index.php?pr=report&id=$1&student_id=$2 [L,QSA]
+
+RewriteRule ^edit-student-modal$ ajax.php?pr=edit-student-modal [L,QSA]
+RewriteRule ^editstudent2$ ajax.php?pr=editstudent2 [L,QSA]
+
+RewriteRule ^delete-student$ ajax.php?pr=delete-student [L,QSA]
+
+RewriteRule ^send-messages$ index.php?pr=send-messages [L,QSA]
+RewriteRule ^send-messages-a$ ajax.php?pr=send-messages [L,QSA]
+
+RewriteRule ^create-template$ ajax.php?pr=create-template [L,QSA]
+RewriteRule ^get-message-templates$ ajax.php?pr=get-message-templates [L,QSA]
+RewriteRule ^manage-message-templates$ ajax.php?pr=manage-message-templates [L,QSA]
+RewriteRule ^edit-template$ ajax.php?pr=edit-template [L,QSA]
+RewriteRule ^delete-template$ ajax.php?pr=delete-template [L,QSA]
+
+RewriteRule ^get-class-students$ ajax.php?pr=get-class-students [L,QSA]
+RewriteRule ^get-report-([0-9]+)$ ajax.php?pr=get-report&student=$1 [L,QSA]
+
+RewriteRule ^revoke-point$ ajax.php?pr=revoke-point [L,QSA]
+
+RewriteRule ^invite-teacher-t-c-([0-9]+)$ ajax.php?pr=invite-teacher-t-c&id=$1 [L,QSA]
+
+RewriteRule ^invite-answer$ ajax.php?pr=invite-answer [L,QSA]
+
+RewriteRule ^redeem-items$ index.php?pr=redeem-items [L,QSA]
+RewriteRule ^get-redeem-items$ ajax.php?pr=get-redeem-items [L,QSA]
+RewriteRule ^create-redeem-item$ ajax.php?pr=create-redeem-item [L,QSA]
+RewriteRule ^edit-redeem-item$ ajax.php?pr=edit-redeem-item [L,QSA]
+RewriteRule ^edit-redeem-item-modal$ ajax.php?pr=edit-redeem-item-modal [L,QSA]
+RewriteRule ^delete-redeem-item$ ajax.php?pr=delete-redeem-item [L,QSA]
+RewriteRule ^give-redeem$ ajax.php?pr=give-redeem [L,QSA]
+
+RewriteRule ^send-mail-to-parent-modal$ ajax.php?pr=send-mail-to-parent-modal [L,QSA]
+RewriteRule ^send-mail-to-parent-a$ ajax.php?pr=send-mail-to-parent [L,QSA]
+
+RewriteRule ^edit-behavior$ ajax.php?pr=edit-behavior [L,QSA]
+RewriteRule ^edit-behavior-modal$ ajax.php?pr=edit-behavior-modal [L,QSA]
+RewriteRule ^delete-behavior$ ajax.php?pr=delete-behavior [L,QSA]
