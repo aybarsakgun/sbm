@@ -48,12 +48,16 @@ if (!isset($page_request)) {
                                 }
                             }
                         }
+                        ?>
+                        <div class="col-lg-8">
+                            <div class="row">
+                        <?php
                         $sorgu = $DB_con->prepare("SELECT id,name,color,status FROM classes WHERE FIND_IN_SET(:uyeid,teachers) AND school = :school ORDER BY id ASC");
                         $sorgu->execute(array(":uyeid" => $uyevtid, ":school" => $uyeokul));
                         if ($sorgu->rowCount() > 0) {
                             while ($yaz = $sorgu->fetch(PDO::FETCH_ASSOC)) {
                                 ?>
-                                <div class="col-lg-2 col-md-3 col-sm-4 col-xs-12">
+                                <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
                                     <div class="card border-radius-6">
                                         <div class="header border-radius-6 bg-<?= $yaz["color"] ?>">
                                             <?php
@@ -98,6 +102,52 @@ if (!isset($page_request)) {
                             <div class="alert alert-danger">Henüz öğretmeni olduğunuz sınıf bulunmamakta.</div>
                             <?php
                         }
+                        ?>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card card-announcements">
+                                <div class="header">
+                                    <h2 style="font-weight:bold;">Announcements</h2>
+                                </div>
+                                <div class="body">
+                                    <ul>
+                                        <?php
+                                        $announcements = $DB_con->prepare("SELECT * FROM announcements WHERE school = :school AND date(date) = CURDATE() ORDER BY date DESC");
+                                        $announcements->execute(array(":school"=>$uyeokul));
+                                        if ($announcements->rowCount() > 0) {
+                                            while ($ann = $announcements->fetch(PDO::FETCH_ASSOC)) {
+                                                ?>
+                                                <li>
+                                                    <div class="title">
+                                                        <i class="material-icons <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'text-success' : '' ?>">announcement</i>
+                                                        <span <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'style="text-decoration: underline;"' : '' ?>><?= printDate($DB_con, $ann["date"], $uyeokul) ?>
+                                                    </div>
+                                                    <div class="content"><?= $ann["detail"] ?></div>
+                                                </li>
+                                                <?php
+                                            }
+                                        } else {
+                                            $announcements = $DB_con->prepare("SELECT * FROM announcements WHERE school = :school ORDER BY date DESC");
+                                            $announcements->execute(array(":school"=>$uyeokul));
+                                            while ($ann = $announcements->fetch(PDO::FETCH_ASSOC)) {
+                                                ?>
+                                                <li>
+                                                    <div class="title">
+                                                        <i class="material-icons <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'text-success' : '' ?>">announcement</i>
+                                                        <span <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'style="text-decoration: underline;"' : '' ?>><?= printDate($DB_con, $ann["date"], $uyeokul) ?>
+                                                    </div>
+                                                    <div class="content"><?= $ann["detail"] ?></div>
+                                                </li>
+                                                <?php
+                                            }
+                                        }
+                                        ?>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                            <?php
                     } else if ($uyerol == "admin") {
                         $sorguogretmenler = $DB_con->prepare("SELECT id FROM users WHERE role = :role AND schools = :school");
                         $sorguogretmenler->execute(array(":role" => "teacher", ":school" => $uyeokul));
@@ -1186,7 +1236,7 @@ if (!isset($page_request)) {
         echo "Hata!";
         exit();
     }
-    $sorgusinifbilgi = $DB_con->prepare("SELECT name,color,student_show,point_show,status FROM classes WHERE id = :id");
+    $sorgusinifbilgi = $DB_con->prepare("SELECT name,color,student_show,point_show,status,points_by_time FROM classes WHERE id = :id");
     $sorgusinifbilgi->execute(array(":id" => $class_id));
     $yazsinifbilgi = $sorgusinifbilgi->fetch(PDO::FETCH_ASSOC);
     ?>
@@ -1390,6 +1440,17 @@ if (!isset($page_request)) {
                                                         <option value="1" <?php if($yazsinifbilgi["point_show"] == 1) { echo "selected"; }?>>Seperate totals</option>
                                                         <option value="2" <?php if($yazsinifbilgi["point_show"] == 2) { echo "selected"; }?>>Combined totals</option>
                                                         <option value="3" <?php if($yazsinifbilgi["point_show"] == 3) { echo "selected"; }?>>Don't show points</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="points_by_time">Points by Time:</label>
+                                                <div class="form-line">
+                                                    <select class="form-control" id="points_by_time" name="points_by_time">
+                                                        <option value="1" <?php if($yazsinifbilgi["points_by_time"] == 1) { echo "selected"; }?>>All time</option>
+                                                        <option value="2" <?php if($yazsinifbilgi["points_by_time"] == 2) { echo "selected"; }?>>Daily</option>
+                                                        <option value="3" <?php if($yazsinifbilgi["points_by_time"] == 3) { echo "selected"; }?>>Weekly</option>
+                                                        <option value="3" <?php if($yazsinifbilgi["points_by_time"] == 4) { echo "selected"; }?>>Monthly</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -1740,7 +1801,7 @@ if (!isset($page_request)) {
                                                         <td><?=$yazHistory["student"]?></td>
                                                         <?php if($uyerol == "admin") { echo '<td>'.$yazHistory["teacher"].'</td>'; } ?>
                                                         <td><?=$yazHistory["class"]?></td>
-                                                        <td><?=$yazHistory["date"]?></td>
+                                                        <td><?=printDate($DB_con, $yazHistory["date"], $uyeokul)?></td>
                                                     </tr>
                                                     <?php
                                                 }
@@ -2128,7 +2189,19 @@ if (!isset($page_request)) {
                             <option value="7">By register date (Oldest first)</option>
                         </select>
                     </div>
-                    <div class="get-students"></div>
+                    <ul class="nav nav-tabs class-tab tab-col-<?=$sinifrenk?>" role="tablist">
+                        <li role="presentation" class="active"><a href="#students" data-toggle="tab" aria-expanded="true">STUDENTS</a></li>
+                        <li role="presentation" class=""><a href="#groups" data-toggle="tab" aria-expanded="false">GROUPS</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane fade active in" id="students">
+                            <div class="get-students"></div>
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade" id="groups">
+                            <button class="btn btn-default btn-block btn-lg waves-effect" id="createGroup" data-toggle="modal" data-target="#createGroupModal" data-class="<?=$sinifid?>" ><i class="material-icons">add</i><span>Create Group</span></button>
+                            <div class="get-groups"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -2163,6 +2236,13 @@ if (!isset($page_request)) {
         <div class="modal fade in" id="modal-edit-behavior" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content modal-edit-behavior-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="createGroupModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content createGroupModalContent">
 
                 </div>
             </div>
@@ -2338,6 +2418,7 @@ if (!isset($page_request)) {
         </nav>
 
         <script src="plugins/jquery/jquery.min.js"></script>
+        <script src="plugins/jquery/jquery-ui.min.js"></script>
         <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
         <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
         <script src="plugins/node-waves/waves.min.js"></script>
@@ -2441,19 +2522,6 @@ if (!isset($page_request)) {
                             icon: 'error',
                             title: "Please select at least one student.",
                         });
-                        // Swal.fire(
-                        //     {
-                        //         type: 'error',
-                        //         position: 'bottom',
-                        //         title: "Error!",
-                        //         text: "Please select at least one student.",
-                        //         animation: false,
-                        //         customClass: 'animated bounceInDown',
-                        //         showConfirmButton: false,
-                        //         timer: 3000,
-                        //         backdrop: false,
-                        //         allowOutsideClick: false
-                        //     });
                     }
                 });
                 $.ajaxSetup({
@@ -2483,6 +2551,65 @@ if (!isset($page_request)) {
                             }
                         }
                     });
+                $.ajax(
+                    {
+                        url: "get-groups?id=<?=$sinifid?>",
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            if (data == 0) {
+                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                            } else if (data == 2) {
+                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                            } else {
+                                $(".get-groups").html(data);
+                            }
+                        }
+                    });
+                $(document).ajaxSuccess(function() {
+                    $('ul.sortable[id^="sort"]').sortable({
+                        connectWith: ".sortable",
+                        receive: function (e, ui) {
+                            var groupId = $(ui.item).parent(".sortable").data("group-id");
+                            var studentId = $(ui.item).data("student-id");
+                            $.ajax({
+                                url: "change-student-group?group=" + groupId + "&student=" + studentId + "&class=<?=$sinifid?>",
+                                type: "GET",
+                                contentType: false,
+                                cache: false,
+                                processData: false,
+                                success: function (data) {
+                                    if (data == 0) {
+                                        Toast.fire({
+                                            icon: 'error',
+                                            title: "A technical error has occurred. Please try again.",
+                                        });
+                                    } else if (data == 1) {
+                                        $.ajax(
+                                            {
+                                                url: "get-groups?id=<?=$sinifid?>",
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                    } else if (data == 2) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                    } else {
+                                                        $(".get-groups").html(data);
+                                                    }
+                                                }
+                                            });
+                                    }
+                                }
+                            });
+                        }
+                    }).disableSelection();
+                });
                 $('body').on('click', '.sortTriggerButton', function (e) {
                     var forWhat = $(this).attr('id');
                     var settedId = null;
@@ -2527,6 +2654,25 @@ if (!isset($page_request)) {
                     var modal = $(this);
                     modal.find('#hidden_student_id').val(ogrenci);
                     modal.find('#hidden_class_id').val(sinif);
+                });
+                $('body').on('click', '#selectStudent', function (e) {
+                    if ($(this).hasClass("selected")) {
+                        $(this).find("div.panel-heading").css({"background-color": "#fff"});
+                        $(this).find("img.studentAvatar").css({"border": "none","padding": "0"});
+                        $(this).removeClass("selected");
+                        var selectedStudents = $("#selectStudent.selected").map(function () {
+                            return $(this).data("student");
+                        }).get().join(',');
+                        $("input#selected_students").val(selectedStudents);
+                    } else {
+                        $(this).find("div.panel-heading").css({"background-color": "rgba(76, 175, 80, 0.30)"});
+                        $(this).find("img.studentAvatar").css({"border": "2px solid #2b982b","padding": "2px"});
+                        $(this).addClass("selected");
+                        var selectedStudents = $("#selectStudent.selected").map(function () {
+                            return $(this).data("student");
+                        }).get().join(',');
+                        $("input#selected_students").val(selectedStudents);
+                    }
                 });
                 $('body').on('click', '.ogrenci-puanla', function (e) {
                     if ($(".bottom-button-group").hasClass("select-multiple-active")) {
@@ -2704,6 +2850,76 @@ if (!isset($page_request)) {
                             }
                         });
                 });
+                $('body').on('submit', '#createGroupForm', function (e) {
+                    e.preventDefault();
+                    var classId = $(this).data("class");
+                    $('.createGroupButton').prop('disabled', true);
+                    $('.createGroupButton').html("Group Creating...");
+
+                    $("#createGroupResult").empty();
+                    $.ajax(
+                        {
+                            url: "create-group-a",
+                            type: "POST",
+                            data: new FormData(this),
+                            contentType: false,
+                            cache: false,
+                            processData: false,
+                            success: function (data) {
+                                setTimeout(function () {
+                                    $('.createGroupButton').prop('disabled', false);
+                                    $('.createGroupButton').html("Create This Group");
+                                    if (data == 0) {
+                                        $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                                    }
+                                    if (data == 1) {
+                                        $("#createGroupResult").html("<div class='alert alert-success'><strong>Successful!</strong> Group successfully created!</div>");
+                                        $.ajax(
+                                            {
+                                                url: "create-group-modal?id=" + classId,
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".createGroupModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                                                    } else {
+                                                        $(".createGroupModalContent").html(data);
+                                                    }
+                                                }
+                                            });
+                                        $.ajax(
+                                            {
+                                                url: "get-groups?id=" + classId,
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                    } else if (data == 2) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                    } else {
+                                                        $(".get-groups").html(data);
+                                                    }
+                                                }
+                                            });
+                                    }
+                                    if (data == 2) {
+                                        $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> Type a name for the group.</div>");
+                                    }
+                                    if (data == 3) {
+                                        $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> The group name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
+                                    }
+                                    if (data == 4) {
+                                        $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one student belonging to the group.</div>");
+                                    }
+                                }, 1000);
+                            }
+                        });
+                });
                 $('body').on('click', '.edit-student', function (e) {
                     e.preventDefault();
                     $('#modal-student').modal('toggle');
@@ -2722,6 +2938,25 @@ if (!isset($page_request)) {
                                     $(".modal-edit-student-content").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
                                 } else {
                                     $(".modal-edit-student-content").html(data);
+                                }
+                            }
+                        });
+                });
+                $('body').on('click', '#createGroup', function (e) {
+                    e.preventDefault();
+                    var classId = $(this).data("class");
+                    $.ajax(
+                        {
+                            url: "create-group-modal?id=" + classId,
+                            type: "GET",
+                            contentType: false,
+                            cache: false,
+                            processData: false,
+                            success: function (data) {
+                                if (data == 0) {
+                                    $(".createGroupModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                                } else {
+                                    $(".createGroupModalContent").html(data);
                                 }
                             }
                         });
@@ -2772,6 +3007,24 @@ if (!isset($page_request)) {
                     $('#modal-add-behavior').css("padding-left", "");
                 });
                 $('#modal-add-behavior').on('hidden.bs.modal', function (e) {
+                    $('body').css("padding-right", "");
+                    $('body').addClass('modal-open');
+                });
+                $('#createGroupModal').on('shown.bs.modal', function (e) {
+                    $('body').addClass('modal-open');
+                    $('body').css("padding-right", "");
+                    $('#createGroupModal').css("padding-left", "");
+                });
+                $('#createGroupModal').on('hidden.bs.modal', function (e) {
+                    $('body').css("padding-right", "");
+                    $('body').addClass('modal-open');
+                });
+                $('#modal-students').on('shown.bs.modal', function (e) {
+                    $('body').addClass('modal-open');
+                    $('body').css("padding-right", "");
+                    $('#modal-students').css("padding-left", "");
+                });
+                $('#modal-students').on('hidden.bs.modal', function (e) {
                     $('body').css("padding-right", "");
                     $('body').addClass('modal-open');
                 });
@@ -2830,6 +3083,23 @@ if (!isset($page_request)) {
                                                                         sliceColors: ['#4CAF50', '#F44336']
                                                                     });
                                                                 });
+                                                            }
+                                                        }
+                                                    });
+                                                $.ajax(
+                                                    {
+                                                        url: "get-groups?id=<?=$sinifid?>",
+                                                        type: "GET",
+                                                        contentType: false,
+                                                        cache: false,
+                                                        processData: false,
+                                                        success: function (data) {
+                                                            if (data == 0) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                            } else if (data == 2) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                            } else {
+                                                                $(".get-groups").html(data);
                                                             }
                                                         }
                                                     });
@@ -2934,6 +3204,23 @@ if (!isset($page_request)) {
                                                             }
                                                         }
                                                     });
+                                                $.ajax(
+                                                    {
+                                                        url: "get-groups?id=<?=$sinifid?>",
+                                                        type: "GET",
+                                                        contentType: false,
+                                                        cache: false,
+                                                        processData: false,
+                                                        success: function (data) {
+                                                            if (data == 0) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                            } else if (data == 2) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                            } else {
+                                                                $(".get-groups").html(data);
+                                                            }
+                                                        }
+                                                    });
                                             } else {
                                                 swal(
                                                     {
@@ -3005,6 +3292,23 @@ if (!isset($page_request)) {
                                                                 sliceColors: ['#4CAF50', '#F44336']
                                                             });
                                                         });
+                                                    }
+                                                }
+                                            });
+                                        $.ajax(
+                                            {
+                                                url: "get-groups?id=<?=$sinifid?>",
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                    } else if (data == 2) {
+                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                    } else {
+                                                        $(".get-groups").html(data);
                                                     }
                                                 }
                                             });
@@ -3366,6 +3670,23 @@ if (!isset($page_request)) {
                                             }
                                         }
                                     });
+                                $.ajax(
+                                    {
+                                        url: "get-groups?id=<?=$sinifid?>",
+                                        type: "GET",
+                                        contentType: false,
+                                        cache: false,
+                                        processData: false,
+                                        success: function (data) {
+                                            if (data == 0) {
+                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                            } else if (data == 2) {
+                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                            } else {
+                                                $(".get-groups").html(data);
+                                            }
+                                        }
+                                    });
                             } else if (data.sonuc == 0) {
                                 Toast.fire({
                                     icon: 'error',
@@ -3467,6 +3788,23 @@ if (!isset($page_request)) {
                                                                         sliceColors: ['#4CAF50', '#F44336']
                                                                     });
                                                                 });
+                                                            }
+                                                        }
+                                                    });
+                                                $.ajax(
+                                                    {
+                                                        url: "get-groups?id=<?=$sinifid?>",
+                                                        type: "GET",
+                                                        contentType: false,
+                                                        cache: false,
+                                                        processData: false,
+                                                        success: function (data) {
+                                                            if (data == 0) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                            } else if (data == 2) {
+                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                            } else {
+                                                                $(".get-groups").html(data);
                                                             }
                                                         }
                                                     });
@@ -3612,6 +3950,23 @@ if (!isset($page_request)) {
                                                         sliceColors: ['#4CAF50', '#F44336']
                                                     });
                                                 });
+                                            }
+                                        }
+                                    });
+                                $.ajax(
+                                    {
+                                        url: "get-groups?id=<?=$sinifid?>",
+                                        type: "GET",
+                                        contentType: false,
+                                        cache: false,
+                                        processData: false,
+                                        success: function (data) {
+                                            if (data == 0) {
+                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                            } else if (data == 2) {
+                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                            } else {
+                                                $(".get-groups").html(data);
                                             }
                                         }
                                     });
@@ -3844,7 +4199,7 @@ if (!isset($page_request)) {
                                                 } ?></td>
                                             <td><?= $yazHistory["point"] ?></td>
                                             <td><?= $yazTeacher["name"] ?></td>
-                                            <td><?= $yazHistory["date"] ?></td>
+                                            <td><?= printDate($DB_con, $yazHistory["date"], $uyeokul) ?></td>
                                             <td><?= $yazHistory["description"] ?></td>
                                         </tr>
                                         <?php
@@ -5206,6 +5561,282 @@ if (!isset($page_request)) {
                                     $("#Edit-Class-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Sınıfa ait en az bir adet öğretmen seçmelisiniz.</div>");
                                 }
                             }, 1000);
+                        }
+                    });
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+} else if ($page_request == "announcements") {
+    if ($uyerol != "admin") {
+        echo "Forbidden";
+        exit();
+    }
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="block-header">
+                    <div class="gri">
+                        <ol class="breadcrumb">
+                            <li>
+                                <a href="home">
+                                    <i class="material-icons">home</i> Home
+                                </a>
+                            </li>
+                            <li>
+                                <i class="material-icons">announcement</i> Announcements
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="panel panel-default panel-post">
+                    <div class="panel-heading">
+                        <h4><strong>Announcements</strong></h4>
+                    </div>
+                    <button type="button" class="btn btn-success btn-block waves-effect waves-block" data-toggle="modal" data-target="#createAnnouncementModal"><i class="material-icons">add</i> <span>Create Announcement</span></button>
+                </div>
+                <div class="row clearfix">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="announcements">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="modal fade in" id="createAnnouncementModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create Announcement</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="createAnnouncementForm">
+                        <div class="form-group">
+                            <textarea name="template" id="template"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit"
+                                    class="btn btn-primary btn-block btn-lg waves-effect createAnnouncementButton">Create
+                                Announcement
+                            </button>
+                        </div>
+                    </form>
+                    <div id="createAnnouncementResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="editAnnouncementModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content announcementContent">
+
+            </div>
+        </div>
+    </div>
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajaxSetup({
+                headers: {'sbmtoken': $('meta[name="sbmtoken"]').attr('content')}
+            });
+            $.ajax(
+                {
+                    url: "announcements-a",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        $("#announcements").html(data);
+                    }
+                });
+
+            CKEDITOR.replace('template');
+
+            function CKUpdate() {
+                for (instance in CKEDITOR.instances)
+                    CKEDITOR.instances[instance].updateElement();
+            }
+
+            $('body').on('submit', '#createAnnouncementForm', function (e) {
+                CKUpdate();
+                e.preventDefault();
+
+                $('.createAnnouncementButton').prop('disabled', true);
+                $('.createAnnouncementButton').html("Announcement Creating...");
+
+                $("#createAnnouncementResult").empty();
+                $.ajax(
+                    {
+                        url: "create-announcement",
+                        type: "POST",
+                        data: new FormData(this),
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            setTimeout(function () {
+                                $('.createAnnouncementButton').prop('disabled', false);
+                                $('.createAnnouncementButton').html("Create Announcement");
+                                if (data == 0) {
+                                    $("#createAnnouncementResult").html("<div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div>");
+                                }
+                                if (data == 1) {
+                                    $("#createAnnouncementResult").html("<div class='alert alert-success'><strong>Successful!</strong> Announcement successfully created.</div>");
+                                    $("#createAnnouncementForm").trigger("reset");
+                                    CKEDITOR.instances.template.setData('');
+                                    $.ajax(
+                                        {
+                                            url: "announcements-a",
+                                            type: "GET",
+                                            contentType: false,
+                                            cache: false,
+                                            processData: false,
+                                            success: function (data) {
+                                                $("#announcements").html(data);
+                                            }
+                                        });
+                                }
+                                if (data == 2) {
+                                    $("#createAnnouncementResult").html("<div class='alert alert-danger'><strong>Error:</strong> Please fill in the form completely.</div>");
+                                }
+                            }, 1000);
+                        }
+                    });
+            });
+            $('body').on('click', '.editAnnouncement', function (e) {
+                e.preventDefault();
+                var regexp = /[^0-9]/g;
+                var announcement = this.id;
+                $.ajax(
+                    {
+                        url: "infos-announcement-" + announcement.replace(regexp, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            if (data == 0) {
+                                $(".announcementContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                            } else {
+                                $(".announcementContent").html(data);
+                                CKEDITOR.replace('templateEdit');
+
+                            }
+                        }
+                    });
+            });
+            $('body').on('submit', '#editAnnouncementForm', function (e) {
+                CKUpdate();
+                e.preventDefault();
+
+                $('.editAnnouncementButton').prop('disabled', true);
+                $('.editAnnouncementButton').html("Announcement Editing...");
+
+                $("#editAnnouncementResult").empty();
+
+                $.ajax(
+                    {
+                        url: "edit-announcement",
+                        type: "POST",
+                        data: new FormData(this),
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            setTimeout(function () {
+                                $('.editAnnouncementButton').prop('disabled', false);
+                                $('.editAnnouncementButton').html("Edit Announcement");
+                                if (data == 0) {
+                                    $("#editAnnouncementResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                                }
+                                if (data == 1) {
+                                    $("#editAnnouncementResult").html("<div class='alert alert-success'><strong>Successful!</strong> The announcement has been successfully edited.</div>");
+                                }
+                                if (data == 2) {
+                                    $("#editAnnouncementResult").html("<div class='alert alert-danger'><strong>Error:</strong> Lütfen formu tamamen doldurunuz.</div>");
+                                }
+                            }, 1000);
+                        }
+                    });
+            });
+            $('body').on('click', '.deleteAnnouncement', function (e) {
+                e.preventDefault();
+                var announcementId = this.id;
+                swal(
+                    {
+                        title: "Are you sure?",
+                        text: "You won't be able to revert this!",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes",
+                        cancelButtonText: "No",
+                        closeOnConfirm: false,
+                        closeOnCancel: false,
+                        showLoaderOnConfirm: true,
+                    },
+                    function (isConfirm) {
+                        if (isConfirm) {
+                            setTimeout(function () {
+                                $.ajax({
+                                    type: 'POST',
+                                    url: 'delete-announcement',
+                                    data: 'id=' + announcementId,
+                                    success: function (data) {
+                                        if (data == 1) {
+                                            swal(
+                                                {
+                                                    title: "Deleted!",
+                                                    text: "Announcement has been deleted.",
+                                                    type: "success",
+                                                    confirmButtonText: "OK",
+                                                    closeOnConfirm: true
+                                                });
+                                            $.ajax(
+                                                {
+                                                    url: "announcements-a",
+                                                    type: "GET",
+                                                    contentType: false,
+                                                    cache: false,
+                                                    processData: false,
+                                                    success: function (data) {
+                                                        $("#announcements").html(data);
+                                                    }
+                                                });
+                                        } else {
+                                            swal(
+                                                {
+                                                    title: "Error!",
+                                                    text: "Somethings went wrong. Please try again.",
+                                                    type: "error",
+                                                    confirmButtonText: "OK",
+                                                    closeOnConfirm: true
+                                                });
+                                        }
+                                    }
+                                });
+                            }, 1000);
+                        } else {
+                            swal(
+                                {
+                                    title: "Canceled!",
+                                    text: "Your request has been canceled.",
+                                    type: "error",
+                                    confirmButtonText: "OK",
+                                    closeOnConfirm: true
+                                });
                         }
                     });
             });

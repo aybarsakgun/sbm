@@ -99,3 +99,18 @@ RewriteRule ^send-mail-to-parent-a$ ajax.php?pr=send-mail-to-parent [L,QSA]
 RewriteRule ^edit-behavior$ ajax.php?pr=edit-behavior [L,QSA]
 RewriteRule ^edit-behavior-modal$ ajax.php?pr=edit-behavior-modal [L,QSA]
 RewriteRule ^delete-behavior$ ajax.php?pr=delete-behavior [L,QSA]
+
+RewriteRule ^announcements-a$ ajax.php?pr=announcements [L,QSA]
+RewriteRule ^announcements$ index.php?pr=announcements [L,QSA]
+RewriteRule ^edit-announcement$ ajax.php?pr=edit-announcement [L,QSA]
+RewriteRule ^delete-announcement$ ajax.php?pr=delete-announcement [L,QSA]
+RewriteRule ^create-announcement$ ajax.php?pr=create-announcement [L,QSA]
+RewriteRule ^infos-announcement-([0-9]+)$ ajax.php?pr=infos-announcement&id=$1 [L,QSA]
+
+RewriteRule ^edit-profile$ ajax.php?pr=edit-profile [L,QSA]
+RewriteRule ^edit-school$ ajax.php?pr=edit-school [L,QSA]
+
+RewriteRule ^create-group-modal$ ajax.php?pr=create-group-modal [L,QSA]
+RewriteRule ^create-group-a$ ajax.php?pr=create-group [L,QSA]
+RewriteRule ^get-groups$ ajax.php?pr=get-groups [L,QSA]
+RewriteRule ^change-student-group$ ajax.php?pr=change-student-group [L,QSA]

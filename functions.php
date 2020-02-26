@@ -165,4 +165,66 @@
             return $yil.' years ago';
         }
     }
+    function thumbOlustur1($filepath, $thumbpath, $thumbnail_width, $thumbnail_height) {
+        list($original_width, $original_height, $original_type) = getimagesize($filepath);
+        if ($original_width > $original_height) {
+            $new_width = $thumbnail_width;
+            $new_height = intval($original_height * $new_width / $original_width);
+        } else {
+            $new_height = $thumbnail_height;
+            $new_width = intval($original_width * $new_height / $original_height);
+        }
+        $dest_x = intval(($thumbnail_width - $new_width) / 2);
+        $dest_y = intval(($thumbnail_height - $new_height) / 2);
+        if ($original_type === 2) {
+            $exif = @exif_read_data($filepath);
+            $imgt = "ImageJPEG";
+            $imgcreatefrom = "ImageCreateFromJPEG";
+        } else if ($original_type === 3) {
+            $imgt = "ImagePNG";
+            $imgcreatefrom = "ImageCreateFromPNG";
+        } else {
+            return false;
+        }
+        $old_image = $imgcreatefrom($filepath);
+        $new_image = imagecreatetruecolor($thumbnail_width, $thumbnail_height);
+        $color = imagecolorallocate($new_image, 255,255,255);
+        imagefill($new_image, 0, 0, $color);
+        imagecopyresampled($new_image, $old_image, $dest_x, $dest_y, 0, 0, $new_width, $new_height, $original_width, $original_height);
+        if (!empty($exif['Orientation'])) {
+            switch ($exif['Orientation']) {
+                case 3:
+                    $new_image = imagerotate($new_image, 180, 0);
+                    break;
+
+                case 6:
+                    $new_image = imagerotate($new_image, -90, 0);
+                    break;
+
+                case 8:
+                    $new_image = imagerotate($new_image, 90, 0);
+                    break;
+            }
+        }
+        $imgt($new_image, $thumbpath);
+        imagedestroy($new_image);
+        imagedestroy($old_image);
+        return true;
+    }
+    function printDate($DB_con, $date, $uyeokul) {
+        $dateTypeQuery = $DB_con->prepare("SELECT date_type FROM schools WHERE id = :id");
+        $dateTypeQuery->execute(array(":id"=>$uyeokul));
+        $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
+        if ($dateType['date_type'] == 1) {
+            return date('d/m/Y H:i:s', strtotime($date));
+        } else if ($dateType['date_type'] == 2) {
+            return date('m/d/Y H:i:s', strtotime($date));
+        } else if ($dateType['date_type'] == 3) {
+            return date('y/m/d H:i:s', strtotime($date));
+        } else if ($dateType['date_type'] == 4) {
+            return date('F d, Y H:i:s', strtotime($date));
+        } else if ($dateType['date_type'] == 5) {
+            return date('d F, Y H:i:s', strtotime($date));
+        }
+    }
 ?>

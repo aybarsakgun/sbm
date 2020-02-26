@@ -108,7 +108,7 @@ if(isset($page_request))
 								<span class="mb-0 text-sm"><?=$yaz["ip"]?></span>
 							</th>
 							<td><?=$yaz["browser"]?></td>
-							<td><?=$yaz["date"]?></td>
+							<td><?=printDate($DB_con, $yaz["date"], $uyeokul)?></td>
 							<td><?php if($yaz["platform"] == "google") { echo '<a href="javascript:;" class="btn btn-neutral btn-icon"><span class="btn-inner--icon"><img src="img/google.svg"></span><span class="btn-inner--text">Google</span></a>'; } ?></td>
 							<td><?php if($yaz["status"] == 0) { echo '<a href="javascript:;" class="btn btn-icon btn-2 btn-danger btn-sm"><span class="btn-inner--icon"><i class="fa fa-times"></i></span></a>'; } else if($yaz["status"] == 1) { echo '<a href="javascript:;" class="btn btn-icon btn-2 btn-success btn-sm"><span class="btn-inner--icon"><i class="fa fa-check"></i></span></a>'; } ?></td>
 						</tr>
@@ -814,8 +814,19 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorguxd = $DB_con->prepare("UPDATE classes SET name = :name , status = :status , color = :color , student_show = :studentshow , point_show = :pointshow WHERE id = :classid");
-        if($sorguxd->execute(array(":name"=>$class_name,":status"=>$class_status,":color"=>$class_color,":studentshow"=>$show_lastname,":pointshow"=>$show_point,":classid"=>$class_id)))
+        $points_by_time = filter_input(INPUT_POST, 'points_by_time', FILTER_VALIDATE_INT);
+        if(empty($points_by_time) || $points_by_time === 0)
+        {
+            echo 2;
+            exit();
+        }
+        if($points_by_time < 1 || $points_by_time > 4)
+        {
+            echo 0;
+            exit();
+        }
+        $sorguxd = $DB_con->prepare("UPDATE classes SET name = :name , status = :status , color = :color , student_show = :studentshow , point_show = :pointshow , points_by_time = :pointsbytime WHERE id = :classid");
+        if($sorguxd->execute(array(":name"=>$class_name,":status"=>$class_status,":color"=>$class_color,":studentshow"=>$show_lastname,":pointshow"=>$show_point,":pointsbytime"=>$points_by_time,":classid"=>$class_id)))
         {
             echo 1;
             exit();
@@ -1254,7 +1265,7 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorgusinifid = $DB_con->prepare("SELECT id,student_show,point_show FROM classes WHERE FIND_IN_SET(:uyeid, teachers) AND id = :id AND school = :school");
+        $sorgusinifid = $DB_con->prepare("SELECT id,student_show,point_show,points_by_time FROM classes WHERE FIND_IN_SET(:uyeid, teachers) AND id = :id AND school = :school");
         $sorgusinifid->execute(array(":uyeid"=>$uyevtid,":id"=>$sinifid,":school"=>$uyeokul));
         if($sorgusinifid->rowCount() != 1)
         {
@@ -1298,11 +1309,19 @@ if(isset($page_request))
         {
             $siralama_yazisi = "";
         }
-		$sorguogrenciler = $DB_con->prepare("SELECT id,name,invite_date,register_date,update_date,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx) as davranis_toplam,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx2 AND type = 1) as davranis_pozitif,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx3 AND type = 2) as davranis_negatif, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx4 AND type = 3) as redeem_point FROM users WHERE FIND_IN_SET(:sinifid, classes) AND role = :role AND schools = :school $siralama_yazisi");
+        $yazsinifid = $sorgusinifid->fetch(PDO::FETCH_ASSOC);
+        $pointsByTimeQuery = '';
+        if ($yazsinifid['points_by_time'] == 2) {
+            $pointsByTimeQuery = 'AND date(date) = CURDATE()';
+        } else if ($yazsinifid['points_by_time'] == 3) {
+            $pointsByTimeQuery = 'AND YEARWEEK(`date`, 1) = YEARWEEK(CURDATE(), 1)';
+        } else if ($yazsinifid['points_by_time'] == 4) {
+            $pointsByTimeQuery = 'AND MONTH(date) = MONTH(CURRENT_DATE())';
+        }
+		$sorguogrenciler = $DB_con->prepare("SELECT id,name,invite_date,register_date,update_date,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx $pointsByTimeQuery) as davranis_toplam,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx2 AND type = 1 $pointsByTimeQuery) as davranis_pozitif,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx3 AND type = 2 $pointsByTimeQuery) as davranis_negatif, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classidx4 AND type = 3 $pointsByTimeQuery) as redeem_point FROM users WHERE FIND_IN_SET(:sinifid, classes) AND role = :role AND schools = :school $siralama_yazisi");
 		$sorguogrenciler->execute(array(":classidx"=>$sinifid,":classidx2"=>$sinifid,":classidx3"=>$sinifid,":classidx4"=>$sinifid,":sinifid"=>$sinifid,":role"=>"student",":school"=>$uyeokul));
 		if($sorguogrenciler->rowCount() > 0)
 		{
-		    $yazsinifid = $sorgusinifid->fetch(PDO::FETCH_ASSOC);
 		    echo '<div class="row">';
             $sorgupuansx = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE type = 1 AND class_id = :classid) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE type = 2 AND class_id = :classid2) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE class_id = :classid3) as toplampuans");
             $sorgupuansx->execute(array(":classid"=>$sinifid,":classid2"=>$sinifid,":classid3"=>$sinifid));
@@ -1443,7 +1462,7 @@ if(isset($page_request))
                                     </button>
                                 </p>
                                 <small class="text-muted">Created
-                                    at: <?= date("Y-m-d", strtotime($yaz["date"])) ?></small>
+                                    at: <?= printDate($DB_con, $yaz["date"], $uyeokul) ?></small>
                             </div>
                         </div>
                     </div>
@@ -1661,7 +1680,7 @@ if(isset($page_request))
                                     <td><?php if($yazHistory["type"] == 1) { echo "<b class='col-green'>Positive</b>"; } else if($yazHistory["type"] == 2) { echo "<b class='col-red'>Negative</b>"; } ?></td>
                                     <td><?=$yazHistory["point"]?></td>
                                     <td><?=$yazTeacher["name"]?></td>
-                                    <td><?=$yazHistory["date"]?></td>
+                                    <td><?=printDate($DB_con, $yazHistory["date"], $uyeokul)?></td>
                                     <td><?=$yazHistory["description"]?></td>
                                     <td><button type="button" class="btn btn-danger btn-xs btn-block Revoke-Point-Button" data-student="<?=$ogrenci?>" data-class="<?=$sinif?>" data-point="<?=$yazHistory["id"]?>">Revoke</button></td>
                                 </tr>
@@ -1684,19 +1703,32 @@ if(isset($page_request))
                 </div>
                 <div role="tabpanel" class="tab-pane fade" id="redeem">
                     <?php
-                    $sorgu = $DB_con->prepare("SELECT id,name,image FROM redeem_items WHERE (user = :teacher OR FIND_IN_SET(user, (SELECT GROUP_CONCAT(id) FROM users WHERE role = :roleadmin AND schools = :schools))) ORDER BY id DESC");
+                    $sorgu = $DB_con->prepare("SELECT id,name,image,user,point FROM redeem_items WHERE (user = :teacher OR FIND_IN_SET(user, (SELECT GROUP_CONCAT(id) FROM users WHERE role = :roleadmin AND schools = :schools))) ORDER BY id DESC");
                     $sorgu->execute(array(":teacher"=>$uyevtid,":roleadmin"=>"admin",":schools"=>$uyeokul));
                     if($sorgu->rowCount() > 0) {
+                        $sorguogrencipuan = $DB_con->prepare("SELECT SUM(point) as toplampuans FROM feedbacks_students WHERE student_id = :studentid AND class_id = :class");
+                        $sorguogrencipuan->execute(array(":studentid"=>$ogrenci,":class"=>$sinif));
+                        $yazogrencipuan = $sorguogrencipuan->fetch(PDO::FETCH_ASSOC);
                         echo '<div class="row">';
                         while ($yaz = $sorgu->fetch(PDO::FETCH_ASSOC)) {
+                            $sorguteachername = $DB_con->prepare("SELECT name FROM users WHERE id = :id");
+                            $sorguteachername->execute(array(":id" => $yaz["user"]));
+                            $yazteachername = $sorguteachername->fetch(PDO::FETCH_ASSOC);
                             ?>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6">
+                            <div class="col-lg-4 col-md-4 col-sm-6 col-xs-6">
                                 <div class="thumbnail">
-                                    <img src="<?= $yaz["image"] ?>" width="200" height="200" alt="<?= $yaz["name"] ?>">
+                                    <img src="<?= $yaz["image"] ?>" alt="<?= $yaz["name"] ?>" <?=($yazogrencipuan["toplampuans"] < abs($yaz["point"])) ? 'class="disable-img"' : ''?>>
                                     <div class="caption">
-                                        <button type="button"
-                                                class="btn btn-success btn-block waves-effect giveRedeem" data-student="<?=$ogrenci?>" data-class="<?=$sinif?>" data-redeem="<?=$yaz["id"]?>">Give
-                                        </button>
+                                        <h3 class="nowrapwithellipsis"><?= $yaz["name"] ?></h3>
+                                        <p class="nowrapwithellipsis"><?= $yazteachername["name"] ?></p>
+                                        <p>
+                                            <button type="button"
+                                                    class="btn btn-success waves-effect giveRedeem" data-student="<?=$ogrenci?>" data-class="<?=$sinif?>" data-redeem="<?=$yaz["id"]?>" <?=($yazogrencipuan["toplampuans"] < abs($yaz["point"])) ? 'disabled="disabled"' : ''?>>Give
+                                            </button>
+                                            <button type="button"
+                                                    class="btn <?=($yazogrencipuan["toplampuans"] < abs($yaz["point"])) ? 'btn-danger' : 'btn-success'?> waves-effect pull-right" <?=($yazogrencipuan["toplampuans"] < abs($yaz["point"])) ? 'disabled="disabled"' : ''?>><?= $yaz["point"] ?> Points
+                                            </button>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -1738,7 +1770,7 @@ if(isset($page_request))
                                     <td><?=$yazHistory["name"]?></td>
                                     <td><?=abs($yazHistory["point"])?></td>
                                     <td><?=$yazTeacher["name"]?></td>
-                                    <td><?=$yazHistory["date"]?></td>
+                                    <td><?=printDate($DB_con, $yazHistory["date"], $uyeokul)?></td>
                                 </tr>
                                 <?php
                             }
@@ -1964,7 +1996,7 @@ if(isset($page_request))
         }
         $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
         $sorgu2->execute(array(":id"=>$sinif,":oid"=>$uyevtid,":school"=>$uyeokul));
-        if($sorgu->rowCount() != 1)
+        if($sorgu2->rowCount() != 1)
         {
             echo 0;
             exit();
@@ -2013,6 +2045,7 @@ if(isset($page_request))
                     </div>
                 </div>
                 <label>Classes:</label>
+                <div class="row">
                 <?php
                 $explodeclasses = explode(",", $yazogrenci["classes"]);
                 foreach($explodeclasses as $explodedclasses)
@@ -2025,21 +2058,30 @@ if(isset($page_request))
                 while($getClasses = $classesQuery->fetch(PDO::FETCH_ASSOC))
                 {
                     ?>
-                    <div class="form-group">
-                        <input type="checkbox" name="class[]" value="<?=$getClasses["id"]?>" id="classIdfor<?=$getClasses["id"]?>" <?php if(in_array($getClasses["id"],$sClasses)) { echo 'checked'; } ?> class="filled-in chk-col-orange">
-                        <label for="classIdfor<?=$getClasses["id"]?>"><?=$getClasses["name"]?></label>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <input type="checkbox" name="class[]" value="<?=$getClasses["id"]?>" id="classIdfor<?=$getClasses["id"]?>" <?php if(in_array($getClasses["id"],$sClasses)) { echo 'checked'; } ?> class="filled-in chk-col-orange">
+                            <label for="classIdfor<?=$getClasses["id"]?>"><?=$getClasses["name"]?></label>
+                        </div>
                     </div>
                     <?php
                 }
                 ?>
+                </div>
                 <input type="hidden" name="hidden_student_id" id="hidden_student_id" value="<?=$yazogrenci["id"]?>">
                 <input type="hidden" name="hidden_class_id" id="hidden_class_id" value="<?=$sinif?>">
                 <div id="Edit-Student-Result"></div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect Edit-Student-Button">Edit Student</button>
-                </div>
-                <div class="form-group">
-                    <button type="button" class="btn btn-danger btn-block btn-lg waves-effect Delete-Student-Button" data-student="<?=$yazogrenci["id"]?>" data-class="<?=$sinif?>">Delete This Student</button>
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect Edit-Student-Button">Edit Student</button>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-danger btn-block btn-lg waves-effect Delete-Student-Button" data-student="<?=$yazogrenci["id"]?>" data-class="<?=$sinif?>">Delete This Student</button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -2449,12 +2491,12 @@ if(isset($page_request))
                                 <td class="baslik_td">
                                     <span class="baslik"><?=$yaz["browser"]?></span>
                                     <div class="visible-xs">
-                                        <strong>Date:</strong> <?=$yaz["date"]?><br>
+                                        <strong>Date:</strong> <?=printDate($DB_con, $yaz["date"], $uyeokul)?><br>
                                         <strong>Status:</strong><br>
                                         <?php if($yaz["status"] == "0") { ?><span class="label label-danger">Unsuccessful</span><?php } else if($yaz["status"] == "1") { ?><span class="label label-success">Successful</span><?php } ?>
                                     </div>
                                 </td>
-                                <td class="visible-sm visible-md visible-lg"><?=$yaz["date"]?></td>
+                                <td class="visible-sm visible-md visible-lg"><?=printDate($DB_con, $yaz["date"], $uyeokul)?></td>
                                 <td class="visible-sm visible-md visible-lg"><?php if($yaz["status"] == "0") { ?><span class="label label-danger">Unsuccessful</span><?php } else if($yaz["status"] == "1") { ?><span class="label label-success">Successful</span><?php } ?></td>
                             </tr>
                             <?php
@@ -3453,6 +3495,65 @@ if(isset($page_request))
             {
                 ?>
                 <div class='notice notice-danger'><strong>Bilgi: </strong>Henüz okula kayıtlı sınıf bulunamadı.</div>
+                <?php
+            }
+        }
+        else
+        {
+            ?>
+            <div class="alert alert-danger mb-0">There was a technical problem. Please try again.</div>
+            <?php
+        }
+    }
+    else if($page_request == "announcements")
+    {
+        if($uyerol == "admin")
+        {
+            $sorguSay = $DB_con->prepare("SELECT COUNT(id) AS say FROM announcements WHERE school = :school");
+            $sorguSay->execute(array(":school"=>$uyeokul));
+            $yazSay = $sorguSay->fetch(PDO::FETCH_ASSOC);
+
+            if($yazSay["say"] > 0)
+            {
+                $sorgu = $DB_con->prepare("SELECT * FROM announcements WHERE school = :school");
+                $sorgu->execute(array(":school"=>$uyeokul));
+                ?>
+                <div class="table-responsive">
+                    <table class="table table-condensed table-striped liste">
+                        <thead>
+                        <tr>
+                            <th class="baslik_th">Date</th>
+                            <th class="visible-sm visible-md visible-lg">Created by</th>
+                            <th class="visible-sm visible-md visible-lg">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        while($yaz = $sorgu->fetch(PDO::FETCH_ASSOC))
+                        {
+                            $adminName = $DB_con->prepare("SELECT name FROM users WHERE id = :id");
+                            $adminName->execute(array(":id"=>$yaz["admin"]));
+                            $getAdminName = $adminName->fetch(PDO::FETCH_ASSOC);
+                            ?>
+                            <tr>
+                                <td class="baslik_td">
+                                    <span class="baslik"><?=printDate($DB_con, $yaz["date"], $uyeokul)?></span>
+                                </td>
+                                <td class="visible-sm visible-md visible-lg"><?=$getAdminName["name"]?></td>
+                                <td class="visible-md visible-lg"><a href="javascript:;" data-toggle="modal" data-target="#editAnnouncementModal" class="label label-info editAnnouncement" id="<?=$yaz["id"]?>">Edit</a><a href="javascript:;" class="label label-danger deleteAnnouncement" id="<?=$yaz["id"]?>">Delete</a></td>
+                            </tr>
+                            <?php
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php
+            }
+            else
+            {
+                ?>
+                <div class='notice notice-info'><strong>Information: </strong>The school has no announcements yet.</div>
                 <?php
             }
         }
@@ -4968,7 +5069,7 @@ if(isset($page_request))
                             <td>'.($yazHistory["type"] == 3 ? abs($yazHistory["point"]) : $yazHistory["point"]) .'</td>
                             <td>'.$yazSinifad["name"].'</td>
                             <td>'.$yazTeacher["name"].'</td>
-                            <td>'.$yazHistory["date"].'</td>
+                            <td>'.printDate($DB_con, $yazHistory["date"], $uyeokul).'</td>
                             <td>'.$yazHistory["description"].'</td>
                         </tr>
                         ';
@@ -5235,52 +5336,6 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        function thumbOlustur1($filepath, $thumbpath, $thumbnail_width, $thumbnail_height) {
-            list($original_width, $original_height, $original_type) = getimagesize($filepath);
-            if ($original_width > $original_height) {
-                $new_width = $thumbnail_width;
-                $new_height = intval($original_height * $new_width / $original_width);
-            } else {
-                $new_height = $thumbnail_height;
-                $new_width = intval($original_width * $new_height / $original_height);
-            }
-            $dest_x = intval(($thumbnail_width - $new_width) / 2);
-            $dest_y = intval(($thumbnail_height - $new_height) / 2);
-            if ($original_type === 2) {
-                $exif = @exif_read_data($filepath);
-                $imgt = "ImageJPEG";
-                $imgcreatefrom = "ImageCreateFromJPEG";
-            } else if ($original_type === 3) {
-                $imgt = "ImagePNG";
-                $imgcreatefrom = "ImageCreateFromPNG";
-            } else {
-                return false;
-            }
-            $old_image = $imgcreatefrom($filepath);
-            $new_image = imagecreatetruecolor($thumbnail_width, $thumbnail_height);
-            $color = imagecolorallocate($new_image, 255,255,255);
-            imagefill($new_image, 0, 0, $color);
-            imagecopyresampled($new_image, $old_image, $dest_x, $dest_y, 0, 0, $new_width, $new_height, $original_width, $original_height);
-            if (!empty($exif['Orientation'])) {
-                switch ($exif['Orientation']) {
-                    case 3:
-                        $new_image = imagerotate($new_image, 180, 0);
-                        break;
-
-                    case 6:
-                        $new_image = imagerotate($new_image, -90, 0);
-                        break;
-
-                    case 8:
-                        $new_image = imagerotate($new_image, 90, 0);
-                        break;
-                }
-            }
-            $imgt($new_image, $thumbpath);
-            imagedestroy($new_image);
-            imagedestroy($old_image);
-            return true;
-        }
         $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
         $point = filter_input(INPUT_POST, 'point', FILTER_VALIDATE_INT);
         if($point != null && $point === false)
@@ -5361,52 +5416,6 @@ if(isset($page_request))
         {
             echo 0;
             exit();
-        }
-        function thumbOlustur1($filepath, $thumbpath, $thumbnail_width, $thumbnail_height) {
-            list($original_width, $original_height, $original_type) = getimagesize($filepath);
-            if ($original_width > $original_height) {
-                $new_width = $thumbnail_width;
-                $new_height = intval($original_height * $new_width / $original_width);
-            } else {
-                $new_height = $thumbnail_height;
-                $new_width = intval($original_width * $new_height / $original_height);
-            }
-            $dest_x = intval(($thumbnail_width - $new_width) / 2);
-            $dest_y = intval(($thumbnail_height - $new_height) / 2);
-            if ($original_type === 2) {
-                $exif = @exif_read_data($filepath);
-                $imgt = "ImageJPEG";
-                $imgcreatefrom = "ImageCreateFromJPEG";
-            } else if ($original_type === 3) {
-                $imgt = "ImagePNG";
-                $imgcreatefrom = "ImageCreateFromPNG";
-            } else {
-                return false;
-            }
-            $old_image = $imgcreatefrom($filepath);
-            $new_image = imagecreatetruecolor($thumbnail_width, $thumbnail_height);
-            $color = imagecolorallocate($new_image, 255,255,255);
-            imagefill($new_image, 0, 0, $color);
-            imagecopyresampled($new_image, $old_image, $dest_x, $dest_y, 0, 0, $new_width, $new_height, $original_width, $original_height);
-            if (!empty($exif['Orientation'])) {
-                switch ($exif['Orientation']) {
-                    case 3:
-                        $new_image = imagerotate($new_image, 180, 0);
-                        break;
-
-                    case 6:
-                        $new_image = imagerotate($new_image, -90, 0);
-                        break;
-
-                    case 8:
-                        $new_image = imagerotate($new_image, 90, 0);
-                        break;
-                }
-            }
-            $imgt($new_image, $thumbpath);
-            imagedestroy($new_image);
-            imagedestroy($old_image);
-            return true;
         }
         $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
         $point = filter_input(INPUT_POST, 'point', FILTER_VALIDATE_INT);
@@ -5945,6 +5954,537 @@ if(isset($page_request))
             <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
         </div>
         <?php
+    }
+    else if($page_request == "create-announcement")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $template = filter_input(INPUT_POST, 'template');
+        if(empty($template))
+        {
+            echo 2;
+            exit();
+        }
+        $date = date('Y-m-d H:i:s');
+        $sorguekle = $DB_con->prepare("INSERT INTO announcements(detail,date,admin,school) VALUES (:detail,:date,:admin,:school)");
+        if($sorguekle->execute(array(":detail"=>$template,":date"=>$date,":admin"=>$uyevtid,":school"=>$uyeokul)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "edit-announcement")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $announcement_id = filter_input(INPUT_POST, 'template_id', FILTER_VALIDATE_INT);
+        if($announcement_id === false) {
+            echo 0;
+            exit();
+        }
+        $template = filter_input(INPUT_POST, 'templateEdit');
+        if(empty($template))
+        {
+            echo 2;
+            exit();
+        }
+        $editQuery = $DB_con->prepare("UPDATE announcements SET detail = :detail WHERE id = :id AND school = :school");
+        if($editQuery->execute(array(":detail"=>$template,":id"=>$announcement_id,":school"=>$uyeokul)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "delete-announcement")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $announcement_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+        if($announcement_id === false) {
+            echo 0;
+            exit();
+        }
+        $deleteQuery = $DB_con->prepare("DELETE FROM announcements WHERE id = :id AND school = :school");
+        if($deleteQuery->execute(array(":id"=>$announcement_id,":school"=>$uyeokul)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "infos-announcement")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $announcement_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if($announcement_id === false)
+        {
+            echo 0;
+            exit();
+        }
+        $queryAnnouncement = $DB_con->prepare("SELECT * FROM announcements WHERE id = :id AND school = :school");
+        $queryAnnouncement->execute(array(":id"=>$announcement_id,":school"=>$uyeokul));
+        if($queryAnnouncement->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $announcement = $queryAnnouncement->fetch(PDO::FETCH_ASSOC);
+        ?>
+        <div class="modal-header">
+            <h4 class="modal-title">Editing Announcement</h4>
+        </div>
+        <div class="modal-body">
+            <form id="editAnnouncementForm">
+                <div class="form-group">
+                    <textarea name="templateEdit" id="templateEdit"><?=$announcement["detail"]?></textarea>
+                </div>
+                <input type="hidden" name="template_id" id="template_id" value="<?=$announcement["id"]?>">
+                <div id="editAnnouncementResult"></div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect editAnnouncementButton">Edit Announcement</button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+        </div>
+        <?php
+    }
+    else if($page_request == "edit-profile")
+    {
+        if($uyerol == "student")
+        {
+            echo json_encode(array("sonuc"=>0));
+            exit();
+        }
+        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        if(empty($name))
+        {
+            echo json_encode(array("sonuc"=>2));
+            exit();
+        }
+        if(strlen($name) < 3 || strlen($name) > 64)
+        {
+            echo json_encode(array("sonuc"=>3));
+            exit();
+        }
+        $simdi = date('Y-m-d H:i:s');
+        if(isset($_FILES['image']) && !empty($_FILES['image']['name'])) {
+            $uzanti2 = strtolower(substr($_FILES["image"]["name"], strripos($_FILES["image"]["name"], '.')+1));
+            $yeni_resim2 = round(microtime(true)).mt_rand().'.'.$uzanti2;
+            if(!($uzanti2 == "jpg" || $uzanti2 == "jpeg" || $uzanti2 == "png"))
+            {
+                echo json_encode(array("sonuc"=>4));
+                exit();
+            }
+            $allowed_types = array('image/jpeg', 'image/png');
+            $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+            $detected_type = finfo_file($fileInfo, $_FILES['image']['tmp_name']);
+            if(!in_array($detected_type, $allowed_types))
+            {
+                finfo_close($fileInfo);
+                echo json_encode(array("sonuc"=>4));
+                exit();
+            }
+            finfo_close($fileInfo);
+
+            $targetPath = "img/avatars/";
+            $tempFile = $_FILES['image']['tmp_name'];
+
+            $resim  = $targetPath.$yeni_resim2 . "-PP." . $uzanti2;
+
+            thumbOlustur1($tempFile, $resim, 100, 100);
+
+            $sorguekle = $DB_con->prepare("UPDATE users SET name = :name , avatar = :avatar , update_date = :updatedate WHERE id = :id");
+            if($sorguekle->execute(array(":name"=>$name,":avatar"=>$resim,":updatedate"=>$simdi,":id"=>$uyevtid)))
+            {
+                echo json_encode(array("sonuc"=>1,"photo"=>$resim,"name"=>$name));
+                exit();
+            }
+            else
+            {
+                echo json_encode(array("sonuc"=>0));
+                exit();
+            }
+        } else {
+            $sorguekle = $DB_con->prepare("UPDATE users SET name = :name , update_date = :updatedate WHERE id = :id");
+            if($sorguekle->execute(array(":name"=>$name,":updatedate"=>$simdi,":id"=>$uyevtid)))
+            {
+                echo json_encode(array("sonuc"=>5,"name"=>$name));
+                exit();
+            }
+            else
+            {
+                echo json_encode(array("sonuc"=>0));
+                exit();
+            }
+        }
+    }
+    else if($page_request == "edit-school")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool = $DB_con->prepare("SELECT id FROM schools WHERE id = :id");
+        $sorguSchool->execute(array(":id"=>$uyeokul));
+        if($sorguSchool->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool2 = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND schools = :school");
+        $sorguSchool2->execute(array(":id"=>$uyevtid,":school"=>$uyeokul));
+        if($sorguSchool2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $school_name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        if(empty($school_name))
+        {
+            echo 2;
+            exit();
+        }
+        if(strlen($school_name) < 3 || strlen($school_name) > 64)
+        {
+            echo 3;
+            exit();
+        }
+        $date_type = filter_input(INPUT_POST, 'date_type', FILTER_VALIDATE_INT);
+        if($date_type === false)
+        {
+            echo 0;
+            exit();
+        }
+        if($date_type < 1 || $date_type > 5)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu = $DB_con->prepare("UPDATE schools SET name = :name , date_type = :datetype WHERE id = :id");
+        if($sorgu->execute(array(":name"=>$school_name,":datetype"=>$date_type,":id"=>$uyeokul)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "create-group-modal")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($sorgu2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $noAvailableStudent = false;
+        ?>
+        <div class="modal-header">
+            <h4 class="modal-title">Create Class</h4>
+        </div>
+        <div class="modal-body">
+            <form id="createGroupForm" data-class="<?= $class ?>">
+                <div class="form-group">*
+                    <label for="name">Name:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="name" id="name" type="text">
+                    </div>
+                </div>
+                <label>Students:</label>
+                <div class="row">
+                    <?php
+                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :class) as totalBehaviorPoint FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT GROUP_CONCAT(students) FROM groups WHERE class = :class3 AND school = :school2))");
+                    $availableStudentsQuery->execute(array(":class"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":class3"=>$class,":school2"=>$uyeokul));
+                    if ($availableStudentsQuery->rowCount() > 0) {
+                        while ($getStudents = $availableStudentsQuery->fetch(PDO::FETCH_ASSOC)) {
+                            ?>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                <a href="javascript:;" id="selectStudent" data-student="<?= $getStudents["id"] ?>">
+                                    <div class="panel panel-default panel-post groupStudents">
+                                        <div class="panel-heading">
+                                            <div class="media">
+                                                <div class="media-left">
+                                                    <img src="<?= $getStudents["avatar"] ?>" class="studentAvatar">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h4 class="media-heading"><?= $getStudents["name"] ?></h4>
+                                                    Total Behavior Point: <b
+                                                            class="font-15 <?= $getStudents["totalBehaviorPoint"] >= 0 ? 'text-success' : 'text-danger' ?>"><?= $getStudents["totalBehaviorPoint"] ?></b>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php
+                        }
+                    } else {
+                        $noAvailableStudent = true;
+                    }
+                    ?>
+                </div>
+                <input type="hidden" name="hidden_class_id" id="hidden_class_id" value="<?=$class?>">
+                <input type="hidden" id="selected_students" name="selected_students" data-class="<?= $class ?>">
+                <div id="createGroupResult"></div>
+                <?php
+                if ($noAvailableStudent == true) {
+                    ?>
+                    <div class='alert alert-danger'><strong>Error:</strong> All students belonging to this class are members of any group.</div>
+                    <?php
+                } else {
+                  ?>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success btn-block btn-lg waves-effect createGroupButton" data-class="<?=$class?>">Create This Group</button>
+                    </div>
+                    <?php
+                }
+                ?>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+        </div>
+        <?php
+    }
+    else if($page_request == "create-group")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_POST, 'hidden_class_id', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($sorgu2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $groupName = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        if(empty($groupName))
+        {
+            echo 2;
+            exit();
+        }
+        if(strlen($groupName) < 3 || strlen($groupName) > 64)
+        {
+            echo 3;
+            exit();
+        }
+        $students = filter_input(INPUT_POST, 'selected_students', FILTER_SANITIZE_STRING);
+        if (!isset($students) || empty($students)) {
+            echo 4;
+            exit();
+        }
+        $nowDate = date('Y-m-d H:i:s');
+        $sorgu = $DB_con->prepare("INSERT INTO groups(name,class,school,students,created_time,created_by) VALUES (:name, :class, :school, :students, :createdtime, :createdby)");
+        if($sorgu->execute(array(":name"=>$groupName,":class"=>$class,":school"=>$uyeokul,":students"=>$students,":createdtime"=>$nowDate,":createdby"=>$uyevtid)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "get-groups")
+    {
+        $class = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgusinifid = $DB_con->prepare("SELECT id,student_show,point_show,points_by_time FROM classes WHERE FIND_IN_SET(:uyeid, teachers) AND id = :id AND school = :school");
+        $sorgusinifid->execute(array(":uyeid"=>$uyevtid,":id"=>$class,":school"=>$uyeokul));
+        if($sorgusinifid->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $getGroups = $DB_con->prepare("SELECT id,name,students FROM groups WHERE class = :id AND school = :school");
+        $getGroups->execute(array(":id"=>$class,":school"=>$uyeokul));
+        if($getGroups->rowCount() == 0)
+        {
+            echo 2;
+            exit();
+        }
+        $yazsinifid = $sorgusinifid->fetch(PDO::FETCH_ASSOC);
+        $pointsByTimeQuery = '';
+        if ($yazsinifid['points_by_time'] == 2) {
+            $pointsByTimeQuery = 'AND date(date) = CURDATE()';
+        } else if ($yazsinifid['points_by_time'] == 3) {
+            $pointsByTimeQuery = 'AND YEARWEEK(`date`, 1) = YEARWEEK(CURDATE(), 1)';
+        } else if ($yazsinifid['points_by_time'] == 4) {
+            $pointsByTimeQuery = 'AND MONTH(date) = MONTH(CURRENT_DATE())';
+        }
+        echo '<div class="row"><div class="group-board">';
+        while($fetchGroups = $getGroups->fetch(PDO::FETCH_ASSOC)) {
+            ?>
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3">
+                <div class="group-card">
+                    <div class="card-header">
+                        <span class="card-header-text"><?=$fetchGroups["name"]?></span>
+                    </div>
+                    <ul class="sortable ui-sortable" id="sort<?=$fetchGroups["id"]?>" data-group-id="<?=$fetchGroups["id"]?>">
+                        <?php
+                        $getStudents = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx AND type = 1 $pointsByTimeQuery) as positiveBehaviorPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx2 AND type = 2 $pointsByTimeQuery) as negativeBehaviorPoints, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx3 AND type = 3 $pointsByTimeQuery) as redeemedPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx4 $pointsByTimeQuery) as totalBehaviorPoints FROM users WHERE FIND_IN_SET(id, (SELECT students FROM groups WHERE id = :id AND class = :class AND school = :school))");
+                        $getStudents->execute(array(":classx"=>$class,":classx2"=>$class,":classx3"=>$class,":classx4"=>$class,":id"=>$fetchGroups["id"],":class"=>$class,":school"=>$uyeokul));
+                        while($fetchStudents = $getStudents->fetch(PDO::FETCH_ASSOC)) {
+                            if($yazsinifid["student_show"] == 2) {
+                                $explodestudentname = explode(" ", $fetchStudents["name"]);
+                                array_pop($explodestudentname);
+                                $namexdxd = implode(" ", $explodestudentname);
+                            } else {
+                                $namexdxd = $fetchStudents["name"];
+                            }
+                            ?>
+                            <li class="text-row ui-sortable-handle"
+                                data-student-id="<?=$fetchStudents["id"]?>" id="<?=$fetchStudents["id"]?>">
+                                <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla" id="<?=$fetchStudents["id"]?>" class_id="<?=$class?>">
+                                    <div class="media">
+                                        <div class="media-left">
+                                            <img src="<?= $fetchStudents["avatar"] ?>" class="studentAvatar">
+                                        </div>
+                                        <div class="media-body">
+                                            <h4 class="media-heading"><?= $namexdxd ?></h4>
+                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-green"><?= empty($fetchStudents["positiveBehaviorPoints"]) ? "0" : $fetchStudents["positiveBehaviorPoints"] ?></span><?php } ?>
+                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-red"><?= empty($fetchStudents["negativeBehaviorPoints"]) ? "0" : $fetchStudents["negativeBehaviorPoints"] ?></span><?php } ?>
+                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-orange"><?= empty($fetchStudents["redeemedPoints"]) ? "0" : $fetchStudents["redeemedPoints"] ?></span><?php } ?>
+                                            <?php if($yazsinifid["point_show"] != 3) { ?><span class="badge bg-blue"><?= empty($fetchStudents["totalBehaviorPoints"]) ? "0" : $fetchStudents["totalBehaviorPoints"] ?></span><?php } ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <?php
+        }
+        echo '</div></div>';
+    }
+    else if($page_request == "change-student-group")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_GET, 'class', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $student = filter_input(INPUT_GET, 'student', FILTER_VALIDATE_INT);
+        if($student === false)
+        {
+            echo 0;
+            exit();
+        }
+        $group = filter_input(INPUT_GET, 'group', FILTER_VALIDATE_INT);
+        if($group === false)
+        {
+            echo 0;
+            exit();
+        }
+        $checkTeacher = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $checkTeacher->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($checkTeacher->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $checkStudent = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND FIND_IN_SET(:sid, classes) AND schools = :school");
+        $checkStudent->execute(array(":id"=>$student,":sid"=>$class,":school"=>$uyeokul));
+        if($checkStudent->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $checkGroup = $DB_con->prepare("SELECT id FROM groups WHERE class = :id AND school = :school AND id = :group");
+        $checkGroup->execute(array(":id"=>$class,":school"=>$uyeokul,":group"=>$group));
+        if($checkGroup->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $checkStudentGroup = $DB_con->prepare("SELECT id FROM groups WHERE FIND_IN_SET(:student, students) AND class = :class AND school = :school");
+        $checkStudentGroup->execute(array(":student"=>$student,":class"=>$class,":school"=>$uyeokul));
+        if($checkStudentGroup->rowCount() != 1) {
+            echo 0;
+            exit();
+        } else {
+            $getStudentGroup = $checkStudentGroup->fetch(PDO::FETCH_ASSOC);
+            $updateStudentPreviousGroup = $DB_con->prepare("UPDATE groups SET students = TRIM(BOTH ',' FROM REPLACE(CONCAT(',', students), ',".$student."', '')) WHERE FIND_IN_SET(:student2, students) AND class = :class AND school = :school AND id = :group");
+            $updateStudentPreviousGroup->execute(array(":student2"=>$student,":class"=>$class,":school"=>$uyeokul,":group"=>$getStudentGroup["id"]));
+            $updateStudentNewGroup = $DB_con->prepare("UPDATE groups SET students = CONCAT(students,',".$student."')  WHERE class = :class AND school = :school AND id = :group");
+            if ($updateStudentNewGroup->execute(array(":class"=>$class,":school"=>$uyeokul,":group"=>$group))) {
+                echo 1;
+                exit();
+            }
+        }
     }
 }	
 ?>

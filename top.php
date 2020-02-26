@@ -17,8 +17,6 @@ if(LoginCheckUser($DB_con) == false)
 	exit();
 }
 
-
-
 $sorguUye = $DB_con->prepare("SELECT id,name,role,schools,email,avatar FROM users WHERE google_id = :gid");
 $sorguUye->execute(array(":gid"=>LoginCheckUser($DB_con)));
 $yazUye = $sorguUye->fetch(PDO::FETCH_ASSOC);
@@ -77,7 +75,7 @@ else
 
 		<link href="css/all-themes.min.css" rel="stylesheet" />
 
-        <?php if($page_request == "class" || $page_request == "send-messages" || $page_request == "students" || $page_request == "redeem-items" || !isset($page_request)) { ?><link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" /><?php } ?>
+        <?php if($page_request == "class" || $page_request == "send-messages" || $page_request == "students" || $page_request == "redeem-items" || $page_request == 'announcements' || !isset($page_request)) { ?><link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" /><?php } ?>
 
         <?php if($page_request == "report" || $page_request == "class" || $page_request == "redeem-items") { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
 
@@ -181,7 +179,7 @@ else
                         <?php
                     }
                     ?>
-                    <li class="dropdown">
+                    <li class="dropdown" id="profileDropdown">
                         <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true" style="padding-top: 0;padding-bottom: 0;margin-top: 16px;height:39px;">
                             <img src="<?=$uyeavat?>" width="38" height="38" class="img-circle uye-avatar-yeri" alt="<?=$uyead?>" style="vertical-align:unset!important;"/>
                         </a>
@@ -190,13 +188,28 @@ else
                             <li class="body">
                                 <ul class="menu tasks" style="overflow: hidden; width: auto; height: auto; padding-left:15px; padding-right:15px;">
                                     <li class="text-center" style="list-style:none;">
-                                        <img src="<?=$uyeavat?>" width="80" height="80" class="img-circle m-t-10" alt="<?=$uyead?>"/>
-                                        <div class="m-t-10 m-b-10"><strong><?=$uyead?></strong></div>
+                                        <img src="<?=$uyeavat?>" width="80" height="80" id="profilePhoto" class="img-circle m-t-10" alt="<?=$uyead?>"/>
+                                        <div class="m-t-10 m-b-10" id="profileName"><strong><?=$uyead?></strong></div>
                                         <div class="m-b-10 text-muted"><?=$uyemail?></div>
                                         <div class="m-b-10"><small><b><?php if($uyerol == "student") { echo "Student"; } else if($uyerol == "teacher") { echo "Teacher"; } else if($uyerol == "admin") { echo "School Admin"; } ?></b></small></div>
                                     </li>
                                 </ul>
                             </li>
+                            <?php
+                            if ($uyerol == 'admin') {
+                                ?>
+                                <li class="footer">
+                                    <a href="javascript:;" class="waves-effect waves-block" data-toggle="modal" data-target="#editSchoolModal">Edit School</a>
+                                </li>
+                                <?php
+                            }
+                            if ($uyerol != 'student') {
+                                ?>
+                                <li class="footer">
+                                    <a href="javascript:;" class="waves-effect waves-block" data-toggle="modal" data-target="#editProfileModal">Edit Profile</a>
+                                </li>
+                            <?php
+                            }?>
                             <li class="footer">
                                 <a href="javascript:;" class="waves-effect waves-block LogOutButton">Log Out</a>
                             </li>
@@ -287,6 +300,12 @@ else
                                 </a>
                             </li>
                             <li><a href="redeem-items"><i class="material-icons">shopping_cart</i><span>Redeem Items</span></a></li>
+                            <li>
+                                <a href="announcements">
+                                    <i class="material-icons">announcement</i>
+                                    <span>Announcements</span>
+                                </a>
+                            </li>
                             <?php
                         }
 						?>
@@ -299,3 +318,84 @@ else
 				</div>
 			</aside>
 		</section>
+        <?php
+        if ($uyerol != 'student') {
+        ?>
+        <div class="modal fade in" id="editProfileModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Edit Profile</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProfileForm">
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <div class="form-line">
+                                    <input class="form-control" name="name" id="name" type="text" value="<?=$uyead?>">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Profile Photo:</label>
+                                <div class="form-line">
+                                    <input class="form-control" name="image" id="image" type="file">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect editProfileButton">Edit Profile</button>
+                            </div>
+                        </form>
+                        <div id="editProfileResult"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        }
+        if ($uyerol == 'admin') {
+            $dateTypeQuery = $DB_con->prepare("SELECT name,date_type FROM schools WHERE id = :id");
+            $dateTypeQuery->execute(array(":id"=>$uyeokul));
+            $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
+            ?>
+            <div class="modal fade in" id="editSchoolModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Edit School</h4>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editSchoolForm">
+                                <div class="form-group">
+                                    <label for="name">Name:</label>
+                                    <div class="form-line">
+                                        <input class="form-control" name="name" id="name" type="text" value="<?=$dateType["name"]?>">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="date_type">Date Display Type:</label>
+                                    <div class="form-line">
+                                        <select class="form-control" name="date_type" id="date_type">
+                                            <option value="1" <?php if ($dateType['date_type'] === 1) { ?> selected <?php } ?>>DD/MM/YYYY H:i:s</option>
+                                            <option value="2" <?php if ($dateType['date_type'] === 2) { ?> selected <?php } ?>>MM/DD/YYYY H:i:s</option>
+                                            <option value="3" <?php if ($dateType['date_type'] === 3) { ?> selected <?php } ?>>YYYY/MM/DD H:i:s</option>
+                                            <option value="4" <?php if ($dateType['date_type'] === 4) { ?> selected <?php } ?>>Month D, Yr H:i:s</option>
+                                            <option value="5" <?php if ($dateType['date_type'] === 5) { ?> selected <?php } ?>>D Month, Yr H:i:s</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect editSchoolButton">Edit School</button>
+                                </div>
+                            </form>
+                            <div id="editSchoolResult"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php } ?>

@@ -319,7 +319,7 @@ if(isset($_GET["s"]))
                             <td class="visible-sm visible-md visible-lg"><a href="students?school=<?=$yaz["id"]?>"><?=$sorguOkulOgrencileri->rowCount()?></a></td>
                             <td class="visible-sm visible-md visible-lg"><a href="teachers?school=<?=$yaz["id"]?>"><?=$sorguOkulOgretmenleri->rowCount()?></a></td>
                             <td class="visible-sm visible-md visible-lg"><a href="classes?school=<?=$yaz["id"]?>"><?=$sorguOkulSiniflari->rowCount()?></a></td>
-                            <td class="visible-sm visible-md visible-lg"><a href="javascript:;" class="label label-info" data-toggle="modal" data-target="#modal-school-edit" data-school="<?=$yaz["id"]?>" data-school-name="<?=$yaz["name"]?>">Edit</a></td>
+                            <td class="visible-sm visible-md visible-lg"><a href="javascript:;" class="label label-info editSchool" data-toggle="modal" data-target="#modal-school-edit" id="<?=$yaz["id"]?>" data-school-name="<?=$yaz["name"]?>">Edit</a></td>
                         </tr>
                         <?php
                     }
@@ -1437,8 +1437,19 @@ if(isset($_GET["s"]))
             echo 3;
             exit();
         }
-        $sorgu = $DB_con->prepare("UPDATE schools SET name = :name WHERE id = :id");
-        if($sorgu->execute(array(":name"=>$school_name,":id"=>$school)))
+        $date_type = filter_input(INPUT_POST, 'date_type', FILTER_VALIDATE_INT);
+        if($date_type === false)
+        {
+            echo 0;
+            exit();
+        }
+        if($date_type < 1 || $date_type > 5)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu = $DB_con->prepare("UPDATE schools SET name = :name , date_type = :datetype WHERE id = :id");
+        if($sorgu->execute(array(":name"=>$school_name,":datetype"=>$date_type,":id"=>$school)))
         {
             echo 1;
             exit();
@@ -2603,6 +2614,68 @@ if(isset($_GET["s"]))
                 }
             }
             ?>
+        </div>
+        <?php
+    }
+    else if($_GET["s"] == "school-infos")
+    {
+        if(LoginCheckAdmin($DB_con) == false)
+        {
+            echo 0;
+            exit();
+        }
+        $school = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if($school === false)
+        {
+            echo 0;
+            exit();
+        }
+        $querySchool = $DB_con->prepare("SELECT id,name,date_type FROM schools WHERE id = :id");
+        $querySchool->execute(array(":id"=>$school));
+        if($querySchool->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $writeSchool = $querySchool->fetch(PDO::FETCH_ASSOC);
+        ?>
+        <div class="modal-header">
+            <h4 class="modal-title">Editing School: <?=$writeSchool["name"]?></h4>
+        </div>
+        <div class="modal-body">
+            <form id="Edit-School-Form">
+                <div class="form-group">
+                    <label for="name">School Name:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="name" id="name" type="text" value="<?=$writeSchool["name"]?>">
+                    </div>
+                </div>
+                <?php
+                $dateTypeQuery = $DB_con->prepare("SELECT date_type FROM schools WHERE id = :id");
+                $dateTypeQuery->execute(array(":id"=>$school));
+                $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
+                ?>
+                <div class="form-group">
+                    <label for="date_type">Date Display Type:</label>
+                    <div class="form-line">
+                        <select class="form-control" name="date_type" id="date_type">
+                            <option value="1" <?php if ($dateType['date_type'] === 1) { ?> selected <?php } ?>>DD/MM/YYYY H:i:s</option>
+                            <option value="2" <?php if ($dateType['date_type'] === 2) { ?> selected <?php } ?>>MM/DD/YYYY H:i:s</option>
+                            <option value="3" <?php if ($dateType['date_type'] === 3) { ?> selected <?php } ?>>YYYY/MM/DD H:i:s</option>
+                            <option value="4" <?php if ($dateType['date_type'] === 4) { ?> selected <?php } ?>>Month D, Yr H:i:s</option>
+                            <option value="5" <?php if ($dateType['date_type'] === 5) { ?> selected <?php } ?>>D Month, Yr H:i:s</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="hidden" name="hidden_school_id" id="hidden_school_id" value="<?=$writeSchool["id"]?>">
+                <div id="Edit-School-Result"></div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect Edit-School-Button">Edit School</button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
         </div>
         <?php
     }

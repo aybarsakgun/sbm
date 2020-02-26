@@ -685,28 +685,8 @@ else if($page_request == "schools")
     </section>
     <div class="modal fade in" id="modal-school-edit" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Edit School</h4>
-                </div>
-                <div class="modal-body">
-                    <form id="Edit-School-Form">
-                        <div class="form-group">
-                            <label for="name">School Name:</label>
-                            <div class="form-line">
-                                <input class="form-control" name="name" id="name" type="text">
-                            </div>
-                        </div>
-                        <input type="hidden" name="hidden_school_id" id="hidden_school_id">
-                        <div id="Edit-School-Result"></div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect Edit-School-Button">Edit School</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
-                </div>
+            <div class="modal-content" id="schoolEditContent">
+
             </div>
         </div>
     </div>
@@ -789,14 +769,40 @@ else if($page_request == "schools")
                         }
                     });
             });
-            $('#modal-school-edit').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget);
-                var school_id = button.data("school");
-                var school_name = button.data("school-name");
-                var modal = $(this);
-                modal.find('#hidden_school_id').val(school_id);
-                modal.find('#name').val(school_name);
+            $('body').on('click','.editSchool',function(e)
+            {
+                e.preventDefault();
+                var regexp = /[^0-9]/g;
+                var school = this.id;
+                $.ajax(
+                    {
+                        url: "school-infos-"+school.replace(regexp,''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData:false,
+                        success: function(data)
+                        {
+                            if(data == 0)
+                            {
+                                $("#schoolEditContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                            }
+                            else
+                            {
+                                $("#schoolEditContent").html(data);
+                            }
+                        }
+                    });
             });
+            // $('#modal-school-edit').on('show.bs.modal', function (event) {
+            //     var button = $(event.relatedTarget);
+            //     var school_id = button.data("school");
+            //     var school_name = button.data("school-name");
+            //     var modal = $(this);
+            //     modal.find('#hidden_school_id').val(school_id);
+            //     modal.find('#name').val(school_name);
+            // });
+
             $('#modal-school-admin-edit').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
                 var school_name = button.data("school-name");

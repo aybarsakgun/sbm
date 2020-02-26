@@ -426,5 +426,90 @@ $(function () {
                 }
             }, false);
         }
+        $('body').on('submit', '#editProfileForm', function (e) {
+            e.preventDefault();
+
+            $('.editProfileButton').prop('disabled', true);
+            $('.editProfileButton').html("Profile editing...");
+
+            $("#editProfileResult").empty();
+
+            $.ajax(
+                {
+                    url: "edit-profile",
+                    type: "POST",
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        setTimeout(function () {
+                            $('.editProfileButton').prop('disabled', false);
+                            $('.editProfileButton').html("Edit Profile");
+                            if (data.sonuc == 0) {
+                                $("#editProfileResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                            }
+                            if (data.sonuc == 1) {
+                                $("#editProfileResult").html("<div class='alert alert-success'><strong>Successful!</strong> Profile successfully edited.</div>");
+                                $("#editProfileForm #image").val("");
+                                $("ul.navbar-right li#profileDropdown .uye-avatar-yeri").attr('src', data.photo);
+                                $("ul.navbar-right li#profileDropdown #profilePhoto").attr('src', data.photo);
+                                $("ul.navbar-right li#profileDropdown #profileName").html("<strong>"+data.name+"</strong>");
+                            }
+                            if (data.sonuc == 2) {
+                                $("#editProfileResult").html("<div class='alert alert-danger'><strong>Error:</strong> Please fill your name in the form.</div>");
+                            }
+                            if (data.sonuc == 3) {
+                                $("#editProfileResult").html("<div class='alert alert-danger'><strong>Error:</strong> Name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
+                            }
+                            if (data.sonuc == 4) {
+                                $("#editProfileResult").html("<div class='alert alert-danger'><strong>Error:</strong> Profile photo can only be in jpeg, png and jpg format.</div>");
+                            }
+                            if (data.sonuc == 5) {
+                                $("#editProfileResult").html("<div class='alert alert-success'><strong>Successful!</strong> Profile successfully edited.</div>");
+                                $("#editProfileForm #image").val("");
+                                $("ul.navbar-right li#profileDropdown #profileName").html("<strong>"+data.name+"</strong>");
+                            }
+                        }, 1000);
+                    }
+                });
+        });
+        $('body').on('submit', '#editSchoolForm', function (e) {
+            e.preventDefault();
+
+            $('.editSchoolButton').prop('disabled', true);
+            $('.editSchoolButton').html("Profile editing...");
+
+            $("#editSchoolResult").empty();
+
+            $.ajax(
+                {
+                    url: "edit-school",
+                    type: "POST",
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        setTimeout(function () {
+                            $('.editSchoolButton').prop('disabled', false);
+                            $('.editSchoolButton').html("Edit School");
+                            if (data == 0) {
+                                $("#editSchoolResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                            }
+                            if (data == 1) {
+                                $("#editSchoolResult").html("<div class='alert alert-success'><strong>Successful!</strong> School successfully edited.</div>");
+                            }
+                            if (data == 2) {
+                                $("#editSchoolResult").html("<div class='alert alert-danger'><strong>Error:</strong> Please fill school name in the form.</div>");
+                            }
+                            if (data == 3) {
+                                $("#editSchoolResult").html("<div class='alert alert-danger'><strong>Error:</strong> School name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
+                            }
+                        }, 1000);
+                    }
+                });
+        });
 	});
 });
