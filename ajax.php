@@ -6238,7 +6238,7 @@ if(isset($page_request))
                 <label>Students:</label>
                 <div class="row">
                     <?php
-                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :class) as totalBehaviorPoint FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT GROUP_CONCAT(students) FROM groups WHERE class = :class3 AND school = :school2))");
+                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :class) as totalBehaviorPoint FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT IFNULL(GROUP_CONCAT(students), '') FROM groups WHERE class = :class3 AND school = :school2))");
                     $availableStudentsQuery->execute(array(":class"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":class3"=>$class,":school2"=>$uyeokul));
                     if ($availableStudentsQuery->rowCount() > 0) {
                         while ($getStudents = $availableStudentsQuery->fetch(PDO::FETCH_ASSOC)) {
