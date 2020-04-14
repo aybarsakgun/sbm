@@ -112,5 +112,16 @@ RewriteRule ^edit-school$ ajax.php?pr=edit-school [L,QSA]
 
 RewriteRule ^create-group-modal$ ajax.php?pr=create-group-modal [L,QSA]
 RewriteRule ^create-group-a$ ajax.php?pr=create-group [L,QSA]
+RewriteRule ^edit-group-modal$ ajax.php?pr=edit-group-modal [L,QSA]
+RewriteRule ^edit-group-a$ ajax.php?pr=edit-group [L,QSA]
+RewriteRule ^delete-group$ ajax.php?pr=delete-group [L,QSA]
 RewriteRule ^get-groups$ ajax.php?pr=get-groups [L,QSA]
 RewriteRule ^change-student-group$ ajax.php?pr=change-student-group [L,QSA]
+
+RewriteRule ^point-locations$ ajax.php?pr=point-locations [L,QSA]
+RewriteRule ^action-point-location-info$ ajax.php?pr=action-point-location-info [L,QSA]
+RewriteRule ^action-point-location$ ajax.php?pr=action-point-location [L,QSA]
+RewriteRule ^delete-point-location$ ajax.php?pr=delete-point-location [L,QSA]
+
+RewriteRule ^stats$ index.php?pr=stats [L,QSA]
+RewriteRule ^stats-a$ ajax.php?pr=stats [L,QSA]

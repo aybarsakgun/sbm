@@ -58,7 +58,7 @@ $base_request = filter_input(INPUT_GET, 'br', FILTER_SANITIZE_STRING);
 			</div>
 		</div>
 		<div class="overlay"></div>
-		<nav class="navbar">
+		<nav class="navbar" style="z-index: 11!important;">
 			<div class="container-fluid">
 				<div class="navbar-header">
 					<a href="javascript:void(0);" class="bars"></a>
@@ -80,7 +80,7 @@ $base_request = filter_input(INPUT_GET, 'br', FILTER_SANITIZE_STRING);
 			</div>
 		</nav>
 		<section>
-			<aside id="leftsidebar" class="sidebar">
+			<aside id="leftsidebar" class="sidebar" style="top: 70px!important;height:calc(100vh - 70px);">
 				<div class="user-info">
 					<div class="image">
 						<img src="../img/user.png" width="48" height="48" alt="User" />

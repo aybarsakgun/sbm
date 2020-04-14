@@ -120,10 +120,13 @@ if (!isset($page_request)) {
                                                 ?>
                                                 <li>
                                                     <div class="title">
-                                                        <i class="material-icons <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'text-success' : '' ?>">announcement</i>
-                                                        <span <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'style="text-decoration: underline;"' : '' ?>><?= printDate($DB_con, $ann["date"], $uyeokul) ?>
+                                                        <time class="icon">
+                                                            <em><?=date('D', strtotime($ann["date"]))?></em>
+                                                            <strong><?=date('F', strtotime($ann["date"]))?></strong>
+                                                            <span><?=date('d', strtotime($ann["date"]))?></span>
+                                                        </time>
+                                                        <div class="content"><?= $ann["detail"] ?></div>
                                                     </div>
-                                                    <div class="content"><?= $ann["detail"] ?></div>
                                                 </li>
                                                 <?php
                                             }
@@ -133,11 +136,14 @@ if (!isset($page_request)) {
                                             while ($ann = $announcements->fetch(PDO::FETCH_ASSOC)) {
                                                 ?>
                                                 <li>
-                                                    <div class="title">
-                                                        <i class="material-icons <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'text-success' : '' ?>">announcement</i>
-                                                        <span <?= date('d F Y', strtotime($ann["date"])) == date('d F Y') ? 'style="text-decoration: underline;"' : '' ?>><?= printDate($DB_con, $ann["date"], $uyeokul) ?>
+                                                    <div class="title" style="display:flex">
+                                                        <time class="icon">
+                                                            <em><?=date('D', strtotime($ann["date"]))?></em>
+                                                            <strong><?=date('F', strtotime($ann["date"]))?></strong>
+                                                            <span><?=date('d', strtotime($ann["date"]))?></span>
+                                                        </time>
+                                                        <div class="content"><?= $ann["detail"] ?></div>
                                                     </div>
-                                                    <div class="content"><?= $ann["detail"] ?></div>
                                                 </li>
                                                 <?php
                                             }
@@ -313,6 +319,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <?php
     if ($uyerol == "admin") {
@@ -796,6 +803,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -943,6 +951,30 @@ if (!isset($page_request)) {
                                                    placeholder="Parent secondary phone..." type="text">
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="homeroom">Homeroom:</label>
+                                        <div class="form-line">
+                                            <input class="form-control" name="homeroom" id="homeroom" type="text" placeholder="Homeroom...">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="gender">Gender:</label>
+                                        <div class="form-line">
+                                            <input class="form-control" name="gender" id="gender" type="text" placeholder="Gender...">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="stateID">StateID:</label>
+                                        <div class="form-line">
+                                            <input class="form-control" name="stateID" id="stateID" type="text" placeholder="State id..." oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="grade">Grade:</label>
+                                        <div class="form-line">
+                                            <input class="form-control" name="grade" id="grade" type="text" placeholder="Grade..." oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                                        </div>
+                                    </div>
                                     <label>*Classes:</label>
                                     <?php
                                     if ($uyerol == "teacher") {
@@ -992,6 +1024,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -1047,6 +1080,12 @@ if (!isset($page_request)) {
                                 }
                                 if (data == 10) {
                                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> İkincil veli e-postası için geçerli bir e-posta adresi giriniz.</div>");
+                                }
+                                if (data == 11) {
+                                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Homeroom minimum 3 characters, maximum 64 characters required.</div>");
+                                }
+                                if (data == 12) {
+                                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Gender maximum 32 characters required.</div>");
                                 }
                             }, 1000);
                         }
@@ -1105,6 +1144,85 @@ if (!isset($page_request)) {
                                         <label>CSV File:</label>
                                         <input type="file" id="import_file" name="import_file">
                                     </div>
+                                    <div class="row clearfix" id="mapTable" style="display:none">
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>* Student Name</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="name[]" equal="name" multiple>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>* E-Mail Address</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="email" equal="email">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Parent Name</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="parent_name[]" equal="parent_name" multiple>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Parent E-Mail Address</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="parent_email" equal="parent_email">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Parent E-Mail Address 2</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="parent_email2" equal="parent_email2">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Parent Phone</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="parent_phone" equal="parent_phone">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Parent Phone 2</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="parent_phone2" equal="parent_phone2">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Homeroom</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="homeroom" equal="homeroom">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Gender</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="gender" equal="gender">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>State</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="stateID" equal="stateID">
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p>
+                                                <b>Grade</b>
+                                            </p>
+                                            <select class="form-control show-tick" id="csvColumn" name="grade" equal="grade">
+                                            </select>
+                                        </div>
+                                    </div>
                                     <?php
                                     if ($uyerol == "teacher") {
                                         echo '<label>Class(es):</label>';
@@ -1155,16 +1273,81 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
+        function CSVImportGetHeaders()
+        {
+            $('select#csvColumn').empty();
+            $('select#csvColumn:not([multiple])').append('<option selected="selected" value="">Choose</option>');
+            var file = document.getElementById('import_file').files[0];
+            var reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onloadend = function (evt) {
+                var data = evt.target.result;
+                var byteLength = data.byteLength;
+                var ui8a = new Uint8Array(data, 0);
+                var headerString = '';
+                for (var i = 0; i < byteLength; i++) {
+                    var char = String.fromCharCode(ui8a[i]);
+                    if (char.match(/[^\r\n]+/g) !== null) {
+                        headerString += char;
+                    } else {
+                        break;
+                    }
+                }
+                var headersArray = headerString.split(';');
+                for(var i = 0; i < headersArray.length; i++) {
+                    $('select#csvColumn').append('<option value='+i+'>'+headersArray[i]+'</option>');
+                }
+                $('select#csvColumn').selectpicker('refresh');
+                $('#mapTable').show();
+            };
+        }
         $(document).ready(function () {
+            $('select#csvColumn').change(function(){
+                $('select#csvColumn option').attr('disabled',false);
+                $('select#csvColumn').each(function(){
+                    var $this = $(this);
+                    $('select#csvColumn').not($this).find('option').each(function(){
+                        if ($.isArray($this.val())) {
+                            for (let i = 0; i < $this.val().length; ++i) {
+                                if($(this).attr('value') == $this.val()[i])
+                                    $(this).attr('disabled',true);
+                            }
+                        } else {
+                            if ($this.val() === '') return;
+                            if($(this).attr('value') == $this.val())
+                                $(this).attr('disabled',true);
+                        }
+                    });
+                });
+                $('select#csvColumn').selectpicker('refresh');
+            });
+            $('#import_file').on("change", function(){ CSVImportGetHeaders(); });
             $('body').on('submit', '#Add-Student-Form', function (e) {
                 e.preventDefault();
                 if ($('#import_file').get(0).files.length === 0) {
                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Aktarılacak herhangi bir CSV dosyası seçmediniz.</div>");
                     return false;
                 }
-
+                if ($("select[equal='name']").val() == null) {
+                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one for the Student Name field.</div>");
+                    return false;
+                }
+                if ($("select[equal='name']").val().length > 2) {
+                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You can choose a maximum of two for the Student Name field.</div>");
+                    return false;
+                }
+                if ($("select[equal='email']").val() == '') {
+                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one for the E-Mail Address field.</div>");
+                    return false;
+                }
+                if ($("select[equal='parent_name']").val().length > 2) {
+                    $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You can choose a maximum of two for the Parent Name field.</div>");
+                    return false;
+                }
                 $('.Add-Student-Button').prop('disabled', true);
                 $('.Add-Student-Button').html("Student(s) Importing...");
 
@@ -1188,6 +1371,9 @@ if (!isset($page_request)) {
                                 if (data.sonuc == 1) {
                                     $("#Add-Student-Result").html("<div class='alert alert-success'><strong>Successful!</strong> " + data.eklenen + " adet öğrenci sisteme aktarıldı, " + data.duzenlenen + " adet öğrencinin sınıfı düzenlendi.</div>");
                                     $("#Add-Student-Form").trigger("reset");
+                                    $('select#csvColumn').empty();
+                                    $('select#csvColumn').selectpicker('refresh');
+                                    $('#mapTable').hide();
                                 }
                                 if (data.sonuc == 2) {
                                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Lütfen formu tamamen doldurunuz.</div>");
@@ -1500,6 +1686,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -1648,6 +1835,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -2189,7 +2377,7 @@ if (!isset($page_request)) {
                             <option value="7">By register date (Oldest first)</option>
                         </select>
                     </div>
-                    <ul class="nav nav-tabs class-tab tab-col-<?=$sinifrenk?>" role="tablist">
+                    <ul class="nav nav-tabs class-tab tab-col-<?=$sinifrenk?> hidden-md hidden-lg" role="tablist">
                         <li role="presentation" class="active"><a href="#students" data-toggle="tab" aria-expanded="true">STUDENTS</a></li>
                         <li role="presentation" class=""><a href="#groups" data-toggle="tab" aria-expanded="false">GROUPS</a></li>
                     </ul>
@@ -2247,6 +2435,13 @@ if (!isset($page_request)) {
                 </div>
             </div>
         </div>
+        <div class="modal fade in" id="editGroupModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content editGroupModalContent">
+
+                </div>
+            </div>
+        </div>
         <div class="modal fade in" id="modal-students" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content modal-students-content">
@@ -2300,6 +2495,20 @@ if (!isset($page_request)) {
                                     ?>
                                 </div>
                                 <div class="form-group m-t-15">
+                                    <label for="pointLocation">Point Location:</label>
+                                    <select class="form-control show-tick" id="point_location_multiple1">
+                                        <?php
+                                        $getPointLocationsQuery = $DB_con->prepare("SELECT * FROM point_locations WHERE school = :school");
+                                        $getPointLocationsQuery->execute(array(':school'=>$uyeokul));
+                                        while($fetchPointLocations = $getPointLocationsQuery->fetch(PDO::FETCH_ASSOC)) {
+                                            ?>
+                                            <option value="<?=$fetchPointLocations['id']?>" <?php if($fetchPointLocations['id'] == 1) { echo 'selected'; } ?>><?=$fetchPointLocations['name']?></option>
+                                            <?php
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="form-group m-t-15">
                                     <label for="feedback_description">Behavior Description:</label>
                                     <div class="form-line">
                                         <textarea class="form-control no-resize" id="feedback_description_multiple1"
@@ -2336,6 +2545,20 @@ if (!isset($page_request)) {
                                         <?php
                                     }
                                     ?>
+                                </div>
+                                <div class="form-group m-t-15">
+                                    <label for="pointLocation">Point Location:</label>
+                                    <select class="form-control show-tick" id="point_location_multiple2">
+                                        <?php
+                                        $getPointLocationsQuery = $DB_con->prepare("SELECT * FROM point_locations WHERE school = :school");
+                                        $getPointLocationsQuery->execute(array(':school'=>$uyeokul));
+                                        while($fetchPointLocations = $getPointLocationsQuery->fetch(PDO::FETCH_ASSOC)) {
+                                            ?>
+                                            <option value="<?=$fetchPointLocations['id']?>" <?php if($fetchPointLocations['id'] == 1) { echo 'selected'; } ?>><?=$fetchPointLocations['name']?></option>
+                                            <?php
+                                        }
+                                        ?>
+                                    </select>
                                 </div>
                                 <div class="form-group m-t-15">
                                     <label for="feedback_description">Behavior Description:</label>
@@ -2404,6 +2627,7 @@ if (!isset($page_request)) {
             <div class="container">
                 <div class="row">
                     <input type="hidden" id="checked_students" name="checked_students" data-class-id="<?= $sinifid ?>">
+                    <input type="hidden" id="checked_students2" name="checked_students2" data-class-id="<?= $sinifid ?>">
                     <div class="btn-group btn-group-justified bottom-button-group" role="group"
                          aria-label="Large button group">
                         <a href="javascript:void(0);" role="button"
@@ -2432,6 +2656,7 @@ if (!isset($page_request)) {
         <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
         <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
         <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
+        <script src="plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
         <script src="js/main.js"></script>
         <script type="text/javascript">
             function loadTemplateText(template_id) {
@@ -2461,6 +2686,9 @@ if (!isset($page_request)) {
                 negativeSound.setAttribute('src', 'https://www.aybarsakgun.com/sbm/sound/negative.mp3');
                 randomSound.setAttribute('src', 'https://www.aybarsakgun.com/sbm/sound/random.mp3');
                 $('body').on('click', '.select-multiple-button', function (e) {
+                    $('#modal-students').attr('mode', '');
+                    $('.class-tab a[href="#students"]').tab('show');
+                    $('.class-tab a[href="#groups"]').addClass('disabledTab');
                     $(".bottom-button-group").addClass("select-multiple-active");
                     $(".ogrenci-puanla").attr("data-toggle", "");
                     $(".bottom-button-group").html('<a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis cancel-button"><i class="material-icons col-red">cancel</i><span>Cancel</span></a><a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis count-of-selecteds give-points-multiple"><i class="material-icons col-green">note_add</i><span>Give Points <b class="count-selecteds">(0)</b></span></a><a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis select-all-button"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">check</i><span>Select All</span></a>');
@@ -2473,8 +2701,10 @@ if (!isset($page_request)) {
                     $("input#checked_students").val("");
                     $(".bottom-button-group").html('<a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis select-multiple-button"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">check_box</i><span>Select Multiple</span></a><a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis get-random"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">shuffle</i><span>Get Random</span></a>');
                     $(".count-of-selecteds b.count-selecteds").text("");
+                    $('.class-tab a[href="#groups"]').removeClass('disabledTab');
                 });
                 $('body').on('click', '.select-all-button', function (e) {
+                    $('.class-tab a[href="#students"]').tab('show');
                     $(".ogrenci-puanla").children("div.info-box").css({"background-color": "rgba(76, 175, 80, 0.30)"});
                     $(".ogrenci-puanla").addClass("checked");
                     var checkedstudents = $(".ogrenci-puanla.checked").map(function () {
@@ -2482,6 +2712,35 @@ if (!isset($page_request)) {
                     }).get().join(',');
                     $("input#checked_students").val(checkedstudents);
                     $(".count-of-selecteds b.count-selecteds").text("(" + $(".ogrenci-puanla.checked").length + ")");
+                });
+                $('body').on('click', '.class-tab a[href="#groups"]', function (e) {
+                    if($(this).hasClass('disabledTab')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                $('body').on('click', '.group-give-points', function (e) {
+                    if ($(".bottom-button-group").hasClass('select-multiple-active')) {
+                        $('.cancel-button').click();
+                    }
+                    var thisGroupId = $(this).data('group-id');
+                    var thisGroupName  = $(this).data('group-name');
+                    var $this = $('ul[data-group-id="'+thisGroupId+'"] > li > a');
+                    if($this.length == 0){
+                        return;
+                    }
+                    $this.children("div").css({"background-color": "rgba(76, 175, 80, 0.30)"});
+                    if ($this.children('div').hasClass('media')) {
+                        $this.find("img.studentAvatar").css({"border": "2px solid #2b982b","padding": "2px"});
+                    }
+                    $this.addClass("checked");
+                    var checkedstudents = $('ul[data-group-id="'+thisGroupId+'"] > li > a.checked').map(function () {
+                        return $(this).attr("id");
+                    }).get().join(',');
+                    $("input#checked_students2").val(checkedstudents);
+                    $('#modal-students').modal('show');
+                    $('#modal-students').attr('mode', 'group');
+                    $('#modal-students .modal-title').text("Give behavior points to group of " + thisGroupName + "'s students:");
                 });
                 $('body').on('click', '.toggle-edit-behaviors', function (e) {
                     $('.toggle-edit-behaviors').attr("checked", !$('.toggle-edit-behaviors').attr("checked"));
@@ -2543,6 +2802,7 @@ if (!isset($page_request)) {
                                 $(".get-students").html(data);
                                 $.each($('.chart.chart-pie'), function (i, key) {
                                     $(key).sparkline(undefined, {
+                                        disableHiddenCheck: true,
                                         type: 'pie',
                                         height: '50px',
                                         sliceColors: ['#4CAF50', '#F44336']
@@ -2560,9 +2820,9 @@ if (!isset($page_request)) {
                         processData: false,
                         success: function (data) {
                             if (data == 0) {
-                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                             } else if (data == 2) {
-                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                             } else {
                                 $(".get-groups").html(data);
                             }
@@ -2596,9 +2856,9 @@ if (!isset($page_request)) {
                                                 processData: false,
                                                 success: function (data) {
                                                     if (data == 0) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                     } else if (data == 2) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                     } else {
                                                         $(".get-groups").html(data);
                                                     }
@@ -2638,6 +2898,7 @@ if (!isset($page_request)) {
                                     $(".get-students").html(data);
                                     $.each($('.chart.chart-pie'), function (i, key) {
                                         $(key).sparkline(undefined, {
+                                            disableHiddenCheck: true,
                                             type: 'pie',
                                             height: '50px',
                                             sliceColors: ['#4CAF50', '#F44336']
@@ -2674,10 +2935,32 @@ if (!isset($page_request)) {
                         $("input#selected_students").val(selectedStudents);
                     }
                 });
+                $('body').on('click', '#selectStudent2', function (e) {
+                    if ($(this).hasClass("selected")) {
+                        $(this).find("div.panel-heading").css({"background-color": "#fff"});
+                        $(this).find("img.studentAvatar").css({"border": "none","padding": "0"});
+                        $(this).removeClass("selected");
+                        var selectedStudents = $("#selectStudent2.selected").map(function () {
+                            return $(this).data("student");
+                        }).get().join(',');
+                        $("input#selected_students2").val(selectedStudents);
+                    } else {
+                        $(this).find("div.panel-heading").css({"background-color": "rgba(244, 67, 54, 0.30)"});
+                        $(this).find("img.studentAvatar").css({"border": "2px solid #F44336","padding": "2px"});
+                        $(this).addClass("selected");
+                        var selectedStudents = $("#selectStudent2.selected").map(function () {
+                            return $(this).data("student");
+                        }).get().join(',');
+                        $("input#selected_students2").val(selectedStudents);
+                    }
+                });
                 $('body').on('click', '.ogrenci-puanla', function (e) {
                     if ($(".bottom-button-group").hasClass("select-multiple-active")) {
                         if ($(this).hasClass("checked")) {
-                            $(this).children("div.info-box").css({"background-color": "#fff"});
+                            $(this).children("div").css({"background-color": "#fff"});
+                            if ($(this).children('div').hasClass('media')) {
+                                $(this).find("img.studentAvatar").css({"border": "none","padding": "0"});
+                            }
                             $(this).removeClass("checked");
                             var checkedstudents = $(".ogrenci-puanla.checked").map(function () {
                                 return $(this).attr("id");
@@ -2685,7 +2968,10 @@ if (!isset($page_request)) {
                             $("input#checked_students").val(checkedstudents);
                             $(".count-of-selecteds b.count-selecteds").text("(" + $(".ogrenci-puanla.checked").length + ")");
                         } else {
-                            $(this).children("div.info-box").css({"background-color": "rgba(76, 175, 80, 0.30)"});
+                            $(this).children("div").css({"background-color": "rgba(76, 175, 80, 0.30)"});
+                            if ($(this).children('div').hasClass('media')) {
+                                $(this).find("img.studentAvatar").css({"border": "2px solid #2b982b","padding": "2px"});
+                            }
                             $(this).addClass("checked");
                             var checkedstudents = $(".ogrenci-puanla.checked").map(function () {
                                 return $(this).attr("id");
@@ -2693,6 +2979,7 @@ if (!isset($page_request)) {
                             $("input#checked_students").val(checkedstudents);
                             $(".count-of-selecteds b.count-selecteds").text("(" + $(".ogrenci-puanla.checked").length + ")");
                         }
+                        return;
                     }
                     e.preventDefault();
                     var regexp = /[^0-9]/g;
@@ -2710,6 +2997,7 @@ if (!isset($page_request)) {
                                     $(".modal-student-content").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
                                 } else {
                                     $(".modal-student-content").html(data);
+                                    $("select.show-tick").selectpicker('refresh');
                                     $('.report-behavior-list').DataTable({responsive: true});
                                     $('.report-redeem-list').DataTable({responsive: true});
                                 }
@@ -2873,7 +3161,6 @@ if (!isset($page_request)) {
                                         $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
                                     }
                                     if (data == 1) {
-                                        $("#createGroupResult").html("<div class='alert alert-success'><strong>Successful!</strong> Group successfully created!</div>");
                                         $.ajax(
                                             {
                                                 url: "create-group-modal?id=" + classId,
@@ -2886,21 +3173,22 @@ if (!isset($page_request)) {
                                                         $(".createGroupModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
                                                     } else {
                                                         $(".createGroupModalContent").html(data);
+                                                        $("#createGroupResult").html("<div class='alert alert-success'><strong>Successful!</strong> Group successfully created!</div>");
                                                     }
                                                 }
                                             });
                                         $.ajax(
                                             {
-                                                url: "get-groups?id=" + classId,
+                                                url: "get-groups?id=<?=$sinifid?>",
                                                 type: "GET",
                                                 contentType: false,
                                                 cache: false,
                                                 processData: false,
                                                 success: function (data) {
                                                     if (data == 0) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                     } else if (data == 2) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                     } else {
                                                         $(".get-groups").html(data);
                                                     }
@@ -2913,8 +3201,73 @@ if (!isset($page_request)) {
                                     if (data == 3) {
                                         $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> The group name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
                                     }
-                                    if (data == 4) {
-                                        $("#createGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one student belonging to the group.</div>");
+                                }, 1000);
+                            }
+                        });
+                });
+                $('body').on('submit', '#editGroupForm', function (e) {
+                    e.preventDefault();
+                    var classId = $(this).data("class");
+                    var groupId = $(this).data("group");
+                    $('.editGroupButton').prop('disabled', true);
+                    $('.editGroupButton').html("Group Editing...");
+
+                    $("#editGroupResult").empty();
+                    $.ajax(
+                        {
+                            url: "edit-group-a",
+                            type: "POST",
+                            data: new FormData(this),
+                            contentType: false,
+                            cache: false,
+                            processData: false,
+                            success: function (data) {
+                                setTimeout(function () {
+                                    $('.editGroupButton').prop('disabled', false);
+                                    $('.editGroupButton').html("Create This Group");
+                                    if (data == 0) {
+                                        $("#editGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                                    }
+                                    if (data == 1) {
+                                        $.ajax(
+                                            {
+                                                url: "edit-group-modal?id=" + classId + "&group=" + groupId,
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".editGroupModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                                                    } else {
+                                                        $(".editGroupModalContent").html(data);
+                                                        $("#editGroupResult").html("<div class='alert alert-success'><strong>Successful!</strong> Group successfully edited!</div>");
+                                                    }
+                                                }
+                                            });
+                                        $.ajax(
+                                            {
+                                                url: "get-groups?id=<?=$sinifid?>",
+                                                type: "GET",
+                                                contentType: false,
+                                                cache: false,
+                                                processData: false,
+                                                success: function (data) {
+                                                    if (data == 0) {
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
+                                                    } else if (data == 2) {
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
+                                                    } else {
+                                                        $(".get-groups").html(data);
+                                                    }
+                                                }
+                                            });
+                                    }
+                                    if (data == 2) {
+                                        $("#editGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> Type a name for the group.</div>");
+                                    }
+                                    if (data == 3) {
+                                        $("#editGroupResult").html("<div class='alert alert-danger'><strong>Error:</strong> The group name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
                                     }
                                 }, 1000);
                             }
@@ -2958,6 +3311,102 @@ if (!isset($page_request)) {
                                 } else {
                                     $(".createGroupModalContent").html(data);
                                 }
+                            }
+                        });
+                });
+                $('body').on('click', '#editGroup', function (e) {
+                    e.preventDefault();
+                    var classId = $(this).data("class");
+                    var groupId = $(this).data("group");
+                    $.ajax(
+                        {
+                            url: "edit-group-modal?id=" + classId + "&group=" + groupId,
+                            type: "GET",
+                            contentType: false,
+                            cache: false,
+                            processData: false,
+                            success: function (data) {
+                                if (data == 0) {
+                                    $(".editGroupModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                                } else {
+                                    $(".editGroupModalContent").html(data);
+                                }
+                            }
+                        });
+                });
+                $('body').on('click', '#deleteGroupButton', function (e) {
+                    e.preventDefault();
+                    var classId = $(this).data("class");
+                    var groupId = $(this).data("group");
+                    swal(
+                        {
+                            title: "Are you sure?",
+                            text: "You won't be able to revert this!",
+                            type: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes",
+                            cancelButtonText: "No",
+                            closeOnConfirm: false,
+                            closeOnCancel: false,
+                            showLoaderOnConfirm: true,
+                        },
+                        function (isConfirm) {
+                            if (isConfirm) {
+                                setTimeout(function () {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: 'delete-group',
+                                        data: 'class=' + classId + '&group=' + groupId,
+                                        success: function (data) {
+                                            if (data == 1) {
+                                                $('#editGroupModal').modal('toggle');
+                                                swal(
+                                                    {
+                                                        title: "Deleted!",
+                                                        text: "Group has been deleted.",
+                                                        type: "success",
+                                                        confirmButtonText: "OK",
+                                                        closeOnConfirm: true
+                                                    });
+                                                $.ajax(
+                                                    {
+                                                        url: "get-groups?id=<?=$sinifid?>",
+                                                        type: "GET",
+                                                        contentType: false,
+                                                        cache: false,
+                                                        processData: false,
+                                                        success: function (data) {
+                                                            if (data == 0) {
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
+                                                            } else if (data == 2) {
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
+                                                            } else {
+                                                                $(".get-groups").html(data);
+                                                            }
+                                                        }
+                                                    });
+                                            } else {
+                                                swal(
+                                                    {
+                                                        title: "Error!",
+                                                        text: "Somethings went wrong. Please try again.",
+                                                        type: "error",
+                                                        confirmButtonText: "OK",
+                                                        closeOnConfirm: true
+                                                    });
+                                            }
+                                        }
+                                    });
+                                }, 1000);
+                            } else {
+                                swal(
+                                    {
+                                        title: "Canceled!",
+                                        text: "Your request has been canceled.",
+                                        type: "error",
+                                        confirmButtonText: "OK",
+                                        closeOnConfirm: true
+                                    });
                             }
                         });
                 });
@@ -3019,6 +3468,15 @@ if (!isset($page_request)) {
                     $('body').css("padding-right", "");
                     $('body').addClass('modal-open');
                 });
+                $('#editGroupModal').on('shown.bs.modal', function (e) {
+                    $('body').addClass('modal-open');
+                    $('body').css("padding-right", "");
+                    $('#editGroupModal').css("padding-left", "");
+                });
+                $('#editGroupModal').on('hidden.bs.modal', function (e) {
+                    $('body').css("padding-right", "");
+                    $('body').addClass('modal-open');
+                });
                 $('#modal-students').on('shown.bs.modal', function (e) {
                     $('body').addClass('modal-open');
                     $('body').css("padding-right", "");
@@ -3027,6 +3485,18 @@ if (!isset($page_request)) {
                 $('#modal-students').on('hidden.bs.modal', function (e) {
                     $('body').css("padding-right", "");
                     $('body').addClass('modal-open');
+                    if ($('#modal-students').attr('mode') == 'group') {
+                        var $this = $('ul.sortable > li > a');
+                        if ($this.hasClass("checked")) {
+                            $this.children("div").css({"background-color": "#fff"});
+                            if ($this.children('div').hasClass('media')) {
+                                $this.find("img.studentAvatar").css({"border": "none", "padding": "0"});
+                            }
+                            $('#checked_students2').val('');
+                            $this.removeClass("checked");
+                            $('#modal-students').attr('mode', '');
+                        }
+                    }
                 });
                 $('body').on('click', '.Delete-Student-Button', function (e) {
                     e.preventDefault();
@@ -3078,6 +3548,7 @@ if (!isset($page_request)) {
                                                                 $(".get-students").html(data);
                                                                 $.each($('.chart.chart-pie'), function (i, key) {
                                                                     $(key).sparkline(undefined, {
+                                                                        disableHiddenCheck: true,
                                                                         type: 'pie',
                                                                         height: '50px',
                                                                         sliceColors: ['#4CAF50', '#F44336']
@@ -3095,9 +3566,9 @@ if (!isset($page_request)) {
                                                         processData: false,
                                                         success: function (data) {
                                                             if (data == 0) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                             } else if (data == 2) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                             } else {
                                                                 $(".get-groups").html(data);
                                                             }
@@ -3178,6 +3649,7 @@ if (!isset($page_request)) {
                                                                 $(".get-students").html(data);
                                                                 $.each($('.chart.chart-pie'), function (i, key) {
                                                                     $(key).sparkline(undefined, {
+                                                                        disableHiddenCheck: true,
                                                                         type: 'pie',
                                                                         height: '50px',
                                                                         sliceColors: ['#4CAF50', '#F44336']
@@ -3213,9 +3685,9 @@ if (!isset($page_request)) {
                                                         processData: false,
                                                         success: function (data) {
                                                             if (data == 0) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                             } else if (data == 2) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                             } else {
                                                                 $(".get-groups").html(data);
                                                             }
@@ -3287,6 +3759,7 @@ if (!isset($page_request)) {
                                                         $(".get-students").html(data);
                                                         $.each($('.chart.chart-pie'), function (i, key) {
                                                             $(key).sparkline(undefined, {
+                                                                disableHiddenCheck: true,
                                                                 type: 'pie',
                                                                 height: '50px',
                                                                 sliceColors: ['#4CAF50', '#F44336']
@@ -3304,9 +3777,9 @@ if (!isset($page_request)) {
                                                 processData: false,
                                                 success: function (data) {
                                                     if (data == 0) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                     } else if (data == 2) {
-                                                        $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                        $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                     } else {
                                                         $(".get-groups").html(data);
                                                     }
@@ -3330,6 +3803,12 @@ if (!isset($page_request)) {
                                     }
                                     if (data == 7) {
                                         $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> İkincil veli e-postası için geçerli bir e-posta adresi giriniz.</div>");
+                                    }
+                                    if (data == 8) {
+                                        $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Homeroom minimum 3 characters, maximum 64 characters required.</div>");
+                                    }
+                                    if (data == 9) {
+                                        $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Gender maximum 32 characters required.</div>");
                                     }
                                 }, 1000);
                             }
@@ -3545,7 +4024,7 @@ if (!isset($page_request)) {
 
                 function aksiyon(ogrenci) {
                     $(".get-random").removeClass('disabled');
-                    $("a[class='ogrenci-puanla'][id='" + ogrenci + "']").trigger("click");
+                    $(".get-students a[class='ogrenci-puanla'][id='" + ogrenci + "']").trigger("click");
                 }
 
                 $("body").on('click', '.give-behavior', function (e) {
@@ -3581,6 +4060,8 @@ if (!isset($page_request)) {
                     var behavior = $(this).data("behavior");
                     var description_1 = $("textarea#feedback_description_1").val();
                     var description_2 = $("textarea#feedback_description_2").val();
+                    var point_location_1 = $("select#point_location_1").val();
+                    var point_location_2 = $("select#point_location_2").val();
                     var behavior_name = $(this).find(".btn-inner--text").text();
                     const Toast = Swal.mixin({
                         toast: true,
@@ -3600,7 +4081,7 @@ if (!isset($page_request)) {
                     $.ajax({
                         type: 'POST',
                         url: 'give-behavior',
-                        data: 'id=' + student + '&class=' + classe + '&behavior=' + behavior + '&feedback_description_1=' + description_1 + '&feedback_description_2=' + description_2,
+                        data: 'id=' + student + '&class=' + classe + '&behavior=' + behavior + '&feedback_description_1=' + description_1 + '&feedback_description_2=' + description_2 + '&point_location_1=' + point_location_1 + '&point_location_2=' + point_location_2,
                         dataType: 'json',
                         success: function (data) {
                             if (data.sonuc == 1) {
@@ -3662,6 +4143,7 @@ if (!isset($page_request)) {
                                                 $(".get-students").html(data);
                                                 $.each($('.chart.chart-pie'), function (i, key) {
                                                     $(key).sparkline(undefined, {
+                                                        disableHiddenCheck: true,
                                                         type: 'pie',
                                                         height: '50px',
                                                         sliceColors: ['#4CAF50', '#F44336']
@@ -3679,9 +4161,9 @@ if (!isset($page_request)) {
                                         processData: false,
                                         success: function (data) {
                                             if (data == 0) {
-                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                             } else if (data == 2) {
-                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                             } else {
                                                 $(".get-groups").html(data);
                                             }
@@ -3783,6 +4265,7 @@ if (!isset($page_request)) {
                                                                 $(".get-students").html(data);
                                                                 $.each($('.chart.chart-pie'), function (i, key) {
                                                                     $(key).sparkline(undefined, {
+                                                                        disableHiddenCheck: true,
                                                                         type: 'pie',
                                                                         height: '50px',
                                                                         sliceColors: ['#4CAF50', '#F44336']
@@ -3800,9 +4283,9 @@ if (!isset($page_request)) {
                                                         processData: false,
                                                         success: function (data) {
                                                             if (data == 0) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                                             } else if (data == 2) {
-                                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                                             } else {
                                                                 $(".get-groups").html(data);
                                                             }
@@ -3859,11 +4342,13 @@ if (!isset($page_request)) {
                     positiveSound.pause();
                     negativeSound.play();
                     negativeSound.pause();
-                    var students = $("input#checked_students").val();
+                    var students = $('#modal-students').attr('mode') == 'group' ? $("input#checked_students2").val() : $("input#checked_students").val();
                     var classe = $(this).data("class");
                     var behavior = $(this).data("behavior");
                     var description_1 = $("textarea#feedback_description_multiple1").val();
                     var description_2 = $("textarea#feedback_description_multiple2").val();
+                    var point_location_1 = $("select#point_location_multiple1").val();
+                    var point_location_2 = $("select#point_location_multiple2").val();
                     var behavior_name = $(this).find("span").first().text();
                     const Toast = Swal.mixin({
                         toast: true,
@@ -3883,7 +4368,7 @@ if (!isset($page_request)) {
                     $.ajax({
                         type: 'POST',
                         url: 'give-behavior-multiple',
-                        data: 'ids=' + students + '&class=' + classe + '&behavior=' + behavior + '&feedback_description_1=' + description_1 + '&feedback_description_2=' + description_2,
+                        data: 'ids=' + students + '&class=' + classe + '&behavior=' + behavior + '&feedback_description_1=' + description_1 + '&feedback_description_2=' + description_2 + '&point_location_1=' + point_location_1 + '&point_location_2=' + point_location_2,
                         dataType: 'json',
                         success: function (data) {
                             if (data.sonuc == 1) {
@@ -3945,6 +4430,7 @@ if (!isset($page_request)) {
                                                 $(".get-students").html(data);
                                                 $.each($('.chart.chart-pie'), function (i, key) {
                                                     $(key).sparkline(undefined, {
+                                                        disableHiddenCheck: true,
                                                         type: 'pie',
                                                         height: '50px',
                                                         sliceColors: ['#4CAF50', '#F44336']
@@ -3962,18 +4448,23 @@ if (!isset($page_request)) {
                                         processData: false,
                                         success: function (data) {
                                             if (data == 0) {
-                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div>");
+                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div></div></div>");
                                             } else if (data == 2) {
-                                                $(".get-groups").html("<div class='col-lg-12'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div>");
+                                                $(".get-groups").html("<div class='row'><div class='col-lg-12 m-t-10'><div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Sınıfa ait grup bulunamadı.</div></div></div>");
                                             } else {
                                                 $(".get-groups").html(data);
                                             }
                                         }
                                     });
-                                $(".bottom-button-group").removeClass("select-multiple-active");
-                                $("input#checked_students").val("");
-                                $(".bottom-button-group").html('<a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis select-multiple-button"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">check_box</i><span>Select Multiple</span></a><a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis get-random"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">shuffle</i><span>Get Random</span></a>');
-                                $(".count-of-selecteds b.count-selecteds").text("");
+                                if ($('#modal-students').attr('mode') == 'group') {
+                                    $("input#checked_students2").val("");
+                                } else {
+                                    $(".bottom-button-group").removeClass("select-multiple-active");
+                                    $("input#checked_students").val("");
+                                    $(".bottom-button-group").html('<a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis select-multiple-button"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">check_box</i><span>Select Multiple</span></a><a href="javascript:void(0);" role="button" class="btn btn-lg btn-default waves-effect btn-text-ellipsis get-random"><i class="material-icons col-<?=$yazsinifrenk["color"]?>">shuffle</i><span>Get Random</span></a>');
+                                    $(".count-of-selecteds b.count-selecteds").text("");
+                                    $('.class-tab a[href="#groups"]').removeClass('disabledTab');
+                                }
                             } else if (data.sonuc == 0) {
                                 Toast.fire({
                                     icon: 'error',
@@ -4270,6 +4761,7 @@ if (!isset($page_request)) {
         <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
         <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
         <script src="plugins/node-waves/waves.min.js"></script>
+        <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
         <script src="plugins/jquery-sparkline/jquery.sparkline.js"></script>
         <script src="plugins/jquery-datatable/jquery.dataTables.min.js"></script>
         <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
@@ -4280,6 +4772,7 @@ if (!isset($page_request)) {
             $(document).ready(function () {
                 $.each($('.chart.chart-pie'), function (i, key) {
                     $(key).sparkline(undefined, {
+                        disableHiddenCheck: true,
                         type: 'pie',
                         height: '50px',
                         sliceColors: ['#4CAF50', '#F44336']
@@ -4428,6 +4921,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -4989,6 +5483,12 @@ if (!isset($page_request)) {
                                 if (data == 7) {
                                     $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> İkincil veli e-postası için geçerli bir e-posta adresi giriniz.</div>");
                                 }
+                                if (data == 8) {
+                                    $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Homeroom minimum 3 characters, maximum 64 characters required.</div>");
+                                }
+                                if (data == 9) {
+                                    $("#Edit-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> Gender maximum 32 characters required.</div>");
+                                }
                             }, 1000);
                         }
                     });
@@ -5099,6 +5599,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -5398,6 +5899,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -5960,6 +6462,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -6131,6 +6634,7 @@ if (!isset($page_request)) {
         <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
         <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
         <script src="plugins/node-waves/waves.min.js"></script>
+        <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
         <script src="js/main.js"></script>
         </body>
         </html>
@@ -6288,6 +6792,7 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="plugins/jquery-sparkline/jquery.sparkline.js"></script>
     <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="plugins/jquery-datatable/jquery.dataTables.min.js"></script>
@@ -7021,6 +7526,393 @@ if (!isset($page_request)) {
                             }, 1000);
                         }
                     });
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+} else if ($page_request == "stats") {
+    if ($uyerol != "admin") {
+        echo "Forbidden";
+        exit();
+    }
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="block-header">
+                    <div class="gri">
+                        <ol class="breadcrumb">
+                            <li>
+                                <a href="home">
+                                    <i class="material-icons">home</i> Home
+                                </a>
+                            </li>
+                            <li class="active">
+                                <i class="material-icons">insert_chart</i> Stats
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="row clearfix">
+                    <div class="col-lg-12 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Filter statistics</h2>
+                            </div>
+                            <div class="body">
+                                <select class="form-control" id="timefilter" name="timefilter">
+                                    <option value="0">All time</option>
+                                    <option value="1">Today</option>
+                                    <option value="2">Yesterday</option>
+                                    <option value="3">This week</option>
+                                    <option value="4">Last week</option>
+                                    <option value="5">This month (<?= date("F") ?>)</option>
+                                    <option value="6">Last month (<?= date("F", strtotime('-1 month')) ?>)
+                                    </option>
+                                    <option value="7">Custom date range</option>
+                                </select>
+                                <div class="custom-range-filter m-t-15" style="display:none;">
+                                    <h4 class="media-heading p-b-5">
+                                        Custom date range:
+                                    </h4>
+                                    <div class="row">
+                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                            <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">date_range</i>
+                                                        </span>
+                                                <div class="form-line">
+                                                    <input type="text" class="form-control date1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                            <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">compare_arrows</i>
+                                                        </span>
+                                                <div class="form-line">
+                                                    <input type="text" class="form-control date2">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                            <button type="button"
+                                                    class="btn btn-success btn-block btn-sm waves-effect applytimefilter">
+                                                Apply
+                                            </button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                            <div id="apply-alert"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>All behavior points of school</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="total_behaviors_chart" data-chart-title="All behavior points of school">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="total_behaviors_chart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Most given positive behavior of school</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="most_positive_behaviors_chart" data-chart-title="Most given positive behavior of school">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="most_positive_behaviors_chart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Top best students of school</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="top_best_students" data-chart-title="Top best students of school">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="top_best_students" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Top worst students of school</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="top_worst_students" data-chart-title="Top worst students of school">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="top_worst_students" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Points of the school by location</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="point_location_chart" data-chart-title="Points of the school by location">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="point_location_chart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Most pointer teachers of school</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="most_pointer_teachers" data-chart-title="Most pointer teachers of school">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="most_pointer_teachers" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Points of school by day</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="points_by_day_chart" data-chart-title="Points of school by day">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="points_by_day_chart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                        <div class="card">
+                            <div class="header">
+                                <h2>Points of school by hour</h2>
+                                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                                    <li class="dropdown">
+                                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="toggleChartSize" data-chart-id="points_by_hour_chart" data-chart-title="Points of school by hour">
+                                            <i class="material-icons">fullscreen</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="body">
+                                <canvas id="points_by_hour_chart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="lightbox">
+        <div class="card" style="height:100%;box-shadow:none;margin-bottom:0!important;">
+            <div class="header">
+                <h2 id="chartName"></h2>
+                <ul class="header-dropdown m-r--5" style="top:15px!important">
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="btn btn-default btn-xs" role="button" id="closeChartFullScreen">
+                            <i class="material-icons">fullscreen_exit</i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="body" id="fullScreenChart">
+
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="timeFilterQueryString" value="">
+    <div id="chartsContainer"></div>
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/chartjs/Chart.bundle.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript">
+        $.ajaxSetup({
+            headers: { 'sbmtoken': $('meta[name="sbmtoken"]').attr('content') }
+        });
+        var chartsTimeout;
+        // Chart.defaults.global.animation.duration = 0;
+        function getCharts(isFirst) {
+            clearTimeout(chartsTimeout);
+            $.ajax(
+                {
+                    url: "stats-a" + $('#timeFilterQueryString').val(),
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(data)
+                    {
+                        if (data != 0) {
+                            $('#chartsContainer').html(data);
+                            if(isFirst == true) {
+                                createChart('total_behaviors_chart');
+                                createChart('most_positive_behaviors_chart');
+                                createChart('top_best_students');
+                                createChart('top_worst_students');
+                                createChart('point_location_chart');
+                                createChart('most_pointer_teachers');
+                                createChart('points_by_day_chart');
+                                createChart('points_by_hour_chart');
+                            } else {
+                                window.totalBehaviorsChart.config = getChartJs('doughnut');
+                                window.totalBehaviorsChart.options.circumference = Math.PI;
+                                window.totalBehaviorsChart.options.rotation = -Math.PI;
+                                window.totalBehaviorsChart.update();
+
+                                window.mostPositiveBehaviorsChart.config = getChartJs('bar');
+                                window.mostPositiveBehaviorsChart.update();
+
+                                window.topBestStudents.config = getChartJs('bar2');
+                                window.topBestStudents.update();
+
+                                window.topWorstStudents.config = getChartJs('bar3');
+                                window.topWorstStudents.update();
+
+                                window.pointLocationChart.config = getChartJs('bar4');
+                                window.pointLocationChart.update();
+
+                                window.mostPointerTeachersChart.config = getChartJs('bar5');
+                                window.mostPointerTeachersChart.update();
+
+                                window.pointsByDay.config = getChartJs('bar6');
+                                window.pointsByDay.update();
+
+                                window.pointsByHour.config = getChartJs('bar7');
+                                window.pointsByHour.update();
+                            }
+                        } else {
+                            $('#chartsContainer').html('<div class="alert alert-danger">Teknik bir hata oluştu.</div>');
+                        }
+                    },
+                    complete: function() {
+                        chartsTimeout = setTimeout(function() { getCharts(); }, 10000);
+                    }
+                });
+        }
+        $(document).ready(function() {
+            getCharts(true);
+            $('.date1').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $('.date2').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $('.custom-range-filter').find('.date1').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('.custom-range-filter').find('.date2').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('body').on('click', '#toggleChartSize', function (e) {
+                e.preventDefault();
+                var getChartId = $(this).data('chart-id');
+                var newCanvas = $('<canvas/>',{
+                    id: getChartId
+                }).prop({
+                    width: 150,
+                });
+                $('.lightbox').show();
+                $('html').css('overflow','hidden');
+                $(this).closest('div.card').find('div.body').html('');
+                $('#chartName').html($(this).data('chart-title'));
+                $('#fullScreenChart').html(newCanvas);
+                createChart(getChartId);
+                $('#closeChartFullScreen').attr('chart-id', getChartId);
+            });
+            $('body').on('click', '#closeChartFullScreen', function (e) {
+                e.preventDefault();
+                $('.lightbox').hide();
+                $('html').css('overflow','auto');
+                $('a[data-chart-id="'+$(this).attr('chart-id')+'"]').closest('div.card').find('div.body').html($('#fullScreenChart').html());
+                createChart($(this).attr('chart-id'));
+                $('#fullScreenChart').html('');
+            });
+            $('body').on("change", 'select#timefilter', function (event) {
+                if ($("select#timefilter").val() === "7") {
+                    $('.custom-range-filter').show();
+                    return false;
+                } else {
+                    if ($('.custom-range-filter').is(":visible")) {
+                        $('.custom-range-filter').hide();
+                    }
+                }
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var queryString = "?timefilter=" + timefilter.replace(regexp, '');
+                $('#timeFilterQueryString').val(queryString);
+                getCharts();
+            });
+            $('body').on("click", '.applytimefilter', function (event) {
+                if ($("select#timefilter").val() !== "7") return false;
+                $('#apply-alert').html("");
+                if ($("input.date1").val().length === 0 || $("input.date2").val().length === 0) {
+                    $('#apply-alert').html("<div class='alert alert-danger m-t-10'>Lütfen filtrelemek istediğiniz zaman aralığını eksiksiz doldurunuz.</div>");
+                    return false;
+                }
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                var queryString = "?timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2;
+                $('#timeFilterQueryString').val(queryString);
+                getCharts();
             });
         });
     </script>

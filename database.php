@@ -71,6 +71,8 @@ else
 $google_oauthV2 = new Google_Service_Oauth2($gClient);
 $classroom = new Google_Service_Classroom($gClient);
 
+date_default_timezone_set('America/New_York');
+
 /*
 date_default_timezone_set("Europe/Istanbul");
 

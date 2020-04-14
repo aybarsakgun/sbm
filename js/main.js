@@ -69,6 +69,10 @@ $.AdminBSB.leftSideBar = {
 
         _this.setMenuHeight(true);
         _this.checkStatusForResize(true);
+		setTimeout(function() {
+			_this.setMenuHeight(false);
+			_this.checkStatusForResize(false);
+		}, 500);
         $(window).resize(function () {
             _this.setMenuHeight(false);
             _this.checkStatusForResize(false);
@@ -420,8 +424,10 @@ $(function () {
             var btn = document.getElementById("fullscreen-toggle");
             btn.addEventListener("click", function (event) {
                 if (!document.fullscreenElement) {
+                    btn.innerHTML = '<i class="material-icons">fullscreen_exit</i>';
                     document.documentElement.requestFullscreen();
                 } else {
+                    btn.innerHTML = '<i class="material-icons">fullscreen</i>';
                     document.exitFullscreen();
                 }
             }, false);
@@ -511,5 +517,143 @@ $(function () {
                     }
                 });
         });
+        $('#editSchoolModal').on('shown.bs.modal', function (e) {
+            getPointLocations();
+        });
+        $('#actionPointLocationModal').on('shown.bs.modal', function (e) {
+            var checkId = $(e.relatedTarget).attr('id');
+            $.ajax(
+                {
+                    url: checkId == 'create' ? "action-point-location-info" : "action-point-location-info?id=" + checkId,
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        if (data == 0) {
+                            $(".actionPointLocationsModalContent").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                        } else {
+                            $(".actionPointLocationsModalContent").html(data);
+                        }
+                    }
+                });
+        });
+        $('body').on('submit', '#actionPointLocationForm', function (e) {
+            e.preventDefault();
+
+            var actionType = $('.actionPointLocationButton').text() == 'Edit Point Location' ? 'edit' : 'create';
+
+            $('.actionPointLocationButton').prop('disabled', true);
+            $('.actionPointLocationButton').html("Point location " + (actionType == 'edit' ? "editing..." : "creating..."));
+
+            $("#actionPointLocationResult").empty();
+
+            $.ajax(
+                {
+                    url: "action-point-location",
+                    type: "POST",
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        setTimeout(function () {
+                            $('.actionPointLocationButton').prop('disabled', false);
+                            $('.actionPointLocationButton').html((actionType == 'edit' ? "Edit" : "Create") + " Point Location");
+                            if (data == 0) {
+                                $("#actionPointLocationResult").html("<div class='alert alert-danger'><strong>Error:</strong> Teknik bir problem yaşandı. Lütfen tekrar deneyin.</div>");
+                            }
+                            if (data == 1) {
+                                if (actionType == 'create') {
+                                    $("#actionPointLocationForm").trigger("reset");
+                                }
+                                $("#actionPointLocationResult").html("<div class='alert alert-success'><strong>Successful!</strong> Point location successfully " + (actionType == 'edit' ? "edited" : "created") + "</div>");
+                                getPointLocations();
+                            }
+                            if (data == 2) {
+                                $("#actionPointLocationResult").html("<div class='alert alert-danger'><strong>Error:</strong> Please fill point location name in the form.</div>");
+                            }
+                            if (data == 3) {
+                                $("#actionPointLocationResult").html("<div class='alert alert-danger'><strong>Error:</strong> Point location name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
+                            }
+                        }, 1000);
+                    }
+                });
+        });
+        $('body').on('click', '.deletePointLocation', function (e) {
+            e.preventDefault();
+            var pointLocationId = $(this).attr("id");
+            swal(
+                {
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes",
+                    cancelButtonText: "No",
+                    closeOnConfirm: false,
+                    closeOnCancel: false,
+                    showLoaderOnConfirm: true,
+                },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        setTimeout(function () {
+                            $.ajax({
+                                type: 'POST',
+                                url: 'delete-point-location',
+                                data: 'id=' + pointLocationId,
+                                success: function (data) {
+                                    if (data == 1) {
+                                        swal(
+                                            {
+                                                title: "Deleted!",
+                                                text: "Point location has been deleted.",
+                                                type: "success",
+                                                confirmButtonText: "OK",
+                                                closeOnConfirm: true
+                                            });
+                                        getPointLocations();
+                                    } else {
+                                        swal(
+                                            {
+                                                title: "Error!",
+                                                text: "Somethings went wrong. Please try again.",
+                                                type: "error",
+                                                confirmButtonText: "OK",
+                                                closeOnConfirm: true
+                                            });
+                                    }
+                                }
+                            });
+                        }, 1000);
+                    } else {
+                        swal(
+                            {
+                                title: "Canceled!",
+                                text: "Your request has been canceled.",
+                                type: "error",
+                                confirmButtonText: "OK",
+                                closeOnConfirm: true
+                            });
+                    }
+                });
+        });
+        function getPointLocations() {
+            $.ajax(
+                {
+                    url: "point-locations",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        if (data == 0) {
+                            $(".pointLocations").html("<div class='alert alert-danger mb-0 rounded-0'><strong>Hata!</strong> Teknik bir problem oluştu. Lütfen tekrar deneyin.</div>");
+                        } else {
+                            $(".pointLocations").html(data);
+                        }
+                    }
+                });
+        }
 	});
 });

@@ -1397,8 +1397,14 @@ if(isset($_GET["s"]))
 		$sorgu = $DB_con->prepare("INSERT INTO schools(name,code) VALUES (:school_name, :code)");
 		if($sorgu->execute(array(":school_name"=>$school_name,":code"=>$create_code)))
 		{
-			echo 1;
-			exit();
+            $sorgu2 = $DB_con->prepare("INSERT INTO point_locations(school,name) VALUES (:school, :name)");
+		    if ($sorgu2->execute(array(":school"=>$DB_con->lastInsertId(),":name"=>'Classroom'))) {
+                echo 1;
+                exit();
+            } else {
+		        echo 0;
+		        exit();
+            }
 		}
 		else
 		{

@@ -67,6 +67,8 @@ else
 
 		<link href="plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
+        <?php if($page_request == 'import-student' || $page_request == 'class') { ?><link href="plugins/bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet" /><?php } ?>
+
 		<link href="plugins/node-waves/waves.min.css" rel="stylesheet" />
 
 		<link href="plugins/animate-css/animate.min.css" rel="stylesheet" />	
@@ -75,11 +77,11 @@ else
 
 		<link href="css/all-themes.min.css" rel="stylesheet" />
 
-        <?php if($page_request == "class" || $page_request == "send-messages" || $page_request == "students" || $page_request == "redeem-items" || $page_request == 'announcements' || !isset($page_request)) { ?><link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" /><?php } ?>
+        <link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" />
 
         <?php if($page_request == "report" || $page_request == "class" || $page_request == "redeem-items") { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
 
-        <?php if($page_request == "report") { ?><link href="plugins/jquery-datepicker/datepicker.min.css" rel="stylesheet" /><?php } ?>
+        <?php if($page_request == "report" || $page_request == "stats") { ?><link href="plugins/jquery-datepicker/datepicker.min.css" rel="stylesheet" /><?php } ?>
 	</head>
 	<body class="theme-<?=$sinifrenk?>">
 		<div class="page-loader-wrapper">
@@ -117,6 +119,19 @@ else
                     }
                     ?>
 				</div>
+                <?php
+                if($sbmbaslik != "")
+                {
+                    ?>
+                <div class="class-tab-nav">
+                    <ul class="nav nav-tabs class-tab tab-col-<?=$sinifrenk?>" role="tablist">
+                        <li role="presentation" class="active"><a href="#students" data-toggle="tab" aria-expanded="true">STUDENTS</a></li>
+                        <li role="presentation" class=""><a href="#groups" data-toggle="tab" aria-expanded="false">GROUPS</a></li>
+                    </ul>
+                </div>
+                <?php
+                }
+                ?>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="javascript:;" id="fullscreen-toggle" class="hidden-xs hidden-sm"><i class="material-icons">fullscreen</i></a></li>
                     <?php
@@ -199,19 +214,19 @@ else
                             if ($uyerol == 'admin') {
                                 ?>
                                 <li class="footer">
-                                    <a href="javascript:;" class="waves-effect waves-block" data-toggle="modal" data-target="#editSchoolModal">Edit School</a>
+                                    <a href="#" class="waves-effect waves-block" data-toggle="modal" data-target="#editSchoolModal">Edit School</a>
                                 </li>
                                 <?php
                             }
                             if ($uyerol != 'student') {
                                 ?>
                                 <li class="footer">
-                                    <a href="javascript:;" class="waves-effect waves-block" data-toggle="modal" data-target="#editProfileModal">Edit Profile</a>
+                                    <a href="#" class="waves-effect waves-block" data-toggle="modal" data-target="#editProfileModal">Edit Profile</a>
                                 </li>
                             <?php
                             }?>
                             <li class="footer">
-                                <a href="javascript:;" class="waves-effect waves-block LogOutButton">Log Out</a>
+                                <a href="#" class="waves-effect waves-block LogOutButton">Log Out</a>
                             </li>
                         </ul>
                     </li>
@@ -306,6 +321,12 @@ else
                                     <span>Announcements</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="stats">
+                                    <i class="material-icons">insert_chart</i>
+                                    <span>Stats</span>
+                                </a>
+                            </li>
                             <?php
                         }
 						?>
@@ -387,6 +408,10 @@ else
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label>Point Locations:</label>
+                                    <div class="pointLocations"></div>
+                                </div>
+                                <div class="form-group">
                                     <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect editSchoolButton">Edit School</button>
                                 </div>
                             </form>
@@ -396,6 +421,11 @@ else
                             <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="modal fade in" id="actionPointLocationModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content actionPointLocationsModalContent"></div>
                 </div>
             </div>
         <?php } ?>

@@ -313,6 +313,34 @@ if(isset($page_request))
         }
         $parentphone = filter_input(INPUT_POST, 'parentphone', FILTER_SANITIZE_STRING);
         $parentphone2 = filter_input(INPUT_POST, 'parentphone2', FILTER_SANITIZE_STRING);
+        $homeroom = filter_input(INPUT_POST, 'homeroom', FILTER_SANITIZE_STRING);
+        if (!empty($homeroom)) {
+            if (strlen($homeroom) < 3 || strlen($homeroom) > 64) {
+                echo 11;
+                exit();
+            }
+        }
+        $gender = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_STRING);
+        if (!empty($gender)) {
+            if (strlen($gender) > 32) {
+                echo 12;
+                exit();
+            }
+        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
+        if(!empty($stateID)) {
+            if ($stateID === false) {
+                echo 0;
+                exit();
+            }
+        }
+        $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
+        if(!empty($grade)) {
+            if ($grade === false) {
+                echo 0;
+                exit();
+            }
+        }
         if(isset($_POST["classes"])) {
             $gelensiniflar = $_POST["classes"];
         }
@@ -340,8 +368,8 @@ if(isset($page_request))
             copy('https://ui-avatars.com/api/?name='.reset($adparcala).'+'.end($adparcala).'&background='.$renkler[0].'&color=fff&bold=true&size=100',  $destin);
             $now = date('Y-m-d H:i:s');
             $invite_tokenxd = bin2hex(random_bytes(32));
-            $ekleogrenci = $DB_con->prepare("INSERT INTO users(name,email,classes,schools,role,invite_token,invite_date,avatar,register_type,parent_name,parent_email,parent_email2,parent_phone,parent_phone2) VALUES (:name,:email,:classes,:schools,:role,:invitetoken,:invitedate,:avatar,:registertype,:parentname,:parentemail,:parentemail2,:parentphone,:parentphone2)");
-            if($ekleogrenci->execute(array(":name"=>$student_name,":email"=>$student_email,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2)))
+            $ekleogrenci = $DB_con->prepare("INSERT INTO users(name,email,classes,schools,role,invite_token,invite_date,avatar,register_type,parent_name,parent_email,parent_email2,parent_phone,parent_phone2,homeroom,gender,stateID,grade) VALUES (:name,:email,:classes,:schools,:role,:invitetoken,:invitedate,:avatar,:registertype,:parentname,:parentemail,:parentemail2,:parentphone,:parentphone2,:homeroom,:gender,:stateID,:grade)");
+            if($ekleogrenci->execute(array(":name"=>$student_name,":email"=>$student_email,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade)))
             {
                 $mail_encoded = rtrim(strtr(base64_encode($student_email), '+/', '-_'), '=');
                 $message = '
@@ -522,14 +550,6 @@ if(isset($page_request))
         $ext = pathinfo($name, PATHINFO_EXTENSION);
         $type = $_FILES['import_file']['type'];
         $tmpName = $_FILES['import_file']['tmp_name'];
-        /*
-        $mimes = array('application/vnd.ms-excel','text/plain','text/csv','text/tsv');
-        if(!in_array($_FILES['import_file']['type'],$mimes))
-        {
-            echo json_encode(array("sonuc" => 4));
-            exit();
-        }
-        */
         if($ext != 'csv')
         {
             echo json_encode(array("sonuc" => 4));
@@ -541,6 +561,22 @@ if(isset($page_request))
         else
         {
             echo json_encode(array("sonuc"=>5));
+            exit();
+        }
+        if (!isset($_POST['name'])) {
+            echo json_encode(array("sonuc"=>0));
+            exit();
+        }
+        if (count($_POST['name']) > 2) {
+            echo json_encode(array("sonuc"=>0));
+            exit();
+        }
+        if (!isset($_POST['email'])) {
+            echo json_encode(array("sonuc"=>0));
+            exit();
+        }
+        if ($_POST['email'] == '') {
+            echo json_encode(array("sonuc"=>0));
             exit();
         }
         $siniflar = "";
@@ -558,13 +594,18 @@ if(isset($page_request))
         {
             if($row == 0){ $row++; continue; }
             $vals = explode(";", $rcsv[0]);
-            $fullName = $vals[0]." ".$vals[1];
-            $eMail = $vals[7];
-            $parentEmail = "";
-            $parentEmail2 = $vals[8];
-            $parentName = $vals[5]." ".$vals[6];
-            $parentPhone = $vals[9];
-            $parentPhone2 = $vals[10];
+            if($vals[$_POST['email']] == '') { continue; }
+            $fullName = count($_POST['name']) == 1 ? onlyAlphaNum($vals[$_POST['name'][0]]) : onlyAlphaNum($vals[$_POST['name'][0]])." ".onlyAlphaNum($vals[$_POST['name'][1]]);
+            $eMail = $vals[$_POST['email']];
+            $parentEmail = isset($_POST['parent_email']) && $_POST['parent_email'] == '' ? '' : $vals[$_POST['parent_email']];
+            $parentEmail2 =  isset($_POST['parent_email2']) && $_POST['parent_email2'] == '' ? '' : $vals[$_POST['parent_email2']];
+            $parentName = isset($_POST['parent_name']) ? (count($_POST['parent_name']) == 1 ? onlyAlphaNum($vals[$_POST['parent_name'][0]]) : onlyAlphaNum($vals[$_POST['parent_name'][0]])." ".onlyAlphaNum($vals[$_POST['parent_name'][1]])) : '';
+            $parentPhone = isset($_POST['parent_phone']) && $_POST['parent_phone'] == '' ? '' : $vals[$_POST['parent_phone']];
+            $parentPhone2 = isset($_POST['parent_phone2']) && $_POST['parent_phone2'] == '' ? '' : $vals[$_POST['parent_phone2']];
+            $homeroom = isset($_POST['homeroom']) && $_POST['homeroom'] == '' ? '' : onlyAlphaNum($vals[$_POST['homeroom']]);
+            $gender = isset($_POST['gender']) && $_POST['gender'] == '' ? '' : onlyAlphaNum($vals[$_POST['gender']]);
+            $stateID = isset($_POST['stateID']) && $_POST['stateID'] == '' ? '' : onlyAlphaNum($vals[$_POST['stateID']]);
+            $grade = isset($_POST['grade']) && $_POST['grade'] == '' ? '' : onlyAlphaNum($vals[$_POST['grade']]);
             $checkMail = $DB_con->prepare("SELECT id,role FROM users WHERE email = :email");
             $checkMail->execute(array(":email"=>$eMail));
             if($checkMail->rowCount() == 0)
@@ -573,11 +614,11 @@ if(isset($page_request))
                 shuffle($renkler);
                 $emailparcala = explode("@", $eMail);
                 $destin = 'img/avatars/'.$emailparcala[0].'-'.$renkler[0].'.jpg';
-                copy('https://ui-avatars.com/api/?name='.$vals[0].'+'.$vals[1].'&background='.$renkler[0].'&color=fff&bold=true&size=100',  $destin);
+                copy('https://ui-avatars.com/api/?name='.onlyAlphaNum($vals[$_POST['name'][0]]).'+'.onlyAlphaNum($vals[$_POST['name'][1]]).'&background='.$renkler[0].'&color=fff&bold=true&size=100',  $destin);
                 $now = date('Y-m-d H:i:s');
                 $invite_tokenxd = bin2hex(random_bytes(32));
-                $ekleogrenci = $DB_con->prepare("INSERT INTO users(name,email,classes,schools,role,invite_token,invite_date,avatar,register_type,parent_name,parent_email,parent_email2,parent_phone,parent_phone2) VALUES (:name,:email,:classes,:schools,:role,:invitetoken,:invitedate,:avatar,:registertype,:parentname,:parentemail,:parentemail2,:parentphone,:parentphone2)");
-                $ekleogrenci->execute(array(":name"=>$fullName,":email"=>$eMail,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentName,":parentemail"=>$parentEmail,":parentemail2"=>$parentEmail2,":parentphone"=>$parentPhone,":parentphone2"=>$parentPhone2));
+                $ekleogrenci = $DB_con->prepare("INSERT INTO users(name,email,classes,schools,role,invite_token,invite_date,avatar,register_type,parent_name,parent_email,parent_email2,parent_phone,parent_phone2,homeroom,gender,stateID,grade) VALUES (:name,:email,:classes,:schools,:role,:invitetoken,:invitedate,:avatar,:registertype,:parentname,:parentemail,:parentemail2,:parentphone,:parentphone2,:homeroom,:gender,:stateID,:grade)");
+                $ekleogrenci->execute(array(":name"=>$fullName,":email"=>$eMail,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentName,":parentemail"=>$parentEmail,":parentemail2"=>$parentEmail2,":parentphone"=>$parentPhone,":parentphone2"=>$parentPhone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade));
 
                 $mail_encoded = rtrim(strtr(base64_encode($eMail), '+/', '-_'), '=');
                 $message = '
@@ -1606,6 +1647,20 @@ if(isset($page_request))
 					}
 					?>
 				</div>
+                    <div class="form-group m-t-15">
+                        <label for="pointLocation">Point Location:</label>
+                        <select class="form-control show-tick" id="point_location_1">
+                            <?php
+                            $getPointLocationsQuery = $DB_con->prepare("SELECT * FROM point_locations WHERE school = :school");
+                            $getPointLocationsQuery->execute(array(':school'=>$uyeokul));
+                            while($fetchPointLocations = $getPointLocationsQuery->fetch(PDO::FETCH_ASSOC)) {
+                                ?>
+                                <option value="<?=$fetchPointLocations['id']?>" <?php if($fetchPointLocations['id'] == 1) { echo 'selected'; } ?>><?=$fetchPointLocations['name']?></option>
+                                <?php
+                            }
+                            ?>
+                        </select>
+                    </div>
                 <div class="form-group m-t-15">
                     <label for="feedback_description">Behavior Description:</label>
                     <div class="form-line">
@@ -1641,6 +1696,20 @@ if(isset($page_request))
 					}
 					?>
 				</div>
+                    <div class="form-group m-t-15">
+                        <label for="pointLocation">Point Location:</label>
+                        <select class="form-control show-tick" id="point_location_2">
+                            <?php
+                            $getPointLocationsQuery = $DB_con->prepare("SELECT * FROM point_locations WHERE school = :school");
+                            $getPointLocationsQuery->execute(array(':school'=>$uyeokul));
+                            while($fetchPointLocations = $getPointLocationsQuery->fetch(PDO::FETCH_ASSOC)) {
+                                ?>
+                                <option value="<?=$fetchPointLocations['id']?>" <?php if($fetchPointLocations['id'] == 1) { echo 'selected'; } ?>><?=$fetchPointLocations['name']?></option>
+                                <?php
+                            }
+                            ?>
+                        </select>
+                    </div>
                 <div class="form-group m-t-15">
                     <label for="feedback_description">Behavior Description:</label>
                     <div class="form-line">
@@ -1987,7 +2056,7 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorgu = $DB_con->prepare("SELECT id,name,classes,schools,parent_name,parent_email,parent_email2,parent_phone,parent_phone2 FROM users WHERE id = :id AND FIND_IN_SET(:sid, classes) AND schools = :school");
+        $sorgu = $DB_con->prepare("SELECT id,name,classes,schools,parent_name,parent_email,parent_email2,parent_phone,parent_phone2,homeroom,gender,stateID,grade FROM users WHERE id = :id AND FIND_IN_SET(:sid, classes) AND schools = :school");
         $sorgu->execute(array(":id"=>$ogrenci,":sid"=>$sinif,":school"=>$uyeokul));
         if($sorgu->rowCount() != 1)
         {
@@ -2042,6 +2111,30 @@ if(isset($page_request))
                     <label for="name">Parent Secondary Phone Number:</label>
                     <div class="form-line">
                         <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="homeroom">Homeroom:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="gender" id="gender" type="text" value="<?=$yazogrenci["gender"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="stateID">StateID:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Grade:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
                     </div>
                 </div>
                 <label>Classes:</label>
@@ -2228,12 +2321,14 @@ if(isset($page_request))
         $simdi = date('Y-m-d H:i:s');
         if($yazFeedbackType["type"] == 1) {
             $description = filter_input(INPUT_POST, 'feedback_description_1', FILTER_SANITIZE_STRING);
+            $pointLocation = filter_input(INPUT_POST, 'point_location_1', FILTER_SANITIZE_STRING);
         }
         else if($yazFeedbackType["type"] == 2) {
             $description = filter_input(INPUT_POST, 'feedback_description_2', FILTER_SANITIZE_STRING);
+            $pointLocation = filter_input(INPUT_POST, 'point_location_2', FILTER_SANITIZE_STRING);
         }
-        $sorguekle = $DB_con->prepare("INSERT INTO feedbacks_students(class_id,student_id,name,point,type,description,teacher,date) VALUES (:class,:student,:bname,:bpoint,:btype,:description,:teacher,:date)");
-        if($sorguekle->execute(array(":class"=>$sinif,":student"=>$ogrenci,":bname"=>$yazFeedbackType["name"],":bpoint"=>$yazFeedbackType["point"],":btype"=>$yazFeedbackType["type"],":description"=>$description,":teacher"=>$uyevtid,":date"=>$simdi)))
+        $sorguekle = $DB_con->prepare("INSERT INTO feedbacks_students(class_id,student_id,name,point,type,description,teacher,date,point_location) VALUES (:class,:student,:bname,:bpoint,:btype,:description,:teacher,:date,:pointlocation)");
+        if($sorguekle->execute(array(":class"=>$sinif,":student"=>$ogrenci,":bname"=>$yazFeedbackType["name"],":bpoint"=>$yazFeedbackType["point"],":btype"=>$yazFeedbackType["type"],":description"=>$description,":teacher"=>$uyevtid,":date"=>$simdi,":pointlocation"=>$pointLocation)))
         {
             echo json_encode(array("feedback_type"=>$yazFeedbackType["type"],"sonuc"=>1,"feedback_name"=>$yazFeedbackType["name"],"student_name"=>$yazStudentName["name"]));
             exit();
@@ -2351,14 +2446,16 @@ if(isset($page_request))
         $simdi = date('Y-m-d H:i:s');
         if($yazFeedbackType["type"] == 1) {
             $description = filter_input(INPUT_POST, 'feedback_description_1', FILTER_SANITIZE_STRING);
+            $pointLocation = filter_input(INPUT_POST, 'point_location_1', FILTER_SANITIZE_STRING);
         }
         else if($yazFeedbackType["type"] == 2) {
             $description = filter_input(INPUT_POST, 'feedback_description_2', FILTER_SANITIZE_STRING);
+            $pointLocation = filter_input(INPUT_POST, 'point_location_2', FILTER_SANITIZE_STRING);
         }
         $explodeogrenciler = explode(",", $ogrenciler);
-        foreach($explodeogrenciler as $expogrenciler) {
-            $sorguekle = $DB_con->prepare("INSERT INTO feedbacks_students(class_id,student_id,name,point,type,description,teacher,date) VALUES (:class,:student,:bname,:bpoint,:btype,:description,:teacher,:date)");
-            $sorguekle->execute(array(":class" => $sinif, ":student" => $expogrenciler, ":bname"=>$yazFeedbackType["name"], ":bpoint"=>$yazFeedbackType["point"], ":btype"=>$yazFeedbackType["type"],":description" => $description, ":teacher" => $uyevtid, ":date" => $simdi));
+        foreach(array_unique($explodeogrenciler) as $expogrenciler) {
+            $sorguekle = $DB_con->prepare("INSERT INTO feedbacks_students(class_id,student_id,name,point,type,description,teacher,date,point_location) VALUES (:class,:student,:bname,:bpoint,:btype,:description,:teacher,:date,:pointlocation)");
+            $sorguekle->execute(array(":class" => $sinif, ":student" => $expogrenciler, ":bname"=>$yazFeedbackType["name"], ":bpoint"=>$yazFeedbackType["point"], ":btype"=>$yazFeedbackType["type"],":description" => $description, ":teacher" => $uyevtid, ":date" => $simdi, ":pointlocation" => $pointLocation));
         }
         echo json_encode(array("feedback_type" => $yazFeedbackType["type"], "sonuc" => 1));
         exit();
@@ -2907,60 +3004,82 @@ if(isset($page_request))
             exit();
         }
     }
-    else if($page_request == "editstudent")
-    {
-        if($uyerol != "admin")
-        {
+    else if($page_request == "editstudent") {
+        if ($uyerol != "admin") {
             echo 0;
             exit();
         }
         $student = filter_input(INPUT_POST, 'hidden_student_id', FILTER_VALIDATE_INT);
-        if($student === false)
-        {
+        if ($student === false) {
             echo 0;
             exit();
         }
         $sorguStudent = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND role = :role AND schools = :school");
-        $sorguStudent->execute(array(":id"=>$student,":role"=>"student",":school"=>$uyeokul));
-        if($sorguStudent->rowCount() != 1)
-        {
+        $sorguStudent->execute(array(":id" => $student, ":role" => "student", ":school" => $uyeokul));
+        if ($sorguStudent->rowCount() != 1) {
             echo 0;
             exit();
         }
         $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
-        if(empty($name))
-        {
+        if (empty($name)) {
             echo 2;
             exit();
         }
-        if(strlen($name) < 3 || strlen($name) > 64)
-        {
+        if (strlen($name) < 3 || strlen($name) > 64) {
             echo 3;
             exit();
         }
         $parentname = filter_input(INPUT_POST, 'parentname', FILTER_SANITIZE_STRING);
-        if(!empty($parentname)) {
+        if (!empty($parentname)) {
             if (strlen($parentname) < 3 || strlen($parentname) > 64) {
                 echo 5;
                 exit();
             }
         }
         $parentemail = filter_input(INPUT_POST, 'parentemail', FILTER_SANITIZE_EMAIL);
-        if(!empty($parentemail)) {
-            if(!filter_var($parentemail, FILTER_VALIDATE_EMAIL))  {
+        if (!empty($parentemail)) {
+            if (!filter_var($parentemail, FILTER_VALIDATE_EMAIL)) {
                 echo 6;
                 exit();
             }
         }
         $parentemail2 = filter_input(INPUT_POST, 'parentemail2', FILTER_SANITIZE_EMAIL);
-        if(!empty($parentemail2)) {
-            if(!filter_var($parentemail2, FILTER_VALIDATE_EMAIL))  {
+        if (!empty($parentemail2)) {
+            if (!filter_var($parentemail2, FILTER_VALIDATE_EMAIL)) {
                 echo 7;
                 exit();
             }
         }
         $parentphone = filter_input(INPUT_POST, 'parentphone', FILTER_SANITIZE_STRING);
         $parentphone2 = filter_input(INPUT_POST, 'parentphone2', FILTER_SANITIZE_STRING);
+        $homeroom = filter_input(INPUT_POST, 'homeroom', FILTER_SANITIZE_STRING);
+        if (!empty($homeroom)) {
+            if (strlen($homeroom) < 3 || strlen($homeroom) > 64) {
+                echo 8;
+                exit();
+            }
+        }
+        $gender = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_STRING);
+        if (!empty($gender)) {
+            if (strlen($gender) > 32) {
+                echo 9;
+                exit();
+            }
+        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
+        if(!empty($stateID)) {
+            if ($stateID === false) {
+                echo 0;
+                exit();
+            }
+        }
+        $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
+        if(!empty($grade)) {
+            if ($grade === false) {
+                echo 0;
+                exit();
+            }
+        }
         if(!isset($_POST["class"]))
         {
             echo 4;
@@ -2973,8 +3092,8 @@ if(isset($page_request))
         }
         $implodeclasses = implode(",", $_POST["class"]);
         $simdi = date('Y-m-d H:i:s');
-        $sorgu = $DB_con->prepare("UPDATE users SET name = :name , classes = :classes , update_date = :simdi , parent_name = :parentname , parent_email = :parentemail , parent_email2 = :parentemail2 , parent_phone = :parentphone , parent_phone2 = :parentphone2 WHERE id = :id AND role = :role AND schools = :school");
-        if($sorgu->execute(array(":name"=>$name,":classes"=>$implodeclasses,":simdi"=>$simdi,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":id"=>$student,":role"=>"student",":school"=>$uyeokul)))
+        $sorgu = $DB_con->prepare("UPDATE users SET name = :name , classes = :classes , update_date = :simdi , parent_name = :parentname , parent_email = :parentemail , parent_email2 = :parentemail2 , parent_phone = :parentphone , parent_phone2 = :parentphone2 , homeroom = :homeroom , gender = :gender , stateID = :stateID , grade = :grade WHERE id = :id AND role = :role AND schools = :school");
+        if($sorgu->execute(array(":name"=>$name,":classes"=>$implodeclasses,":simdi"=>$simdi,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade,":id"=>$student,":role"=>"student",":school"=>$uyeokul)))
         {
             echo 1;
             exit();
@@ -3045,6 +3164,34 @@ if(isset($page_request))
         }
         $parentphone = filter_input(INPUT_POST, 'parentphone', FILTER_SANITIZE_STRING);
         $parentphone2 = filter_input(INPUT_POST, 'parentphone2', FILTER_SANITIZE_STRING);
+        $homeroom = filter_input(INPUT_POST, 'homeroom', FILTER_SANITIZE_STRING);
+        if (!empty($homeroom)) {
+            if (strlen($homeroom) < 3 || strlen($homeroom) > 64) {
+                echo 8;
+                exit();
+            }
+        }
+        $gender = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_STRING);
+        if (!empty($gender)) {
+            if (strlen($gender) > 32) {
+                echo 9;
+                exit();
+            }
+        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
+        if(!empty($stateID)) {
+            if ($stateID === false) {
+                echo 0;
+                exit();
+            }
+        }
+        $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
+        if(!empty($grade)) {
+            if ($grade === false) {
+                echo 0;
+                exit();
+            }
+        }
         if(!isset($_POST["class"]))
         {
             echo 4;
@@ -3096,8 +3243,8 @@ if(isset($page_request))
         }
 
         $simdi = date('Y-m-d H:i:s');
-        $sorgu = $DB_con->prepare("UPDATE users SET name = :name , classes = :classes , update_date = :simdi , parent_name = :parentname , parent_email = :parentemail , parent_email2 = :parentemail2 , parent_phone = :parentphone , parent_phone2 = :parentphone2 WHERE id = :id AND role = :role AND schools = :school");
-        if($sorgu->execute(array(":name"=>$name,":classes"=>$sonucsinifxde,":simdi"=>$simdi,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":id"=>$student,":role"=>"student",":school"=>$uyeokul)))
+        $sorgu = $DB_con->prepare("UPDATE users SET name = :name , classes = :classes , update_date = :simdi , parent_name = :parentname , parent_email = :parentemail , parent_email2 = :parentemail2 , parent_phone = :parentphone , parent_phone2 = :parentphone2 , homeroom = :homeroom , gender = :gender , stateID = :stateID , grade = :grade WHERE id = :id AND role = :role AND schools = :school");
+        if($sorgu->execute(array(":name"=>$name,":classes"=>$sonucsinifxde,":simdi"=>$simdi,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade,":id"=>$student,":role"=>"student",":school"=>$uyeokul)))
         {
             echo 1;
             exit();
@@ -3169,10 +3316,22 @@ if(isset($page_request))
         $silpuanlar->execute(array(":studentid"=>$student));
         $silkayitlar = $DB_con->prepare("DELETE FROM login_attempts_user WHERE member_id = :studentid");
         $silkayitlar->execute(array(":studentid"=>$student));
+        $findInGroups = $DB_con->prepare("SELECT id,students FROM groups WHERE FIND_IN_SET(:student, students)");
+        $findInGroups->execute(array(':student'=>$student));
+        if ($findInGroups->rowCount() > 0) {
+            while ($founds = $findInGroups->fetch(PDO::FETCH_ASSOC)) {
+                $explodedStudents = explode(',', $founds['students']);
+                if (in_array($student, $explodedStudents)) {
+                    unset($explodedStudents[array_search($student, $explodedStudents)]);
+                }
+                $fixStudentsOfGroup = $DB_con->prepare("UPDATE groups SET students = :students WHERE id = :id");
+                $fixStudentsOfGroup->execute(array(':students' => implode(',', $explodedStudents), ':id' => $founds['id']));
+            }
+        }
         $sorgusil = $DB_con->prepare("DELETE FROM users WHERE id = :id AND role = :role AND schools = :school");
         if($sorgusil->execute(array(":id"=>$student,":role"=>"student",":school"=>$uyeokul)))
         {
-            unlink($yazogrencixde["avatar"]);
+            @unlink($yazogrencixde["avatar"]);
             echo 1;
             exit();
         }
@@ -4229,7 +4388,7 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorguogrenci = $DB_con->prepare("SELECT id,name,classes,parent_name,parent_email,parent_email2,parent_phone,parent_phone2 FROM users WHERE id = :id AND role = :role AND schools = :school");
+        $sorguogrenci = $DB_con->prepare("SELECT id,name,classes,parent_name,parent_email,parent_email2,parent_phone,parent_phone2,homeroom,gender,stateID,grade FROM users WHERE id = :id AND role = :role AND schools = :school");
         $sorguogrenci->execute(array(":id"=>$ogrenci,":role"=>"student",":school"=>$uyeokul));
         if($sorguogrenci->rowCount() != 1)
         {
@@ -4277,6 +4436,30 @@ if(isset($page_request))
                     <label for="name">Parent Secondary Phone Number:</label>
                     <div class="form-line">
                         <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="homeroom">Homeroom:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="gender" id="gender" type="text" value="<?=$yazogrenci["gender"]?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="stateID">StateID:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Grade:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
                     </div>
                 </div>
                 <label>Classes:</label>
@@ -6202,6 +6385,169 @@ if(isset($page_request))
             exit();
         }
     }
+    else if($page_request == "edit-group-modal")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $group = filter_input(INPUT_GET, 'group', FILTER_VALIDATE_INT);
+        if($group === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu2 = $DB_con->prepare("SELECT id,student_show,point_show,points_by_time FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($sorgu2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $getGroups = $DB_con->prepare("SELECT id,name,students FROM groups WHERE id = :group AND class = :id AND school = :school");
+        $getGroups->execute(array(":group"=>$group,":id"=>$class,":school"=>$uyeokul));
+        if($getGroups->rowCount() == 0)
+        {
+            echo 0;
+            exit();
+        }
+        $fetchGroup = $getGroups->fetch(PDO::FETCH_ASSOC);
+        $yazsinifid = $sorgu2->fetch(PDO::FETCH_ASSOC);
+        $pointsByTimeQuery = '';
+        if ($yazsinifid['points_by_time'] == 2) {
+            $pointsByTimeQuery = 'AND date(date) = CURDATE()';
+        } else if ($yazsinifid['points_by_time'] == 3) {
+            $pointsByTimeQuery = 'AND YEARWEEK(`date`, 1) = YEARWEEK(CURDATE(), 1)';
+        } else if ($yazsinifid['points_by_time'] == 4) {
+            $pointsByTimeQuery = 'AND MONTH(date) = MONTH(CURRENT_DATE())';
+        }
+        ?>
+        <div class="modal-header">
+            <h4 class="modal-title">Edit Group</h4>
+        </div>
+        <div class="modal-body">
+            <form id="editGroupForm" data-class="<?= $class ?>" data-group="<?=$group?>">
+                <div class="form-group">*
+                    <label for="name">Name:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="name" id="name" type="text" value="<?=$fetchGroup['name']?>">
+                    </div>
+                </div>
+                <label>Students to be added to the group:</label>
+                <div class="row">
+                    <?php
+                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx AND type = 1 $pointsByTimeQuery) as positiveBehaviorPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx2 AND type = 2 $pointsByTimeQuery) as negativeBehaviorPoints, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx3 AND type = 3 $pointsByTimeQuery) as redeemedPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx4 $pointsByTimeQuery) as totalBehaviorPoints FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT IFNULL(GROUP_CONCAT(students), '') FROM groups WHERE class = :class3 AND school = :school2))");
+                    $availableStudentsQuery->execute(array(":classx"=>$class,":classx2"=>$class,":classx3"=>$class,":classx4"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":class3"=>$class,":school2"=>$uyeokul));
+                    if ($availableStudentsQuery->rowCount() > 0) {
+                        while ($getStudents = $availableStudentsQuery->fetch(PDO::FETCH_ASSOC)) {
+                            if($yazsinifid["student_show"] == 2) {
+                                $explodestudentname = explode(" ", $getStudents["name"]);
+                                array_pop($explodestudentname);
+                                $namexdxd = implode(" ", $explodestudentname);
+                            } else {
+                                $namexdxd = $getStudents["name"];
+                            }
+                            ?>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                <a href="javascript:;" id="selectStudent" data-student="<?= $getStudents["id"] ?>">
+                                    <div class="panel panel-default panel-post groupStudents">
+                                        <div class="panel-heading">
+                                            <div class="media">
+                                                <div class="media-left">
+                                                    <img src="<?= $getStudents["avatar"] ?>" class="studentAvatar">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h4 class="media-heading"><?= $namexdxd ?></h4>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-green"><?= empty($getStudents["positiveBehaviorPoints"]) ? "0" : $getStudents["positiveBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-red"><?= empty($getStudents["negativeBehaviorPoints"]) ? "0" : $getStudents["negativeBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-orange"><?= empty($getStudents["redeemedPoints"]) ? "0" : $getStudents["redeemedPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] != 3) { ?><span class="badge bg-blue"><?= empty($getStudents["totalBehaviorPoints"]) ? "0" : $getStudents["totalBehaviorPoints"] ?></span><?php } ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php
+                        }
+                    } else {
+                        echo "<div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'><div class='alert alert-danger'><strong>Error:</strong> All students belonging to this class are members of any group.</div></div>";
+                    }
+                    ?>
+                </div>
+                <label>Students to be removed from the group:</label>
+                <div class="row">
+                    <?php
+                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx AND type = 1 $pointsByTimeQuery) as positiveBehaviorPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx2 AND type = 2 $pointsByTimeQuery) as negativeBehaviorPoints, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx3 AND type = 3 $pointsByTimeQuery) as redeemedPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx4 $pointsByTimeQuery) as totalBehaviorPoints FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND FIND_IN_SET(id, (SELECT IFNULL(GROUP_CONCAT(students), '') FROM groups WHERE id = :group AND class = :class3 AND school = :school2))");
+                    $availableStudentsQuery->execute(array(":classx"=>$class,":classx2"=>$class,":classx3"=>$class,":classx4"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":group"=>$group,":class3"=>$class,":school2"=>$uyeokul));
+                    if ($availableStudentsQuery->rowCount() > 0) {
+                        while ($getStudents = $availableStudentsQuery->fetch(PDO::FETCH_ASSOC)) {
+                            if($yazsinifid["student_show"] == 2) {
+                                $explodestudentname = explode(" ", $getStudents["name"]);
+                                array_pop($explodestudentname);
+                                $namexdxd = implode(" ", $explodestudentname);
+                            } else {
+                                $namexdxd = $getStudents["name"];
+                            }
+                            ?>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                <a href="javascript:;" id="selectStudent2" data-student="<?= $getStudents["id"] ?>">
+                                    <div class="panel panel-default panel-post groupStudents">
+                                        <div class="panel-heading">
+                                            <div class="media">
+                                                <div class="media-left">
+                                                    <img src="<?= $getStudents["avatar"] ?>" class="studentAvatar">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h4 class="media-heading"><?= $namexdxd ?></h4>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-green"><?= empty($getStudents["positiveBehaviorPoints"]) ? "0" : $getStudents["positiveBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-red"><?= empty($getStudents["negativeBehaviorPoints"]) ? "0" : $getStudents["negativeBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-orange"><?= empty($getStudents["redeemedPoints"]) ? "0" : $getStudents["redeemedPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] != 3) { ?><span class="badge bg-blue"><?= empty($getStudents["totalBehaviorPoints"]) ? "0" : $getStudents["totalBehaviorPoints"] ?></span><?php } ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php
+                        }
+                    } else {
+                        echo "<div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'><div class='alert alert-danger'><strong>Error:</strong> No students belonging to the group were found.</div></div>";
+                    }
+                    ?>
+                </div>
+                <input type="hidden" name="hidden_class_id" id="hidden_class_id" value="<?=$class?>">
+                <input type="hidden" name="hidden_group_id" id="hidden_group_id" value="<?=$group?>">
+                <input type="hidden" id="selected_students" name="selected_students" data-class="<?= $class ?>">
+                <input type="hidden" id="selected_students2" name="selected_students2" data-class="<?= $class ?>">
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success btn-block btn-lg waves-effect editGroupButton" data-class="<?=$class?>" data-group="<?=$group?>">Edit This Group</button>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-danger btn-block btn-lg waves-effect" id="deleteGroupButton" data-class="<?=$class?>" data-group="<?=$group?>">Delete This Group</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="editGroupResult"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+        </div>
+        <?php
+    }
     else if($page_request == "create-group-modal")
     {
         if($uyerol != "teacher")
@@ -6215,17 +6561,26 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2 = $DB_con->prepare("SELECT id,student_show,point_show,points_by_time FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
         $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
         if($sorgu2->rowCount() != 1)
         {
             echo 0;
             exit();
         }
+        $yazsinifid = $sorgu2->fetch(PDO::FETCH_ASSOC);
+        $pointsByTimeQuery = '';
+        if ($yazsinifid['points_by_time'] == 2) {
+            $pointsByTimeQuery = 'AND date(date) = CURDATE()';
+        } else if ($yazsinifid['points_by_time'] == 3) {
+            $pointsByTimeQuery = 'AND YEARWEEK(`date`, 1) = YEARWEEK(CURDATE(), 1)';
+        } else if ($yazsinifid['points_by_time'] == 4) {
+            $pointsByTimeQuery = 'AND MONTH(date) = MONTH(CURRENT_DATE())';
+        }
         $noAvailableStudent = false;
         ?>
         <div class="modal-header">
-            <h4 class="modal-title">Create Class</h4>
+            <h4 class="modal-title">Create Group</h4>
         </div>
         <div class="modal-body">
             <form id="createGroupForm" data-class="<?= $class ?>">
@@ -6238,10 +6593,17 @@ if(isset($page_request))
                 <label>Students:</label>
                 <div class="row">
                     <?php
-                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :class) as totalBehaviorPoint FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT IFNULL(GROUP_CONCAT(students), '') FROM groups WHERE class = :class3 AND school = :school2))");
-                    $availableStudentsQuery->execute(array(":class"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":class3"=>$class,":school2"=>$uyeokul));
+                    $availableStudentsQuery = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx AND type = 1 $pointsByTimeQuery) as positiveBehaviorPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx2 AND type = 2 $pointsByTimeQuery) as negativeBehaviorPoints, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx3 AND type = 3 $pointsByTimeQuery) as redeemedPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx4 $pointsByTimeQuery) as totalBehaviorPoints FROM users WHERE FIND_IN_SET(:class2, classes) AND role = :role AND schools = :school AND NOT FIND_IN_SET(id, (SELECT IFNULL(GROUP_CONCAT(students), '') FROM groups WHERE class = :class3 AND school = :school2))");
+                    $availableStudentsQuery->execute(array(":classx"=>$class,":classx2"=>$class,":classx3"=>$class,":classx4"=>$class,":class2"=>$class,":role"=>"student",":school"=>$uyeokul,":class3"=>$class,":school2"=>$uyeokul));
                     if ($availableStudentsQuery->rowCount() > 0) {
                         while ($getStudents = $availableStudentsQuery->fetch(PDO::FETCH_ASSOC)) {
+                            if($yazsinifid["student_show"] == 2) {
+                                $explodestudentname = explode(" ", $getStudents["name"]);
+                                array_pop($explodestudentname);
+                                $namexdxd = implode(" ", $explodestudentname);
+                            } else {
+                                $namexdxd = $getStudents["name"];
+                            }
                             ?>
                             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                 <a href="javascript:;" id="selectStudent" data-student="<?= $getStudents["id"] ?>">
@@ -6252,9 +6614,11 @@ if(isset($page_request))
                                                     <img src="<?= $getStudents["avatar"] ?>" class="studentAvatar">
                                                 </div>
                                                 <div class="media-body">
-                                                    <h4 class="media-heading"><?= $getStudents["name"] ?></h4>
-                                                    Total Behavior Point: <b
-                                                            class="font-15 <?= $getStudents["totalBehaviorPoint"] >= 0 ? 'text-success' : 'text-danger' ?>"><?= $getStudents["totalBehaviorPoint"] ?></b>
+                                                    <h4 class="media-heading"><?= $namexdxd ?></h4>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-green"><?= empty($getStudents["positiveBehaviorPoints"]) ? "0" : $getStudents["positiveBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-red"><?= empty($getStudents["negativeBehaviorPoints"]) ? "0" : $getStudents["negativeBehaviorPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-orange"><?= empty($getStudents["redeemedPoints"]) ? "0" : $getStudents["redeemedPoints"] ?></span><?php } ?>
+                                                    <?php if($yazsinifid["point_show"] != 3) { ?><span class="badge bg-blue"><?= empty($getStudents["totalBehaviorPoints"]) ? "0" : $getStudents["totalBehaviorPoints"] ?></span><?php } ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -6270,7 +6634,6 @@ if(isset($page_request))
                 </div>
                 <input type="hidden" name="hidden_class_id" id="hidden_class_id" value="<?=$class?>">
                 <input type="hidden" id="selected_students" name="selected_students" data-class="<?= $class ?>">
-                <div id="createGroupResult"></div>
                 <?php
                 if ($noAvailableStudent == true) {
                     ?>
@@ -6284,6 +6647,7 @@ if(isset($page_request))
                     <?php
                 }
                 ?>
+                <div id="createGroupResult"></div>
             </form>
         </div>
         <div class="modal-footer">
@@ -6323,13 +6687,126 @@ if(isset($page_request))
             exit();
         }
         $students = filter_input(INPUT_POST, 'selected_students', FILTER_SANITIZE_STRING);
-        if (!isset($students) || empty($students)) {
-            echo 4;
-            exit();
-        }
         $nowDate = date('Y-m-d H:i:s');
         $sorgu = $DB_con->prepare("INSERT INTO groups(name,class,school,students,created_time,created_by) VALUES (:name, :class, :school, :students, :createdtime, :createdby)");
         if($sorgu->execute(array(":name"=>$groupName,":class"=>$class,":school"=>$uyeokul,":students"=>$students,":createdtime"=>$nowDate,":createdby"=>$uyevtid)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "edit-group")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_POST, 'hidden_class_id', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $group = filter_input(INPUT_POST, 'hidden_group_id', FILTER_VALIDATE_INT);
+        if($group === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($sorgu2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu3 = $DB_con->prepare("SELECT id,students FROM groups WHERE id = :id AND class = :class AND school = :school");
+        $sorgu3->execute(array(":id"=>$group,":class"=>$class,":school"=>$uyeokul));
+        if($sorgu3->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $groupName = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        if(empty($groupName))
+        {
+            echo 2;
+            exit();
+        }
+        if(strlen($groupName) < 3 || strlen($groupName) > 64)
+        {
+            echo 3;
+            exit();
+        }
+        $fetchGroup = $sorgu3->fetch(PDO::FETCH_ASSOC);
+        $explodeCurrentStudents = explode(',', $fetchGroup['students']);
+        $willBeRemoveStudents = filter_input(INPUT_POST, 'selected_students2', FILTER_SANITIZE_STRING);
+        if (!empty($willBeRemoveStudents)) {
+            $explodeWillBeRemoveStudents = explode(',', $willBeRemoveStudents);
+            foreach(array_unique($explodeWillBeRemoveStudents) as $student) {
+                unset($explodeCurrentStudents[array_search($student, $explodeCurrentStudents)]);
+            }
+        }
+        $willBeAddStudents = filter_input(INPUT_POST, 'selected_students', FILTER_SANITIZE_STRING);
+        if (!empty($willBeAddStudents)) {
+            $explodeWillBeAddStudents = explode(',', $willBeAddStudents);
+            foreach(array_unique($explodeWillBeAddStudents) as $student) {
+                $explodeCurrentStudents[] = $student;
+            }
+        }
+        $sorgu = $DB_con->prepare("UPDATE groups SET name = :name , students = :students WHERE class = :class AND school = :school AND id = :id");
+        if($sorgu->execute(array(":name"=>$groupName,":students"=>implode(',', array_unique($explodeCurrentStudents)),":class"=>$class,":school"=>$uyeokul,":id"=>$group)))
+        {
+            echo 1;
+            exit();
+        }
+        else
+        {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "delete-group")
+    {
+        if($uyerol != "teacher")
+        {
+            echo 0;
+            exit();
+        }
+        $class = filter_input(INPUT_POST, 'class', FILTER_VALIDATE_INT);
+        if($class === false)
+        {
+            echo 0;
+            exit();
+        }
+        $group = filter_input(INPUT_POST, 'group', FILTER_VALIDATE_INT);
+        if($group === false)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu2 = $DB_con->prepare("SELECT id FROM classes WHERE id = :id AND FIND_IN_SET(:oid, teachers) AND school = :school");
+        $sorgu2->execute(array(":id"=>$class,":oid"=>$uyevtid,":school"=>$uyeokul));
+        if($sorgu2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu3 = $DB_con->prepare("SELECT id FROM groups WHERE id = :id AND class = :class AND school = :school");
+        $sorgu3->execute(array(":id"=>$group,":class"=>$class,":school"=>$uyeokul));
+        if($sorgu3->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorgu = $DB_con->prepare("DELETE FROM groups WHERE class = :class AND school = :school AND id = :id");
+        if($sorgu->execute(array(":class"=>$class,":school"=>$uyeokul,":id"=>$group)))
         {
             echo 1;
             exit();
@@ -6382,42 +6859,71 @@ if(isset($page_request))
             <div class="col-xs-12 col-sm-12 col-md-4 col-lg-3">
                 <div class="group-card">
                     <div class="card-header">
-                        <span class="card-header-text"><?=$fetchGroups["name"]?></span>
+                        <span class="card-header-text">
+                            <?=$fetchGroups["name"]?>
+                            <a href="#" class="pull-right" id="editGroup" data-toggle="modal" data-target="#editGroupModal" data-class="<?=$class?>" data-group="<?=$fetchGroups['id']?>">
+                                <i class="material-icons font-17">edit</i>
+                            </a>
+                            <a href="#" class="pull-right group-give-points" data-group-id="<?=$fetchGroups["id"]?>" data-group-name="<?=$fetchGroups["name"]?>">
+                                <i class="material-icons font-17">note_add</i>
+                            </a>
+                        </span>
                     </div>
                     <ul class="sortable ui-sortable" id="sort<?=$fetchGroups["id"]?>" data-group-id="<?=$fetchGroups["id"]?>">
                         <?php
                         $getStudents = $DB_con->prepare("SELECT id,name,avatar,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx AND type = 1 $pointsByTimeQuery) as positiveBehaviorPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx2 AND type = 2 $pointsByTimeQuery) as negativeBehaviorPoints, (SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx3 AND type = 3 $pointsByTimeQuery) as redeemedPoints,(SELECT SUM(feedbacks_students.point) FROM feedbacks_students WHERE feedbacks_students.student_id = users.id AND class_id = :classx4 $pointsByTimeQuery) as totalBehaviorPoints FROM users WHERE FIND_IN_SET(id, (SELECT students FROM groups WHERE id = :id AND class = :class AND school = :school))");
                         $getStudents->execute(array(":classx"=>$class,":classx2"=>$class,":classx3"=>$class,":classx4"=>$class,":id"=>$fetchGroups["id"],":class"=>$class,":school"=>$uyeokul));
-                        while($fetchStudents = $getStudents->fetch(PDO::FETCH_ASSOC)) {
-                            if($yazsinifid["student_show"] == 2) {
-                                $explodestudentname = explode(" ", $fetchStudents["name"]);
-                                array_pop($explodestudentname);
-                                $namexdxd = implode(" ", $explodestudentname);
-                            } else {
-                                $namexdxd = $fetchStudents["name"];
+                        $studentCount = false;
+                        $groupTotalPoint = 0;
+                        if ($getStudents->rowCount() > 0) {
+                            $studentCount = true;
+                            while ($fetchStudents = $getStudents->fetch(PDO::FETCH_ASSOC)) {
+                                if ($yazsinifid["student_show"] == 2) {
+                                    $explodestudentname = explode(" ", $fetchStudents["name"]);
+                                    array_pop($explodestudentname);
+                                    $namexdxd = implode(" ", $explodestudentname);
+                                } else {
+                                    $namexdxd = $fetchStudents["name"];
+                                }
+                                ?>
+                                <li class="text-row ui-sortable-handle"
+                                    data-student-id="<?= $fetchStudents["id"] ?>" id="<?= $fetchStudents["id"] ?>">
+                                    <a href="javascript:;" data-toggle="modal" data-target="#modal-student"
+                                       class="ogrenci-puanla" id="<?= $fetchStudents["id"] ?>" class_id="<?= $class ?>">
+                                        <div class="media">
+                                            <div class="media-left">
+                                                <img src="<?= $fetchStudents["avatar"] ?>" class="studentAvatar">
+                                            </div>
+                                            <div class="media-body">
+                                                <h4 class="media-heading"><?= $namexdxd ?></h4>
+                                                <?php if ($yazsinifid["point_show"] == 1) { ?><span
+                                                        class="badge bg-green"><?= empty($fetchStudents["positiveBehaviorPoints"]) ? "0" : $fetchStudents["positiveBehaviorPoints"] ?></span><?php } ?>
+                                                <?php if ($yazsinifid["point_show"] == 1) { ?><span
+                                                        class="badge bg-red"><?= empty($fetchStudents["negativeBehaviorPoints"]) ? "0" : $fetchStudents["negativeBehaviorPoints"] ?></span><?php } ?>
+                                                <?php if ($yazsinifid["point_show"] == 1) { ?><span
+                                                        class="badge bg-orange"><?= empty($fetchStudents["redeemedPoints"]) ? "0" : $fetchStudents["redeemedPoints"] ?></span><?php } ?>
+                                                <?php if ($yazsinifid["point_show"] != 3) { ?><span
+                                                        class="badge bg-blue"><?= empty($fetchStudents["totalBehaviorPoints"]) ? "0" : $fetchStudents["totalBehaviorPoints"] ?></span><?php } ?>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                                <?php
+                                $groupTotalPoint += $fetchStudents["totalBehaviorPoints"];
                             }
-                            ?>
-                            <li class="text-row ui-sortable-handle"
-                                data-student-id="<?=$fetchStudents["id"]?>" id="<?=$fetchStudents["id"]?>">
-                                <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla" id="<?=$fetchStudents["id"]?>" class_id="<?=$class?>">
-                                    <div class="media">
-                                        <div class="media-left">
-                                            <img src="<?= $fetchStudents["avatar"] ?>" class="studentAvatar">
-                                        </div>
-                                        <div class="media-body">
-                                            <h4 class="media-heading"><?= $namexdxd ?></h4>
-                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-green"><?= empty($fetchStudents["positiveBehaviorPoints"]) ? "0" : $fetchStudents["positiveBehaviorPoints"] ?></span><?php } ?>
-                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-red"><?= empty($fetchStudents["negativeBehaviorPoints"]) ? "0" : $fetchStudents["negativeBehaviorPoints"] ?></span><?php } ?>
-                                            <?php if($yazsinifid["point_show"] == 1) { ?><span class="badge bg-orange"><?= empty($fetchStudents["redeemedPoints"]) ? "0" : $fetchStudents["redeemedPoints"] ?></span><?php } ?>
-                                            <?php if($yazsinifid["point_show"] != 3) { ?><span class="badge bg-blue"><?= empty($fetchStudents["totalBehaviorPoints"]) ? "0" : $fetchStudents["totalBehaviorPoints"] ?></span><?php } ?>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <?php
                         }
                         ?>
                     </ul>
+                    <?php
+                    if($studentCount) {
+                        ?>
+                        <div class="card-footer">
+                        <span class="card-header-text">
+                            <span class="badge <?=$groupTotalPoint > 0 ? 'bg-green' : 'bg-red'?> btn-block"><?=$groupTotalPoint > 0 ? '+ ' : '- '?><?=abs($groupTotalPoint)?> Points</span>
+                        </div>
+                        <?php
+                    }
+                    ?>
                 </div>
             </div>
             <?php
@@ -6486,5 +6992,680 @@ if(isset($page_request))
             }
         }
     }
-}	
+    else if($page_request == 'point-locations')
+    {
+        if($uyerol != 'admin') {
+            echo 0;
+            exit();
+        }
+        $sorguSchool = $DB_con->prepare("SELECT id FROM schools WHERE id = :id");
+        $sorguSchool->execute(array(":id"=>$uyeokul));
+        if($sorguSchool->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool2 = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND schools = :school");
+        $sorguSchool2->execute(array(":id"=>$uyevtid,":school"=>$uyeokul));
+        if($sorguSchool2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $query = $DB_con->prepare('SELECT * FROM point_locations WHERE school = :school');
+        $query->execute(array(':school'=>$uyeokul));
+        ?>
+        <table class="table table-condensed table-striped liste">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Action</th>
+                <th style="padding:0!important;background: rgba(115, 255, 106, 0.1);width:30px;"><a href="#" data-toggle="modal" data-target="#actionPointLocationModal" id="create"><i class="material-icons">add</i></a></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php
+            if($query->rowCount() > 0)
+            {
+                while($fetch = $query->fetch(PDO::FETCH_ASSOC))
+                {
+                    ?>
+                    <tr>
+                        <td class="baslik_td"><?=$fetch['name']?></td>
+                        <td colspan="2">
+                            <a href="#" data-toggle="modal" data-target="#actionPointLocationModal" class="label label-info" id="<?=$fetch['id']?>">Edit</a>
+                            <?php if($fetch['id'] != 1) { ?>
+                            <a href="#" class="label label-danger deletePointLocation" id="<?=$fetch['id']?>">Delete</a>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                    <?php
+                }
+            }
+            else
+            {
+                ?>
+                <tr>
+                    <td colspan="3">No results were found.</td>
+                </tr>
+                <?php
+            }
+            ?>
+            </tbody>
+        </table>
+        <?php
+    }
+    else if($page_request == 'action-point-location-info')
+    {
+        if($uyerol != 'admin') {
+            echo 0;
+            exit();
+        }
+        $sorguSchool = $DB_con->prepare("SELECT id FROM schools WHERE id = :id");
+        $sorguSchool->execute(array(":id"=>$uyeokul));
+        if($sorguSchool->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool2 = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND schools = :school");
+        $sorguSchool2->execute(array(":id"=>$uyevtid,":school"=>$uyeokul));
+        if($sorguSchool2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $actionType = isset($_GET['id']) ? 'edit' : 'create';
+        if ($actionType == 'edit') {
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if ($id === false) {
+                echo 0;
+                exit();
+            }
+            $query = $DB_con->prepare('SELECT * FROM point_locations WHERE id = :id');
+            $query->execute(array(':id'=>$id));
+            if ($query->rowCount() != 1) {
+                echo 0;
+                exit();
+            }
+            $fetch = $query->fetch(PDO::FETCH_ASSOC);
+        }
+        ?>
+        <div class="modal-header">
+            <h4 class="modal-title"><?=$actionType == 'edit' ? 'Edit Point Location' : 'Create Point Location'?></h4>
+        </div>
+        <div class="modal-body">
+            <form id="actionPointLocationForm">
+                <?php
+                if($actionType == 'edit') {
+                    ?>
+                    <input type="hidden" name="id" value="<?=$fetch['id']?>">
+                    <?php
+                }
+                ?>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <div class="form-line">
+                        <input class="form-control" name="name" id="name" type="text" value="<?=$actionType == 'edit' ? $fetch['name'] : ''?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg waves-effect actionPointLocationButton"><?=$actionType == 'edit' ? 'Edit Point Location' : 'Create Point Location'?></button>
+                </div>
+            </form>
+            <div id="actionPointLocationResult"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+        </div>
+        <?php
+    }
+    else if($page_request == "action-point-location")
+    {
+        if ($uyerol != "admin") {
+            echo 0;
+            exit();
+        }
+        $sorguSchool = $DB_con->prepare("SELECT id FROM schools WHERE id = :id");
+        $sorguSchool->execute(array(":id" => $uyeokul));
+        if ($sorguSchool->rowCount() != 1) {
+            echo 0;
+            exit();
+        }
+        $sorguSchool2 = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND schools = :school");
+        $sorguSchool2->execute(array(":id" => $uyevtid, ":school" => $uyeokul));
+        if ($sorguSchool2->rowCount() != 1) {
+            echo 0;
+            exit();
+        }
+        $actionType = isset($_POST['id']) ? 'edit' : 'create';
+        if ($actionType == 'edit') {
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+            if ($id === false) {
+                echo 0;
+                exit();
+            }
+            $query = $DB_con->prepare("SELECT id FROM point_locations WHERE id = :id AND school = :school");
+            $query->execute(array(':id' => $id, ':school' => $uyeokul));
+            if ($query->rowCount() != 1) {
+                echo 0;
+                exit();
+            }
+        }
+        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        if (empty($name)) {
+            echo 2;
+            exit();
+        }
+        if (strlen($name) < 3 || strlen($name) > 64) {
+            echo 3;
+            exit();
+        }
+        $queryString = $actionType == 'edit' ? 'UPDATE point_locations SET name = :name WHERE id = :id AND school = :school' : 'INSERT INTO point_locations(school,name) VALUES (:school, :name)';
+        $sorgu = $DB_con->prepare($queryString);
+        if ($sorgu->execute($actionType == 'edit' ? array(":name" => $name, ":id" => $id, ":school" => $uyeokul) : array(":school" => $uyeokul, ":name" => $name))) {
+            echo 1;
+            exit();
+        } else {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "delete-point-location")
+    {
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool = $DB_con->prepare("SELECT id FROM schools WHERE id = :id");
+        $sorguSchool->execute(array(":id"=>$uyeokul));
+        if($sorguSchool->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $sorguSchool2 = $DB_con->prepare("SELECT id FROM users WHERE id = :id AND schools = :school");
+        $sorguSchool2->execute(array(":id"=>$uyevtid,":school"=>$uyeokul));
+        if($sorguSchool2->rowCount() != 1)
+        {
+            echo 0;
+            exit();
+        }
+        $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+        if ($id === false) {
+            echo 0;
+            exit();
+        }
+        if ($id == 1) {
+            echo 0;
+            exit();
+        }
+        $query = $DB_con->prepare("SELECT id FROM point_locations WHERE id = :id AND school = :school");
+        $query->execute(array(':id'=>$id,':school'=>$uyeokul));
+        if($query->rowCount() != 1) {
+            echo 0;
+            exit();
+        }
+        $setToDefaultQuery = $DB_con->prepare("UPDATE feedbacks_students SET point_location = :defaultPointLocation WHERE point_location = :pointLocation");
+        if ($setToDefaultQuery->execute(array(':defaultPointLocation'=>1,':pointLocation'=>$id))) {
+            $sorgu = $DB_con->prepare("DELETE FROM point_locations WHERE id = :id AND school = :school");
+            if($sorgu->execute(array(":id"=>$id,":school"=>$uyeokul)))
+            {
+                echo 1;
+                exit();
+            }
+            else
+            {
+                echo 0;
+                exit();
+            }
+        } else {
+            echo 0;
+            exit();
+        }
+    }
+    else if($page_request == "stats") {
+        if($uyerol != "admin") {
+            echo 0;
+            exit();
+        }
+        $timeFilterStatus = isset($_GET['timefilter']) ? (int) $_GET['timefilter'] : 0;
+        $now = date("Y-m-d");
+        $headOfMonth = date("Y-m-01");
+        $endOfMonth = date("Y-m-t");
+        $yesterday = date('Y-m-d',strtotime("-1 days"));
+        $lastWeek = date('Y-m-d',strtotime("-7 days"));
+        $lastWeek2x = date('Y-m-d',strtotime("-14 days"));
+        $headOfMonth2x = date('Y-m-01',strtotime("-1 month"));
+        $endOfMonth2x = date('Y-m-t',strtotime("-1 month"));
+        if($timeFilterStatus == 0)
+        {
+            $dateFilterQueryString = "";
+        }
+        else if($timeFilterStatus == 1)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$now." 00:00:00' AND '".$now." 23:59:59')";
+        }
+        else if($timeFilterStatus == 2)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$yesterday." 00:00:00' AND '".$yesterday." 23:59:59')";
+        }
+        else if($timeFilterStatus == 3)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$lastWeek." 00:00:00' AND '".$now."  23:59:59')";
+        }
+        else if($timeFilterStatus == 4)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$lastWeek2x." 00:00:00' AND '".$lastWeek." 23:59:59')";
+        }
+        else if($timeFilterStatus == 5)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$headOfMonth." 00:00:00' AND '".$endOfMonth." 23:59:59')";
+        }
+        else if($timeFilterStatus == 6)
+        {
+            $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$headOfMonth2x." 00:00:00' AND '".$endOfMonth2x." 23:59:59')";
+        }
+        else if($timeFilterStatus == 7)
+        {
+            if(isset($_GET["date1"]) && isset($_GET["date2"]))
+            {
+                if(!empty($_GET["date1"]) && !empty($_GET["date2"]))
+                {
+                    $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '".$_GET["date1"]." 00:00:00' AND '".$_GET["date2"]." 23:59:59')";
+                } else {
+                    $dateFilterQueryString = "";
+                }
+            } else {
+                $dateFilterQueryString = "";
+            }
+        }
+        else
+        {
+            $dateFilterQueryString = "";
+        }
+        $allBehaviorPointsQuery = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE type = 1 AND classes.school = :school $dateFilterQueryString) as positivePoints,(SELECT SUM(point) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE type = 2 AND classes.school = :school2 $dateFilterQueryString) as negativePoints");
+        $allBehaviorPointsQuery->execute(array(":school"=>$uyeokul,":school2"=>$uyeokul));
+        $fetchAllBehaviorPoints = $allBehaviorPointsQuery->fetch(PDO::FETCH_ASSOC);
+
+        $mostPositiveBehaviorPointsQuery = $DB_con->prepare("SELECT feedbacks_students.name, COUNT(*) as count FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE type = :type AND classes.school = :school $dateFilterQueryString GROUP BY name ORDER BY count DESC LIMIT 5");
+        $mostPositiveBehaviorPointsQuery->execute(array(":type"=>1,":school"=>$uyeokul));
+        $fetchMostPositiveBehaviorPoints = $mostPositiveBehaviorPointsQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        $topPositiveStudents = $DB_con->prepare("SELECT users.name, SUM(point) as totalPoint FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.student_id WHERE classes.school = :school AND users.role = :role $dateFilterQueryString GROUP BY users.id ORDER BY totalPoint DESC LIMIT 10");
+        $topPositiveStudents->execute(array(":school"=>$uyeokul,":role"=>"student"));
+        $fetchTopPositiveStudents = $topPositiveStudents->fetchAll(PDO::FETCH_ASSOC);
+
+        $topNegativeStudents = $DB_con->prepare("SELECT users.name, SUM(point) as totalPoint FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.student_id WHERE classes.school = :school AND users.role = :role $dateFilterQueryString GROUP BY users.id ORDER BY totalPoint ASC LIMIT 10");
+        $topNegativeStudents->execute(array(":school"=>$uyeokul,":role"=>"student"));
+        $fetchTopNegativeStudents = $topNegativeStudents->fetchAll(PDO::FETCH_ASSOC);
+
+        $pointsViaLocationsQuery = $DB_con->prepare("SELECT point_locations.name, SUM(CASE WHEN feedbacks_students.type = :type THEN feedbacks_students.point ELSE 0 END) AS positivePoints, SUM(CASE WHEN feedbacks_students.type = :type2 THEN feedbacks_students.point ELSE 0 END) AS negativePoints FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN point_locations ON point_locations.id = feedbacks_students.point_location WHERE classes.school = :school AND point_locations.school = :school2 $dateFilterQueryString GROUP BY feedbacks_students.point_location");
+        $pointsViaLocationsQuery->execute(array(":type"=>1,":type2"=>2,":school"=>$uyeokul,":school2"=>$uyeokul));
+        $fetchPointsViaLocations = $pointsViaLocationsQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        $mostPointerTeachersQuery = $DB_con->prepare("SELECT users.name, COUNT(feedbacks_students.name) as times, SUM(CASE WHEN feedbacks_students.type = :type THEN feedbacks_students.point ELSE 0 END) AS positivePoints, SUM(CASE WHEN feedbacks_students.type = :type2 THEN feedbacks_students.point ELSE 0 END) AS negativePoints FROM feedbacks_students INNER JOIN users ON users.id = feedbacks_students.teacher WHERE users.role = :role AND users.schools = :school $dateFilterQueryString GROUP BY users.id");
+        $mostPointerTeachersQuery->execute(array(":type"=>1,":type2"=>2,":role"=>"teacher",":school"=>$uyeokul));
+        $fetchMostPointerTeachers = $mostPointerTeachersQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        $pointsByDayQuery = $DB_con->prepare("SELECT DAYNAME(date) as day, SUM(CASE WHEN type = :type THEN point ELSE 0 END) as positivePoints, SUM(CASE WHEN type = :type2 THEN point ELSE 0 END) as negativePoints FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = :school $dateFilterQueryString GROUP BY DAY(date)");
+        $pointsByDayQuery->execute(array(":type"=>1,":type2"=>2,":school"=>$uyeokul));
+        $fetchPointsByDay = $pointsByDayQuery->fetchAll(PDO::FETCH_ASSOC);
+        $days = array("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
+        $newPointsByDay = [];
+        foreach ($days as $day) {
+            $newPointsByDay[] = searchArray('day', $day, $fetchPointsByDay) === null ? ["day" => $day, "positivePoints" => 0, "negativePoints" => 0] : $fetchPointsByDay[searchArray('day', $day, $fetchPointsByDay)];
+        }
+
+        $pointsByHourQuery = $DB_con->prepare("SELECT CONCAT(HOUR(date), ':00') as hour, SUM(CASE WHEN type = :type THEN point ELSE 0 END) as positivePoints, SUM(CASE WHEN type = :type2 THEN point ELSE 0 END) as negativePoints FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = :school $dateFilterQueryString GROUP BY hour");
+        $pointsByHourQuery->execute(array(":type"=>1,":type2"=>2,":school"=>$uyeokul));
+        $fetchPointsByHour = $pointsByHourQuery->fetchAll(PDO::FETCH_ASSOC);
+        $hours = array("07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00");
+        $newPointsByHour = [];
+        foreach ($hours as $hour) {
+            $newPointsByHour[] = searchArray('hour', $hour, $fetchPointsByHour) === null ? ["hour" => $hour, "positivePoints" => 0, "negativePoints" => 0] : $fetchPointsByHour[searchArray('hour', $hour, $fetchPointsByHour)];
+        }
+        ?>
+        <script type="text/javascript">
+            function createChart(chartId) {
+                if (chartId === 'total_behaviors_chart') {
+                    if (window.totalBehaviorsChart) {
+                        window.totalBehaviorsChart.destroy();
+                    }
+                    var ctx = document.getElementById(chartId).getContext("2d");
+                    window.totalBehaviorsChart = new Chart(ctx, getChartJs('doughnut'));
+                    window.totalBehaviorsChart.options.circumference = Math.PI;
+                    window.totalBehaviorsChart.options.rotation = -Math.PI;
+                    window.totalBehaviorsChart.update();
+                } else if (chartId === 'most_positive_behaviors_chart') {
+                    if (window.mostPositiveBehaviorsChart) {
+                        window.mostPositiveBehaviorsChart.destroy();
+                    }
+                    var ctx2 = document.getElementById(chartId).getContext('2d');
+                    window.mostPositiveBehaviorsChart = new Chart(ctx2, getChartJs('bar'));
+                } else if (chartId === 'top_best_students') {
+                    if (window.topBestStudents) {
+                        window.topBestStudents.destroy();
+                    }
+                    var ctx3 = document.getElementById(chartId).getContext('2d');
+                    window.topBestStudents = new Chart(ctx3, getChartJs('bar2'));
+                } else if (chartId === 'top_worst_students') {
+                    if (window.topWorstStudents) {
+                        window.topWorstStudents.destroy();
+                    }
+                    var ctx4 = document.getElementById(chartId).getContext('2d');
+                    window.topWorstStudents = new Chart(ctx4, getChartJs('bar3'));
+                } else if (chartId === 'point_location_chart') {
+                    if (window.pointLocationChart) {
+                        window.pointLocationChart.destroy();
+                    }
+                    var ctx5 = document.getElementById(chartId).getContext('2d');
+                    window.pointLocationChart = new Chart(ctx5, getChartJs('bar4'));
+                } else if (chartId === 'most_pointer_teachers') {
+                    if (window.mostPointerTeachersChart) {
+                        window.mostPointerTeachersChart.destroy();
+                    }
+                    var ctx6 = document.getElementById(chartId).getContext('2d');
+                    window.mostPointerTeachersChart = new Chart(ctx6, getChartJs('bar5'));
+                } else if (chartId === 'points_by_day_chart') {
+                    if (window.pointsByDay) {
+                        window.pointsByDay.destroy();
+                    }
+                    var ctx7 = document.getElementById(chartId).getContext('2d');
+                    window.pointsByDay = new Chart(ctx7, getChartJs('bar6'));
+                } else if (chartId === 'points_by_hour_chart') {
+                    if (window.pointsByHour) {
+                        window.pointsByHour.destroy();
+                    }
+                    var ctx8 = document.getElementById(chartId).getContext('2d');
+                    window.pointsByHour = new Chart(ctx8, getChartJs('bar7'));
+                }
+            }
+            function getChartJs(type) {
+                var config = null;
+                if (type === 'bar') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($fetchMostPositiveBehaviorPoints as $behavior) {
+                                    echo '"'.$behavior['name'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {label: "Total Point", data: [<?php foreach($fetchMostPositiveBehaviorPoints as $behavior) { echo '"'.$behavior['count'].'",'; } ?>], backgroundColor: "rgb(45,185,50)"}
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: false
+                        }
+                    }
+                } else if (type === 'bar2') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($fetchTopPositiveStudents as $behavior) {
+                                    echo '"'.$behavior['name'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {label: "Total Point", data: [<?php foreach($fetchTopPositiveStudents as $behavior) { echo '"'.$behavior['totalPoint'].'",'; } ?>], backgroundColor: "rgb(45,185,50)"}
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: false
+                        }
+                    }
+                } else if (type === 'bar3') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($fetchTopNegativeStudents as $behavior) {
+                                    echo '"'.$behavior['name'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {label: "Total Point", data: [<?php foreach($fetchTopNegativeStudents as $behavior) { echo '"'.$behavior['totalPoint'].'",'; } ?>], backgroundColor: "rgb(244,67,54)"}
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: false
+                        }
+                    }
+                } else if (type === 'bar4') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($fetchPointsViaLocations as $location) {
+                                    echo '"'.$location['name'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {
+                                    label: "Positive",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(45,185,50)",
+                                    data: [<?php foreach($fetchPointsViaLocations as $positive) { echo '"'.$positive['positivePoints'].'",'; } ?>],
+                                }, {
+                                    label: "Negative",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(244,67,54)",
+                                    data: [<?php foreach($fetchPointsViaLocations as $negative) { echo '"'.$negative['negativePoints'].'",'; } ?>],
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    ticks: {
+                                        beginAtZero: true,
+                                        maxRotation: 0,
+                                        minRotation: 0
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                }]
+                            },
+                        }
+                    }
+                } else if (type === 'bar5') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($fetchMostPointerTeachers as $location) {
+                                    echo '"'.$location['name'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {
+                                    label: "Points Awarded",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "#eece01",
+                                    data: [<?php foreach($fetchMostPointerTeachers as $point) { echo '"'.$point['times'].'",'; } ?>],
+                                }, {
+                                    label: "Total Positive",
+                                    type: "bar",
+                                    stack: "Sensitivity",
+                                    backgroundColor: "rgb(45,185,50)",
+                                    data: [<?php foreach($fetchMostPointerTeachers as $point) { echo '"'.$point['positivePoints'].'",'; } ?>],
+                                }, {
+                                    label: "Total Negative",
+                                    type: "bar",
+                                    stack: "Sensitivity",
+                                    backgroundColor: "rgb(244,67,54)",
+                                    data: [<?php foreach($fetchMostPointerTeachers as $point) { echo '"'.$point['negativePoints'].'",'; } ?>]
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    ticks: {
+                                        beginAtZero: true,
+                                        maxRotation: 0,
+                                        minRotation: 0
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                }]
+                            },
+                        }
+                    }
+                } else if (type === 'bar6') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($newPointsByDay as $day) {
+                                    echo '"'.$day['day'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {
+                                    label: "Positive",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(45,185,50)",
+                                    data: [<?php foreach($newPointsByDay as $positive) { echo '"'.$positive['positivePoints'].'",'; } ?>],
+                                }, {
+                                    label: "Negative",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(244,67,54)",
+                                    data: [<?php foreach($newPointsByDay as $negative) { echo '"'.$negative['negativePoints'].'",'; } ?>],
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    ticks: {
+                                        beginAtZero: true,
+                                        maxRotation: 0,
+                                        minRotation: 0
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                }]
+                            },
+                        }
+                    }
+                } else if (type === 'bar7') {
+                    config = {
+                        type: 'bar',
+                        data: {
+
+                            labels: [
+                                <?php
+                                foreach($newPointsByHour as $hour) {
+                                    echo '"'.$hour['hour'].'",';
+                                }
+                                ?>
+                            ],
+                            datasets: [
+                                {
+                                    label: "Positive",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(45,185,50)",
+                                    data: [<?php foreach($newPointsByHour as $positive) { echo '"'.$positive['positivePoints'].'",'; } ?>],
+                                }, {
+                                    label: "Negative",
+                                    type: "bar",
+                                    stack: "Base",
+                                    backgroundColor: "rgb(244,67,54)",
+                                    data: [<?php foreach($newPointsByHour as $negative) { echo '"'.$negative['negativePoints'].'",'; } ?>],
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    stacked: true,
+                                    ticks: {
+                                        beginAtZero: true,
+                                        maxRotation: 0,
+                                        minRotation: 0
+                                    }
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                }]
+                            },
+                        }
+                    }
+                } else if (type === 'doughnut') {
+                    config = {
+                        type: 'doughnut',
+                        data: {
+                            datasets: [{
+                                data: [<?=$fetchAllBehaviorPoints['positivePoints']?>, <?=$fetchAllBehaviorPoints['negativePoints']?>],
+                                backgroundColor: [
+                                    'rgb(45,185,50)',
+                                    'rgb(244,67,54)',
+                                ],
+                                label: 'All behavior points of school'
+                            }],
+                            labels: [
+                                'Positive',
+                                'Negative'
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'All behavior points of school'
+                            },
+                            animation: {
+                                animateScale: true,
+                                animateRotate: true
+                            }
+                        }
+                    }
+                }
+                return config;
+            }
+        </script>
+        <?php
+    }
+}
 ?>

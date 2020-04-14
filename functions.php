@@ -227,4 +227,31 @@
             return date('d F, Y H:i:s', strtotime($date));
         }
     }
+    function setDateFormat($DB_con, $uyeokul, $type) {
+        $dateTypeQuery = $DB_con->prepare("SELECT date_type FROM schools WHERE id = :id");
+        $dateTypeQuery->execute(array(":id"=>$uyeokul));
+        $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
+        if ($dateType['date_type'] == 1) {
+            return $type == 'blank' ? '__-__-____' : 'dd-mm-yyyy';
+        } else if ($dateType['date_type'] == 2) {
+            return $type == 'blank' ? '__-__-____' : 'mm-dd-yyyy';
+        } else if ($dateType['date_type'] == 3) {
+            return $type == 'blank' ? '____-__-__' : 'yyyy-mm-dd';
+        } else if ($dateType['date_type'] == 4) {
+            return $type == 'blank' ? '__-__-____' : 'mm-dd-yyyy';
+        } else if ($dateType['date_type'] == 5) {
+            return $type == 'blank' ? '__-__-____' : 'dd-mm-yyyy';
+        }
+    }
+    function onlyAlphaNum($string) {
+	    return preg_replace("/[^a-zA-Z0-9]+/", "", $string);
+    }
+    function searchArray($field, $id, $array) {
+        foreach ($array as $key => $val) {
+            if ($val[$field] === $id) {
+                return $key;
+            }
+        }
+        return null;
+    }
 ?>
