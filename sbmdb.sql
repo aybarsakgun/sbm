@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Anamakine: 127.0.0.1
--- Üretim Zamanı: 14 Oca 2020, 19:46:16
+-- Üretim Zamanı: 15 Nis 2020, 00:36:27
 -- Sunucu sürümü: 10.2.10-MariaDB
--- PHP Sürümü: 7.1.10
+-- PHP Sürümü: 7.2.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -19,7 +19,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Veritabanı: `sbmhost`
+-- Veritabanı: `sbm`
 --
 
 -- --------------------------------------------------------
@@ -44,6 +44,18 @@ INSERT INTO `admin` (`id`, `mail`, `password`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Tablo için tablo yapısı `announcements`
+--
+
+CREATE TABLE `announcements` (
+  `id` int(11) NOT NULL,
+  `detail` text COLLATE utf8mb4_turkish_ci NOT NULL,
+  `date` datetime NOT NULL,
+  `admin` int(11) NOT NULL,
+  `school` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
+
+--
 -- Tablo için tablo yapısı `classes`
 --
 
@@ -58,10 +70,9 @@ CREATE TABLE `classes` (
   `color` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL,
   `student_show` int(11) NOT NULL DEFAULT 1,
   `point_show` int(11) NOT NULL DEFAULT 1,
-  `status` int(11) NOT NULL DEFAULT 1
+  `status` int(11) NOT NULL DEFAULT 1,
+  `points_by_time` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
-
--- --------------------------------------------------------
 
 --
 -- Tablo için tablo yapısı `conversations`
@@ -91,8 +102,6 @@ CREATE TABLE `feedbacks` (
   `user` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
--- --------------------------------------------------------
-
 --
 -- Tablo için tablo yapısı `feedbacks_students`
 --
@@ -106,10 +115,23 @@ CREATE TABLE `feedbacks_students` (
   `type` int(11) NOT NULL,
   `description` text COLLATE utf8mb4_turkish_ci NOT NULL,
   `teacher` int(11) NOT NULL,
-  `date` datetime NOT NULL
+  `date` datetime NOT NULL,
+  `point_location` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
--- --------------------------------------------------------
+--
+-- Tablo için tablo yapısı `groups`
+--
+
+CREATE TABLE `groups` (
+  `id` int(11) NOT NULL,
+  `name` varchar(64) COLLATE utf8mb4_turkish_ci NOT NULL,
+  `class` int(11) NOT NULL,
+  `school` int(11) NOT NULL,
+  `students` varchar(255) COLLATE utf8mb4_turkish_ci NOT NULL,
+  `created_time` datetime NOT NULL,
+  `created_by` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 --
 -- Tablo için tablo yapısı `invited_teachers`
@@ -139,8 +161,6 @@ CREATE TABLE `login_attempts` (
   `verify` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
--- --------------------------------------------------------
-
 --
 -- Tablo için tablo yapısı `login_attempts_user`
 --
@@ -155,8 +175,6 @@ CREATE TABLE `login_attempts_user` (
   `status` int(11) NOT NULL,
   `verify` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
-
--- --------------------------------------------------------
 
 --
 -- Tablo için tablo yapısı `messages`
@@ -187,7 +205,15 @@ CREATE TABLE `message_templates` (
   `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
--- --------------------------------------------------------
+--
+-- Tablo için tablo yapısı `point_locations`
+--
+
+CREATE TABLE `point_locations` (
+  `id` int(11) NOT NULL,
+  `school` int(11) NOT NULL,
+  `name` varchar(128) COLLATE utf8mb4_turkish_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 --
 -- Tablo için tablo yapısı `redeem_items`
@@ -202,8 +228,6 @@ CREATE TABLE `redeem_items` (
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
--- --------------------------------------------------------
-
 --
 -- Tablo için tablo yapısı `schools`
 --
@@ -211,10 +235,9 @@ CREATE TABLE `redeem_items` (
 CREATE TABLE `schools` (
   `id` int(11) NOT NULL,
   `name` varchar(128) COLLATE utf8mb4_turkish_ci NOT NULL,
-  `code` varchar(10) COLLATE utf8mb4_turkish_ci NOT NULL
+  `code` varchar(10) COLLATE utf8mb4_turkish_ci NOT NULL,
+  `date_type` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
-
--- --------------------------------------------------------
 
 --
 -- Tablo için tablo yapısı `users`
@@ -238,7 +261,11 @@ CREATE TABLE `users` (
   `parent_email` varchar(128) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
   `parent_email2` varchar(128) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
   `parent_phone` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
-  `parent_phone2` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT ''
+  `parent_phone2` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
+  `homeroom` varchar(64) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
+  `gender` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
+  `stateID` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT '',
+  `grade` varchar(32) COLLATE utf8mb4_turkish_ci NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 --
@@ -249,6 +276,12 @@ CREATE TABLE `users` (
 -- Tablo için indeksler `admin`
 --
 ALTER TABLE `admin`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Tablo için indeksler `announcements`
+--
+ALTER TABLE `announcements`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -276,6 +309,12 @@ ALTER TABLE `feedbacks_students`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Tablo için indeksler `groups`
+--
+ALTER TABLE `groups`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Tablo için indeksler `invited_teachers`
 --
 ALTER TABLE `invited_teachers`
@@ -291,6 +330,12 @@ ALTER TABLE `messages`
 -- Tablo için indeksler `message_templates`
 --
 ALTER TABLE `message_templates`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Tablo için indeksler `point_locations`
+--
+ALTER TABLE `point_locations`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -319,67 +364,85 @@ ALTER TABLE `users`
 -- Tablo için AUTO_INCREMENT değeri `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `announcements`
+--
+ALTER TABLE `announcements`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `conversations`
 --
 ALTER TABLE `conversations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `feedbacks`
 --
 ALTER TABLE `feedbacks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `feedbacks_students`
 --
 ALTER TABLE `feedbacks_students`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `groups`
+--
+ALTER TABLE `groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `invited_teachers`
 --
 ALTER TABLE `invited_teachers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `message_templates`
 --
 ALTER TABLE `message_templates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
+
+--
+-- Tablo için AUTO_INCREMENT değeri `point_locations`
+--
+ALTER TABLE `point_locations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `redeem_items`
 --
 ALTER TABLE `redeem_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `schools`
 --
 ALTER TABLE `schools`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 
 --
 -- Tablo için AUTO_INCREMENT değeri `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
