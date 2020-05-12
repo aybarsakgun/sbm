@@ -40,3 +40,5 @@ RewriteRule ^report-([0-9]+)-([0-9]+)$ index.php?pr=report&id=$1&student_id=$2 [
 RewriteRule ^get-report-([0-9]+)$ ajax.php?s=get-report&student=$1 [L,QSA]
 
 RewriteRule ^school-infos-([0-9]+)$ ajax.php?s=school-infos&id=$1&br=admin [L,QSA]
+
+RewriteRule ^security$ index.php?pr=security [L,QSA]

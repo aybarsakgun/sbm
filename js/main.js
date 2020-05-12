@@ -20,7 +20,7 @@ $.AdminBSB.options = {
         effectIn: 'fadeIn',
         effectOut: 'fadeOut'
     }
-}
+};
 $.AdminBSB.leftSideBar = {
     activate: function () {
         var _this = this;
@@ -153,7 +153,35 @@ $.AdminBSB.leftSideBar = {
         return $('body').hasClass('overlay-open');
     }
 };
-
+var $searchBar = $('.search-bar');
+$.AdminBSB.search = {
+    activate: function () {
+        var _this = this;
+        $('.js-search').on('click', function () {
+            _this.showSearchBar();
+        });
+        $searchBar.find('.close-search').on('click', function () {
+            _this.hideSearchBar();
+        });
+        $searchBar.find('input[type="text"]').on('keyup', function (e) {
+            if (e.keyCode == 27) {
+                _this.hideSearchBar();
+            }
+        });
+    },
+    showSearchBar: function () {
+        $searchBar.addClass('open');
+        $searchBar.find('input[type="text"]').focus();
+        if ($('ul.ui-autocomplete, .ui-widget-content > li').length !== 0) {
+            $("ul.ui-autocomplete, .ui-widget-content").show();
+        }
+    },
+    hideSearchBar: function () {
+        $searchBar.removeClass('open');
+        $searchBar.find('input[type="text"]').val('');
+        $('.autocomplete').autocomplete('close');
+    }
+};
 $.AdminBSB.navbar = {
     activate: function () {
         var $body = $('body');
@@ -164,7 +192,7 @@ $.AdminBSB.navbar = {
             if ($body.hasClass('overlay-open')) { $overlay.fadeIn(); } else { $overlay.fadeOut(); }
         });
     }
-}
+};
 $.AdminBSB.input = {
     activate: function ($parentSelector) {
         $parentSelector = $parentSelector || $('body');
@@ -187,13 +215,13 @@ $.AdminBSB.input = {
             $(this).parent().find('input').focus();
         });
     }
-}
+};
 
 $.AdminBSB.select = {
     activate: function () {
         if ($.fn.selectpicker) { $('select:not(.ms)').selectpicker(); }
     }
-}
+};
 
 $.AdminBSB.dropdownMenu = {
     activate: function () {
@@ -264,7 +292,7 @@ $.AdminBSB.dropdownMenu = {
             }
         });
     }
-}
+};
 
 var edge = 'Microsoft Edge';
 var ie10 = 'Internet Explorer 10';
@@ -323,7 +351,7 @@ $.AdminBSB.browser = {
             return '';
         }
     }
-}
+};
 
 function activateNotificationAndTasksScroll(heightxd) {
     $('.navbar-right .dropdown-menu .body .menu#okunmamiskonusmalar').slimscroll({
@@ -343,7 +371,7 @@ $(function () {
     $.AdminBSB.dropdownMenu.activate();
     $.AdminBSB.input.activate();
     $.AdminBSB.select.activate();
-
+    $.AdminBSB.search.activate();
 
 
     setTimeout(function () { $('.page-loader-wrapper').fadeOut(); }, 50);

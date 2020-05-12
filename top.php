@@ -100,6 +100,15 @@ else
 			</div>
 		</div>
 		<div class="overlay"></div>
+        <div class="search-bar ui-widget">
+            <div class="search-icon">
+                <i class="material-icons">search</i>
+            </div>
+            <input type="text" class="autocomplete" placeholder="SEARCH STUDENT...">
+            <div class="close-search">
+                <i class="material-icons">close</i>
+            </div>
+        </div>
 		<nav class="navbar">
 			<div class="container-fluid">
 				<div class="navbar-header">
@@ -133,6 +142,9 @@ else
                 }
                 ?>
                 <ul class="nav navbar-nav navbar-right">
+                    <?php if($uyerol != "student") { ?>
+                    <li><a href="javascript:void(0);" class="js-search" data-close="true"><i class="material-icons">search</i></a></li>
+                    <?php } ?>
                     <li><a href="javascript:;" id="fullscreen-toggle" class="hidden-xs hidden-sm"><i class="material-icons">fullscreen</i></a></li>
                     <?php
                     if($uyerol != "student") {
@@ -295,6 +307,7 @@ else
 						else if($uyerol == "admin")
                         {
                             ?>
+                            <li><a href="security"><i class="material-icons">security</i><span>Security</span></a></li>
                             <li><a href="sync-gc"><img src="img/google.svg" width="24" height="24" style="margin-top:4px;"><span>Sync Google Classroom</span></a></li>
                             <li>
                                 <a href="classes">
@@ -334,7 +347,7 @@ else
 				</div>
 				<div class="legal">
 					<div class="copyright">
-						&copy; 2019 <a href="javascript:;">SBManagement</a>
+						&copy; 2020 <a href="javascript:;">SBManagement</a>
 					</div>
 				</div>
 			</aside>

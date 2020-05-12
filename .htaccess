@@ -125,3 +125,7 @@ RewriteRule ^delete-point-location$ ajax.php?pr=delete-point-location [L,QSA]
 
 RewriteRule ^stats$ index.php?pr=stats [L,QSA]
 RewriteRule ^stats-a$ ajax.php?pr=stats [L,QSA]
+
+RewriteRule ^security$ index.php?pr=security [L,QSA]
+
+RewriteRule ^search-student$ ajax.php?pr=search-student [L,QSA]

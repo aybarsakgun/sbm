@@ -233,37 +233,22 @@ if (!isset($page_request)) {
                                 }
                                 ?>
                             </div>
-                            <div class="panel panel-default panel-post">
-                                <div class="panel-heading">
-                                    <h4><strong>Logon Records</strong></h4>
-                                </div>
-                            </div>
-                            <div class="row clearfix">
-                                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                    <div class="form-group">
-                                        <select class="form-control" id="siralama2" name="siralama2">
-                                            <option value="0">By date (Newest entry first)</option>
-                                            <option value="1">By date (First oldest entry)</option>
-                                        </select>
+                            <?php
+                            $failedLoginAttempts = $DB_con->prepare("SELECT * FROM login_attempts_user WHERE member_id = :userId AND status = :status AND YEARWEEK(date_time, 1) = YEARWEEK(CURDATE(), 1)");
+                            $failedLoginAttempts->execute(array(':userId'=>$uyevtid,':status'=>0));
+                            if($failedLoginAttempts->rowCount() > 0) {
+                                while($fetchFailedLoginAttempts = $failedLoginAttempts->fetch(PDO::FETCH_ASSOC)) {
+                                    ?>
+                                    <div class="alert alert-danger alert-dismissible" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                        <strong>Browser: </strong><?=$fetchFailedLoginAttempts['browser']?><br>
+                                        <strong>IP Address: </strong><?=$fetchFailedLoginAttempts['ip']?><br>
+                                        <small><?=printDate($DB_con, $fetchFailedLoginAttempts["date_time"], $uyeokul)?> (Unsuccessful login attempt in this week.)</small>
                                     </div>
-                                </div>
-                                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                    <strong>Status: </strong>
-                                    <br>
-                                    <input type="radio" class="with-gap radio-col-orange filtre-buton2"
-                                           name="filtre_durum" id="filtredurumtumu" checked="">
-                                    <label for="filtredurumtumu">All</label>
-                                    <input type="radio" class="with-gap radio-col-orange filtre-buton2"
-                                           name="filtre_durum" id="filtredurumbasarili">
-                                    <label for="filtredurumbasarili">Successful</label>
-                                    <input type="radio" class="with-gap radio-col-orange filtre-buton2"
-                                           name="filtre_durum" id="filtredurumbasarisiz">
-                                    <label for="filtredurumbasarisiz">Unsuccessful</label>
-                                </div>
-                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="uye-giris-kayitlari">
-
-                                </div>
-                            </div>
+                                    <?php
+                                }
+                            }
+                            ?>
                         </div>
                         <?php
                     } else if ($uyerol == "student") {
@@ -324,6 +309,7 @@ if (!isset($page_request)) {
     <?php
     if ($uyerol == "admin") {
         ?>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
         <script>
             $(document).ready(function () {
                 $.ajaxSetup({
@@ -404,9 +390,49 @@ if (!isset($page_request)) {
         <?php
     } else if($uyerol == "teacher") {
     ?>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
         <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
         <script>
         $(document).ready(function () {
+            $(".autocomplete").autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "search-student",
+                        data: {
+                            searchString: request.term
+                        },
+                        dataType: 'json'
+                    }).done(function(data) {
+                        if (data.items && data.items.length) {
+                            response($.map(data.items, function(item) {
+                                return item;
+                            }));
+                        } else if (data.items && !data.items.length) {
+                            response([{notFound: true}]);
+                        }
+                    });
+                },
+                delay: 500,
+                minLength: 3,
+                close: function(event, ui) {
+                    var input_length = $('.autocomplete').val().length;
+                    if (input_length !== 0) {
+                        $("ul.ui-autocomplete, .ui-widget-content").filter(':hidden').show();
+                    } else if (input_length === 0) {
+                        $('.autocomplete').autocomplete('close');
+                    }
+                }
+            }).data("ui-autocomplete")._renderItem = function (ul, item) {
+                if (item.notFound) {
+                    var inner_html = '<div class="media">Not found</div>';
+                } else {
+                    var inner_html = '<a href="#" data-toggle="modal" data-target="#editProfileModal"><div class="media"><div class="media-left"><img src="' + item.avatar + '" class="studentAvatar"></div><div class="media-body"><h4 class="media-heading">' + item.name + '</h4><strong>Class: ' + item.class.name + '</div></div></a>';
+                }
+                return $("<li></li>")
+                    .data("ui-autocomplete-item", item)
+                    .append(inner_html)
+                    .appendTo(ul);
+            };
             $('body').on('click', '.acceptInvite', function (e) {
                 e.preventDefault();
                 var inviteid = $(this).data("invite-id");
@@ -540,31 +566,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <?php
-                            if ($uyerol == "admin") {
-                                ?>
-                                <li>
-                                    <a href="classes">
-                                        <i class="material-icons">class</i> Classes
-                                    </a>
-                                </li>
-                                <?php
-                            }
-                            ?>
-                            <li class="active">
-                                <i class="material-icons">add_circle</i> Create Class
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -867,31 +868,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <?php
-                            if ($uyerol == "admin") {
-                                ?>
-                                <li>
-                                    <a href="students">
-                                        <i class="material-icons">school</i> Students
-                                    </a>
-                                </li>
-                                <?php
-                            }
-                            ?>
-                            <li class="active">
-                                <i class="material-icons">add_circle</i> Add Student
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -1105,31 +1081,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <?php
-                            if ($uyerol == "admin") {
-                                ?>
-                                <li>
-                                    <a href="students">
-                                        <i class="material-icons">school</i> Students
-                                    </a>
-                                </li>
-                                <?php
-                            }
-                            ?>
-                            <li class="active">
-                                <i class="material-icons">input</i> Import Student
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -1297,7 +1248,7 @@ if (!isset($page_request)) {
                         break;
                     }
                 }
-                var headersArray = headerString.split(';');
+                var headersArray = headerString.split(',');
                 for(var i = 0; i < headersArray.length; i++) {
                     $('select#csvColumn').append('<option value='+i+'>'+headersArray[i]+'</option>');
                 }
@@ -1336,7 +1287,8 @@ if (!isset($page_request)) {
                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one for the Student Name field.</div>");
                     return false;
                 }
-                if ($("select[equal='name']").val().length > 2) {
+				
+                if ($("select[equal='name']").val() != null && $("select[equal='name']").val().length > 2) {
                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You can choose a maximum of two for the Student Name field.</div>");
                     return false;
                 }
@@ -1344,7 +1296,7 @@ if (!isset($page_request)) {
                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You must choose at least one for the E-Mail Address field.</div>");
                     return false;
                 }
-                if ($("select[equal='parent_name']").val().length > 2) {
+                if ($("select[equal='parent_name']").val() != null && $("select[equal='parent_name']").val().length > 2) {
                     $("#Add-Student-Result").html("<div class='alert alert-danger'><strong>Error:</strong> You can choose a maximum of two for the Parent Name field.</div>");
                     return false;
                 }
@@ -1429,20 +1381,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li class="invite-teacher">
-                                <i class="material-icons">edit</i> Edit Class
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -1787,20 +1725,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li class="active">
-                                <i class="material-icons">sync</i> Sync Google Classroom
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -1912,20 +1836,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li class="active">
-                                <i class="material-icons">shopping_cart</i> Redeem Items
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -4859,25 +4769,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <a href="teachers">
-                                    <i class="material-icons">business_center</i> Teachers
-                                </a>
-                            </li>
-                            <li class="invite-teacher">
-                                <i class="material-icons">contact_mail</i> Invite Teacher
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -4986,20 +4877,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">school</i> Students
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Students</strong></h4>
@@ -5507,20 +5384,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">business_center</i> Teachers
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Teachers</strong></h4>
@@ -5835,20 +5698,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">class</i> Classes
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Classes</strong></h4>
@@ -6080,20 +5929,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">announcement</i> Announcements
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Announcements</strong></h4>
@@ -7048,20 +6883,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li class="active">
-                                <i class="material-icons">email</i> Send Messages to Parents
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -7541,20 +7362,6 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li class="active">
-                                <i class="material-icons">insert_chart</i> Stats
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-lg-12 col-md-6 col-sm-12 col-xs-12">
                         <div class="card">
@@ -7913,6 +7720,137 @@ if (!isset($page_request)) {
                 var queryString = "?timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2;
                 $('#timeFilterQueryString').val(queryString);
                 getCharts();
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+} else if ($page_request == "security") {
+    if ($uyerol != "admin") {
+        echo "Forbidden";
+        exit();
+    }
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="row clearfix">
+                    <div class="col-xs-12">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4><strong>Logon Records</strong></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <select class="form-control" id="siralama2" name="siralama2">
+                                <option value="0">By date (Newest entry first)</option>
+                                <option value="1">By date (First oldest entry)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <strong>Status: </strong>
+                        <br>
+                        <input type="radio" class="with-gap radio-col-orange filtre-buton2"
+                               name="filtre_durum" id="filtredurumtumu" checked="">
+                        <label for="filtredurumtumu">All</label>
+                        <input type="radio" class="with-gap radio-col-orange filtre-buton2"
+                               name="filtre_durum" id="filtredurumbasarili">
+                        <label for="filtredurumbasarili">Successful</label>
+                        <input type="radio" class="with-gap radio-col-orange filtre-buton2"
+                               name="filtre_durum" id="filtredurumbasarisiz">
+                        <label for="filtredurumbasarisiz">Unsuccessful</label>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="uye-giris-kayitlari">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajaxSetup({
+                headers: {'sbmtoken': $('meta[name="sbmtoken"]').attr('content')}
+            });
+            $.ajax(
+                {
+                    url: "admin-logon-records",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    success: function (data) {
+                        $("#uye-giris-kayitlari").html(data);
+                    }
+                });
+            $('body').on("click", '.sayfala-buton2', function (event) {
+                var node = this.id;
+
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?sayfa=" + node.replace(regexp, '') + "&siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
+            });
+            $('body').on("change", 'select#siralama2', function (event) {
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
+            });
+            $('body').on("click", '.filtre-buton2', function (event) {
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        success: function (data) {
+                            $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
             });
         });
     </script>

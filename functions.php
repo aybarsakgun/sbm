@@ -216,15 +216,15 @@
         $dateTypeQuery->execute(array(":id"=>$uyeokul));
         $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
         if ($dateType['date_type'] == 1) {
-            return date('d/m/Y H:i:s', strtotime($date));
+            return date('d/m/Y h:i A', strtotime($date));
         } else if ($dateType['date_type'] == 2) {
-            return date('m/d/Y H:i:s', strtotime($date));
+            return date('m/d/Y h:i A', strtotime($date));
         } else if ($dateType['date_type'] == 3) {
-            return date('y/m/d H:i:s', strtotime($date));
+            return date('y/m/d h:i A', strtotime($date));
         } else if ($dateType['date_type'] == 4) {
-            return date('F d, Y H:i:s', strtotime($date));
+            return date('F d, Y h:i A', strtotime($date));
         } else if ($dateType['date_type'] == 5) {
-            return date('d F, Y H:i:s', strtotime($date));
+            return date('d F, Y h:i A', strtotime($date));
         }
     }
     function setDateFormat($DB_con, $uyeokul, $type) {

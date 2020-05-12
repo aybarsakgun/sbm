@@ -111,6 +111,12 @@ $base_request = filter_input(INPUT_GET, 'br', FILTER_SANITIZE_STRING);
 							</a>
 						</li>
                         <li>
+                            <a href="security">
+                                <i class="material-icons">security</i>
+                                <span>Security</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="schools">
                                 <i class="material-icons">business</i>
                                 <span>Schools</span>
@@ -138,7 +144,7 @@ $base_request = filter_input(INPUT_GET, 'br', FILTER_SANITIZE_STRING);
 				</div>
 				<div class="legal">
 					<div class="copyright">
-						&copy; 2019 <a href="javascript:;">SBManagement</a>
+						&copy; 2020 <a href="javascript:;">SBManagement</a>
 					</div>
 				</div>
 			</aside>

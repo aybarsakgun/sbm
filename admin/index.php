@@ -19,15 +19,6 @@ if(!isset($page_request))
 		<section class="content">
 			<div class="container-fluid">
 				<div class="row clearfix">
-					<div class="block-header">
-						<div class="gri">
-							<ol class="breadcrumb">
-								<li class="active">
-									<i class="material-icons">home</i> Admin Home
-								</li>
-							</ol>
-						</div>
-					</div>
 					<div class="row clearfix">
 						<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 							<div class="card">
@@ -123,34 +114,22 @@ if(!isset($page_request))
 								}
 								?>
 							</div>
-							<div class="panel panel-default panel-post">
-								<div class="panel-heading">
-									<h4><strong>Admin Logon Records</strong></h4>
-								</div>
-							</div>
-							<div class="row clearfix">
-								<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-									<div class="form-group">
-										<select class="form-control" id="siralama2" name="siralama2">
-											<option value="0">By date (Newest entry first)</option>
-											<option value="1">By date (First oldest entry)</option>
-										</select>
-									</div>
-								</div>
-								<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-									<strong>Status: </strong>
-									<br>
-									<input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumtumu" checked="">
-									<label for="filtredurumtumu">All</label> 
-									<input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumbasarili">
-									<label for="filtredurumbasarili">Successful</label> 
-									<input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumbasarisiz">
-									<label for="filtredurumbasarisiz">Unsuccessful</label>
-								</div>
-								<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="uye-giris-kayitlari">
-									
-								</div>
-							</div>
+                            <?php
+                            $failedLoginAttempts = $DB_con->prepare("SELECT * FROM login_attempts WHERE member_id = :userId AND status = :status AND YEARWEEK(date_time, 1) = YEARWEEK(CURDATE(), 1)");
+                            $failedLoginAttempts->execute(array(':userId'=>1,':status'=>0));
+                            if($failedLoginAttempts->rowCount() > 0) {
+                                while($fetchFailedLoginAttempts = $failedLoginAttempts->fetch(PDO::FETCH_ASSOC)) {
+                                    ?>
+                                    <div class="alert alert-danger alert-dismissible" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                                        <strong>Browser: </strong><?=$fetchFailedLoginAttempts['browser']?><br>
+                                        <strong>IP Address: </strong><?=$fetchFailedLoginAttempts['ip']?><br>
+                                        <small><?=$fetchFailedLoginAttempts["date"]?> (Unsuccessful login attempt in this week.)</small>
+                                    </div>
+                                    <?php
+                                }
+                            }
+                            ?>
 						</div>
 					</div>
 				</div>
@@ -161,91 +140,6 @@ if(!isset($page_request))
 		<script src="../plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
 		<script src="../plugins/node-waves/waves.min.js"></script>
 		<script src="../js/main-admin.js"></script>
-		<script>
-		$(document).ready(function()
-		{
-			$.ajaxSetup({
-				headers: { 'sbmtoken': $('meta[name="sbmtoken"]').attr('content') }
-			});
-			$.ajax(
-			{
-				url: "admin-logon-records",
-				type: "GET",
-				contentType: false,
-				cache: false,
-				processData:false,
-				success: function(data)
-				{
-					$("#uye-giris-kayitlari").html(data);
-				}
-			});
-			$('body').on("click", '.sayfala-buton2', function(event)  
-			{
-				var node = this.id;
-				
-				var regexp = /[^0-9]/g;
-				var regexp2 = /[^a-z]/g;
-
-				var siralama = $("select#siralama2").val();
-				var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-				
-				$.ajax(
-				{
-					url: "admin-logon-records?sayfa="+node.replace(regexp,'')+"&siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
-					type: "GET",
-					contentType: false,
-					cache: false,
-					processData:false,
-					success: function(data)
-					{
-						$("#uye-giris-kayitlari").html(data);
-					}	 						
-				});
-			});
-			$('body').on("change", 'select#siralama2', function(event)  
-			{
-				var regexp = /[^0-9]/g;
-				var regexp2 = /[^a-z]/g;
-				
-				var siralama = $("select#siralama2").val();
-				var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-				
-				$.ajax(
-				{
-					url: "admin-logon-records?siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
-					type: "GET",
-					contentType: false,
-					cache: false,
-					processData:false,
-					success: function(data)
-					{
-						$("#uye-giris-kayitlari").html(data);
-					}	 						
-				});
-			});
-			$('body').on("click", '.filtre-buton2', function(event)  
-			{
-				var regexp = /[^0-9]/g;
-				var regexp2 = /[^a-z]/g;
-				
-				var siralama = $("select#siralama2").val();
-				var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-				
-				$.ajax(
-				{
-					url: "admin-logon-records?siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
-					type: "GET",
-					contentType: false,
-					cache: false,
-					processData:false,
-					success: function(data)
-					{
-						$("#uye-giris-kayitlari").html(data);
-					}	 						
-				});
-			});
-		});
-		</script>
 	</body>
 </html>
 <?php
@@ -256,25 +150,6 @@ else if($page_request == "create-school")
 		<section class="content">
 			<div class="container-fluid">
 				<div class="row clearfix">
-					<div class="block-header">
-						<div class="gri">
-							<ol class="breadcrumb">
-								<li>
-									<a href="home">
-										<i class="material-icons">home</i> Home
-									</a>
-								</li>
-								<li>
-									<a href="schools">
-										<i class="material-icons">business</i> Schools
-									</a>
-								</li>
-								<li class="create-school">
-									<i class="material-icons">add</i> Create School
-								</li>
-							</ol>
-						</div>
-					</div>
 					<div class="row clearfix">
 						<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
 							<div class="card">
@@ -366,25 +241,6 @@ else if($page_request == "invite-teacher")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <a href="teachers">
-                                    <i class="material-icons">business_center</i> Teachers
-                                </a>
-                            </li>
-                            <li class="invite-teacher">
-                                <i class="material-icons">contact_mail</i> Invite Teacher
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -511,25 +367,6 @@ else if($page_request == "invite-school-admin")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <a href="schools">
-                                    <i class="material-icons">business</i> Schools
-                                </a>
-                            </li>
-                            <li class="invite-teacher">
-                                <i class="material-icons">contact_mail</i> Invite School Admin
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="row clearfix">
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
                         <div class="card">
@@ -656,20 +493,6 @@ else if($page_request == "schools")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">business</i> Schools
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Schools</strong></h4>
@@ -939,20 +762,6 @@ else if($page_request == "students")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">school</i> Students
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Students</strong></h4>
@@ -1490,20 +1299,6 @@ else if($page_request == "teachers")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">business_center</i> Teachers
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Teachers</strong></h4>
@@ -1921,20 +1716,6 @@ else if($page_request == "classes")
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="block-header">
-                    <div class="gri">
-                        <ol class="breadcrumb">
-                            <li>
-                                <a href="home">
-                                    <i class="material-icons">home</i> Home
-                                </a>
-                            </li>
-                            <li>
-                                <i class="material-icons">class</i> Classes
-                            </li>
-                        </ol>
-                    </div>
-                </div>
                 <div class="panel panel-default panel-post">
                     <div class="panel-heading">
                         <h4><strong>Classes</strong></h4>
@@ -2582,6 +2363,141 @@ else if($page_request == "report")
                                     }
                                 });
                             }
+                        }
+                    });
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+}
+else if($page_request == "security")
+{
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="row clearfix">
+                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4><strong>Admin Logon Records</strong></h4>
+                            </div>
+                        </div>
+                        <div class="row clearfix">
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                <div class="form-group">
+                                    <select class="form-control" id="siralama2" name="siralama2">
+                                        <option value="0">By date (Newest entry first)</option>
+                                        <option value="1">By date (First oldest entry)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                <strong>Status: </strong>
+                                <br>
+                                <input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumtumu" checked="">
+                                <label for="filtredurumtumu">All</label>
+                                <input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumbasarili">
+                                <label for="filtredurumbasarili">Successful</label>
+                                <input type="radio" class="with-gap radio-col-orange filtre-buton2" name="filtre_durum" id="filtredurumbasarisiz">
+                                <label for="filtredurumbasarisiz">Unsuccessful</label>
+                            </div>
+                            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="uye-giris-kayitlari">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="../plugins/jquery/jquery.min.js"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="../plugins/node-waves/waves.min.js"></script>
+    <script src="../js/main-admin.js"></script>
+    <script>
+        $(document).ready(function()
+        {
+            $.ajaxSetup({
+                headers: { 'sbmtoken': $('meta[name="sbmtoken"]').attr('content') }
+            });
+            $.ajax(
+                {
+                    url: "admin-logon-records",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(data)
+                    {
+                        $("#uye-giris-kayitlari").html(data);
+                    }
+                });
+            $('body').on("click", '.sayfala-buton2', function(event)
+            {
+                var node = this.id;
+
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?sayfa="+node.replace(regexp,'')+"&siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData:false,
+                        success: function(data)
+                        {
+                            $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
+            });
+            $('body').on("change", 'select#siralama2', function(event)
+            {
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData:false,
+                        success: function(data)
+                        {
+                            $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
+            });
+            $('body').on("click", '.filtre-buton2', function(event)
+            {
+                var regexp = /[^0-9]/g;
+                var regexp2 = /[^a-z]/g;
+
+                var siralama = $("select#siralama2").val();
+                var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
+
+                $.ajax(
+                    {
+                        url: "admin-logon-records?siralama="+siralama.replace(regexp,'')+"&filtre_durum="+filtre_durum.replace(regexp2,''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData:false,
+                        success: function(data)
+                        {
+                            $("#uye-giris-kayitlari").html(data);
                         }
                     });
             });

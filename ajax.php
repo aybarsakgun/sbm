@@ -327,13 +327,7 @@ if(isset($page_request))
                 exit();
             }
         }
-        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
-        if(!empty($stateID)) {
-            if ($stateID === false) {
-                echo 0;
-                exit();
-            }
-        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_SANITIZE_STRING);
         $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
         if(!empty($grade)) {
             if ($grade === false) {
@@ -586,14 +580,16 @@ if(isset($page_request))
             $siniflar.= $prefix.$val;
             $prefix = ",";
         }
-        $csv = array_map('str_getcsv', file($tmpName));
-        $row = 0;
+        $rows = array_map(function($data) { return str_getcsv($data,","); }, file($tmpName));
+		$header = array_shift($rows);
+		$csv    = [];
+		foreach($rows as $row) {
+			$csv[] = array_combine($header, $row);
+		}
         $addedStudent = 0;
         $editedStudent = 0;
-        foreach($csv as $rcsv)
+        foreach($rows as $vals)
         {
-            if($row == 0){ $row++; continue; }
-            $vals = explode(";", $rcsv[0]);
             if($vals[$_POST['email']] == '') { continue; }
             $fullName = count($_POST['name']) == 1 ? onlyAlphaNum($vals[$_POST['name'][0]]) : onlyAlphaNum($vals[$_POST['name'][0]])." ".onlyAlphaNum($vals[$_POST['name'][1]]);
             $eMail = $vals[$_POST['email']];
@@ -2077,64 +2073,89 @@ if(isset($page_request))
         </div>
         <div class="modal-body">
             <form id="Edit-Student-Form">
-                <div class="form-group">
-                    <label for="name">Name:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="name" id="name" type="text" value="<?=$yazogrenci["name"]?>">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="name" id="name" type="text" value="<?=$yazogrenci["name"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Name:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentname" id="parentname" type="text" value="<?=$yazogrenci["parent_name"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Name:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentname" id="parentname" type="text" value="<?=$yazogrenci["parent_name"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Primary E-Mail Address:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentemail" id="parentemail" type="text" value="<?=$yazogrenci["parent_email"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Primary E-Mail Address:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentemail" id="parentemail" type="text" value="<?=$yazogrenci["parent_email"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Secondary E-Mail Address:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentemail2" id="parentemail2" type="text" value="<?=$yazogrenci["parent_email2"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Secondary E-Mail Address:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentemail2" id="parentemail2" type="text" value="<?=$yazogrenci["parent_email2"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Primary Phone Number:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentphone" id="parentphone" type="text" value="<?=$yazogrenci["parent_phone"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Primary Phone Number:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentphone" id="parentphone" type="text" value="<?=$yazogrenci["parent_phone"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Secondary Phone Number:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Secondary Phone Number:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="homeroom">Homeroom:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="homeroom">Homeroom:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="gender">Gender:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="gender" id="gender" type="text" value="<?=$yazogrenci["gender"]?>">
+                    <div class="col-md-6">
+                        <label for="gender">Gender:</label>
+                        <div class="form-group" style="height:34px!important;">
+                            <div class="form-line">
+                                <input name="gender" type="radio" id="radio_gender_male" class="with-gap radio-col-orange" value="Male" <?php if($yazogrenci["gender"] == 'Male') { echo 'checked'; }?>>
+                                <label for="radio_gender_male">Male</label>
+                                <input name="gender" type="radio" id="radio_gender_female" class="with-gap radio-col-orange" value="Female" <?php if($yazogrenci["gender"] == 'Female') { echo 'checked'; }?>>
+                                <label for="radio_gender_female">Female</label>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="stateID">StateID:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="stateID">StateID:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="grade">Grade:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="grade">Grade:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <label>Classes:</label>
@@ -3066,13 +3087,7 @@ if(isset($page_request))
                 exit();
             }
         }
-        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
-        if(!empty($stateID)) {
-            if ($stateID === false) {
-                echo 0;
-                exit();
-            }
-        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_SANITIZE_STRING);
         $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
         if(!empty($grade)) {
             if ($grade === false) {
@@ -3178,13 +3193,7 @@ if(isset($page_request))
                 exit();
             }
         }
-        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_VALIDATE_INT);
-        if(!empty($stateID)) {
-            if ($stateID === false) {
-                echo 0;
-                exit();
-            }
-        }
+        $stateID = filter_input(INPUT_POST, 'stateID', FILTER_SANITIZE_STRING);
         $grade = filter_input(INPUT_POST, 'grade', FILTER_VALIDATE_INT);
         if(!empty($grade)) {
             if ($grade === false) {
@@ -4398,68 +4407,94 @@ if(isset($page_request))
         $yazogrenci = $sorguogrenci->fetch(PDO::FETCH_ASSOC);
         ?>
         <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="material-icons">close</i></button>
             <h4 class="modal-title">Editing Student: <?=$yazogrenci["name"]?></h4>
         </div>
         <div class="modal-body">
             <form id="Edit-Student-Form">
-                <div class="form-group">
-                    <label for="name">Name:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="name" id="name" type="text" value="<?=$yazogrenci["name"]?>">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="name" id="name" type="text" value="<?=$yazogrenci["name"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Name:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentname" id="parentname" type="text" value="<?=$yazogrenci["parent_name"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Name:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentname" id="parentname" type="text" value="<?=$yazogrenci["parent_name"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Primary E-Mail Address:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentemail" id="parentemail" type="text" value="<?=$yazogrenci["parent_email"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Primary E-Mail Address:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentemail" id="parentemail" type="text" value="<?=$yazogrenci["parent_email"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Secondary E-Mail Address:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentemail2" id="parentemail2" type="text" value="<?=$yazogrenci["parent_email2"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Secondary E-Mail Address:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentemail2" id="parentemail2" type="text" value="<?=$yazogrenci["parent_email2"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Primary Phone Number:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentphone" id="parentphone" type="text" value="<?=$yazogrenci["parent_phone"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Primary Phone Number:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentphone" id="parentphone" type="text" value="<?=$yazogrenci["parent_phone"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="name">Parent Secondary Phone Number:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name">Parent Secondary Phone Number:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="parentphone2" id="parentphone2" type="text" value="<?=$yazogrenci["parent_phone2"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="homeroom">Homeroom:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="homeroom">Homeroom:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="homeroom" id="homeroom" type="text" value="<?=$yazogrenci["homeroom"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="gender">Gender:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="gender" id="gender" type="text" value="<?=$yazogrenci["gender"]?>">
+                    <div class="col-md-6">
+                        <label for="gender">Gender:</label>
+                        <div class="form-group" style="height:34px!important;">
+                            <div class="form-line">
+                                <input name="gender" type="radio" id="radio_gender_male" class="with-gap radio-col-orange" value="Male" <?php if($yazogrenci["gender"] == 'Male') { echo 'checked'; }?>>
+                                <label for="radio_gender_male">Male</label>
+                                <input name="gender" type="radio" id="radio_gender_female" class="with-gap radio-col-orange" value="Female" <?php if($yazogrenci["gender"] == 'Female') { echo 'checked'; }?>>
+                                <label for="radio_gender_female">Female</label>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="stateID">StateID:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="stateID">StateID:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="stateID" id="stateID" type="text" value="<?=$yazogrenci["stateID"]?>">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="grade">Grade:</label>
-                    <div class="form-line">
-                        <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="grade">Grade:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="grade" id="grade" type="text" value="<?=$yazogrenci["grade"]?>" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <label>Classes:</label>
@@ -7321,7 +7356,8 @@ if(isset($page_request))
         $pointsByHourQuery = $DB_con->prepare("SELECT CONCAT(HOUR(date), ':00') as hour, SUM(CASE WHEN type = :type THEN point ELSE 0 END) as positivePoints, SUM(CASE WHEN type = :type2 THEN point ELSE 0 END) as negativePoints FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = :school $dateFilterQueryString GROUP BY hour");
         $pointsByHourQuery->execute(array(":type"=>1,":type2"=>2,":school"=>$uyeokul));
         $fetchPointsByHour = $pointsByHourQuery->fetchAll(PDO::FETCH_ASSOC);
-        $hours = array("07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00");
+        $hours = array("07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00");
+        // $hours = array("07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00");
         $newPointsByHour = [];
         foreach ($hours as $hour) {
             $newPointsByHour[] = searchArray('hour', $hour, $fetchPointsByHour) === null ? ["hour" => $hour, "positivePoints" => 0, "negativePoints" => 0] : $fetchPointsByHour[searchArray('hour', $hour, $fetchPointsByHour)];
@@ -7666,6 +7702,49 @@ if(isset($page_request))
             }
         </script>
         <?php
+    }
+    else if($page_request == "search-student")
+    {
+        if($uyerol == "student")
+        {
+            echo 0;
+            exit();
+        }
+        $searchString = filter_input(INPUT_GET, 'searchString', FILTER_SANITIZE_STRING);
+        $additionalQuery = [];
+        $result = ["items" => []];
+        $additionalQueryParams = array(":school"=>$uyeokul,":role"=>"student",":searchString"=>"%".$searchString."%");
+        if ($uyerol == 'teacher') {
+            $findTeacherClasses = $DB_con->prepare("SELECT id FROM classes WHERE FIND_IN_SET(:userId,teachers) AND school = :school AND status = :status");
+            $findTeacherClasses->execute(array(":userId" => $uyevtid, ":school" => $uyeokul, ":status" => 1));
+            if ($findTeacherClasses->rowCount() > 0) {
+                $i = 0;
+                while($fetchTeacherClasses = $findTeacherClasses->fetch(PDO::FETCH_ASSOC)) {
+                    $i++;
+                    $additionalQuery[] = "FIND_IN_SET(:classId".$i.", classes)";
+                    $additionalQueryParams[':classId'.$i] = $fetchTeacherClasses['id'];
+                }
+            }
+        }
+        $searchStudent = $DB_con->prepare("SELECT name,avatar,classes FROM users WHERE schools = :school AND role = :role AND name LIKE :searchString" . (count($additionalQuery) > 0 ? " AND (" . implode(" OR ", $additionalQuery) . ")" : ""));
+        $searchStudent->execute(count($additionalQuery) == 0 ? array(":school"=>$uyeokul,":role"=>"student",":searchString"=>"%".$searchString."%") : $additionalQueryParams);
+        if ($searchStudent->rowCount() > 0) {
+            while($fetchStudent = $searchStudent->fetch(PDO::FETCH_ASSOC)) {
+                foreach (explode(",", $fetchStudent['classes']) as $class) {
+                    if (!empty($class)) {
+                        $findClass = $DB_con->prepare("SELECT name FROM classes WHERE id = :id AND school = :school AND status = :status");
+                        $findClass->execute(array(':id'=>$class,':school'=>$uyeokul,':status'=>1));
+                        $fetchClass = $findClass->fetch(PDO::FETCH_ASSOC);
+                        $result["items"][] = [
+                            'name' => $fetchStudent['name'],
+                            'avatar' => $fetchStudent['avatar'],
+                            'class' => ['name' => $fetchClass['name'], 'id' => $class]
+                        ];
+                    }
+                }
+            }
+        }
+        echo json_encode($result);
     }
 }
 ?>
