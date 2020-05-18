@@ -1,14 +1,14 @@
 <?php
-/*
-if(!defined('VAL3')) {
-	die('Security');
+if(!defined('AJAX') && !defined('VAL2')) {
+    die('Security');
 }
-define('VAL4', TRUE);
-*/
-$DB_host = "localhost";
-$DB_user = "root";
-$DB_pass = "";
-$DB_name = "sbm";
+define('VAL3', TRUE);
+require_once("settings.php");
+
+$DB_host = $databaseSettings['host'];
+$DB_user = $databaseSettings['user'];
+$DB_pass = $databaseSettings['password'];
+$DB_name = $databaseSettings['databaseName'];
 
 try
 {
@@ -22,32 +22,32 @@ catch(PDOException $e)
     echo $e->getMessage();
 }
 
-define('GOOGLE_CLIENT_ID', '131963723658-22e1k2o18q3595j0lp8qnq10cvkndfr4.apps.googleusercontent.com');
-define('GOOGLE_CLIENT_SECRET', 'AI91AZm8xo0Q50pt2GQ2qbA_');
+define('GOOGLE_CLIENT_ID', $googleSettings['GOOGLE_CLIENT_ID']);
+define('GOOGLE_CLIENT_SECRET', $googleSettings['GOOGLE_CLIENT_SECRET']);
 if(isset($base_request))
 {
 	if($base_request == "signup")
 	{
-		define('GOOGLE_REDIRECT_URL', 'http://localhost/sbm/signup-r');
+		define('GOOGLE_REDIRECT_URL', $companyInformations['companyURL'].'signup-r');
 	}
 	else if($base_request == "signin")
 	{
-		define('GOOGLE_REDIRECT_URL', 'http://localhost/sbm/signin');
+		define('GOOGLE_REDIRECT_URL', $companyInformations['companyURL'].'signin');
 	}
     else if($base_request == "gc")
     {
-        define('GOOGLE_REDIRECT_URL', 'http://localhost/sbm/sync-gc');
+        define('GOOGLE_REDIRECT_URL', $companyInformations['companyURL'].'sync-gc');
     }
 }
 else
 {
-	define('GOOGLE_REDIRECT_URL', 'http://localhost/sbm/signin');
+	define('GOOGLE_REDIRECT_URL', $companyInformations['companyURL'].'signin');
 }
 
 require_once __DIR__ . '/google-api-php-client/vendor/autoload.php';
 
 $gClient = new Google_Client();
-$gClient->setApplicationName('Student Behavior Management');
+$gClient->setApplicationName($googleSettings['APP_NAME']);
 $gClient->setClientId(GOOGLE_CLIENT_ID);
 $gClient->setClientSecret(GOOGLE_CLIENT_SECRET);
 $gClient->setRedirectUri(GOOGLE_REDIRECT_URL);
@@ -71,15 +71,5 @@ else
 $google_oauthV2 = new Google_Service_Oauth2($gClient);
 $classroom = new Google_Service_Classroom($gClient);
 
-date_default_timezone_set('America/New_York');
-
-/*
-date_default_timezone_set("Europe/Istanbul");
-
-define("SECURE", FALSE);
-if(isset($base_request) && $base_request == "admin")
-{
-	$admin = new ADMIN($DB_con);
-}
-*/
+date_default_timezone_set($companyInformations['timeZone']);
 ?>

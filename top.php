@@ -1,4 +1,8 @@
 <?php
+if(!defined('VAL1')) {
+    die('Security');
+}
+define('VAL2', TRUE);
 $page_request = filter_input(INPUT_GET, 'pr', FILTER_SANITIZE_STRING);
 if($page_request == 'sync-gc') {
     $base_request = "gc";
@@ -57,17 +61,21 @@ else
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
-		<meta name="description" content="User panel of Student Behavior Management">
-		<meta name="author" content="Student Behavior Management">
+		<meta name="description" content="User panel of <?=$companyInformations['companyName']?>">
+		<meta name="author" content="<?=$companyInformations['companyName']?>">
 		<meta name="sbmtoken" content="<?=$sbmtoken?>">
-		<title>Home - Student Behavior Management</title>
+        <?php if(isset($page_request) && $page_request == 'class') { ?>
+            <title><?=$yazsinifrenk['name']?> - <?=$companyInformations['companyName']?></title>
+        <?php } else { ?>
+            <title><?=$companyInformations['companyName']?></title>
+        <?php } ?>
 		<link href="img/favicon.png" rel="icon" type="image/png">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700&subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">
 
 		<link href="plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
-        <?php if($page_request == 'import-student' || $page_request == 'class') { ?><link href="plugins/bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet" /><?php } ?>
+        <?php if(!isset($page_request) || $page_request == 'import-student' || $page_request == 'class' || $page_request == 'report') { ?><link href="plugins/bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet" /><?php } ?>
 
 		<link href="plugins/node-waves/waves.min.css" rel="stylesheet" />
 
@@ -79,7 +87,7 @@ else
 
         <link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" />
 
-        <?php if($page_request == "report" || $page_request == "class" || $page_request == "redeem-items") { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
+        <?php if(!isset($page_request) || $page_request == "report" || $page_request == "class" || $page_request == "redeem-items") { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
 
         <?php if($page_request == "report" || $page_request == "stats") { ?><link href="plugins/jquery-datepicker/datepicker.min.css" rel="stylesheet" /><?php } ?>
 	</head>
@@ -129,7 +137,7 @@ else
                     ?>
 				</div>
                 <?php
-                if($sbmbaslik != "")
+                if($sbmbaslik != "" && $uyerol == 'teacher')
                 {
                     ?>
                 <div class="class-tab-nav">
@@ -142,7 +150,7 @@ else
                 }
                 ?>
                 <ul class="nav navbar-nav navbar-right">
-                    <?php if($uyerol != "student") { ?>
+                    <?php if($uyerol != "student" && !isset($page_request)) { ?>
                     <li><a href="javascript:void(0);" class="js-search" data-close="true"><i class="material-icons">search</i></a></li>
                     <?php } ?>
                     <li><a href="javascript:;" id="fullscreen-toggle" class="hidden-xs hidden-sm"><i class="material-icons">fullscreen</i></a></li>

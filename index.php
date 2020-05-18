@@ -1,5 +1,5 @@
 <?php
-//define('VAL1', TRUE);
+define('VAL1', TRUE);
 require_once("top.php");
 if (!isset($page_request)) {
     ?>
@@ -315,83 +315,143 @@ if (!isset($page_request)) {
                 $.ajaxSetup({
                     headers: {'sbmtoken': $('meta[name="sbmtoken"]').attr('content')}
                 });
-                $.ajax(
-                    {
-                        url: "admin-logon-records",
-                        type: "GET",
-                        contentType: false,
-                        cache: false,
-                        processData: false,
-                        success: function (data) {
-                            $("#uye-giris-kayitlari").html(data);
+                $(".autocomplete").autocomplete({
+                    source: function(request, response) {
+                        $.ajax({
+                            url: "search-student",
+                            data: {
+                                searchString: request.term
+                            },
+                            dataType: 'json'
+                        }).done(function(data) {
+                            if (data.items && data.items.length) {
+                                response($.map(data.items, function(item) {
+                                    return item;
+                                }));
+                            } else if (data.items && !data.items.length) {
+                                response([{notFound: true}]);
+                            }
+                        });
+                    },
+                    delay: 500,
+                    minLength: 1,
+                    close: function(event, ui) {
+                        var input_length = $('.autocomplete').val().length;
+                        if (input_length !== 0) {
+                            $("ul.ui-autocomplete, .ui-widget-content").filter(':hidden').show();
+                        } else if (input_length === 0) {
+                            $('.autocomplete').autocomplete('close');
                         }
-                    });
-                $('body').on("click", '.sayfala-buton2', function (event) {
-                    var node = this.id;
-
-                    var regexp = /[^0-9]/g;
-                    var regexp2 = /[^a-z]/g;
-
-                    var siralama = $("select#siralama2").val();
-                    var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-
-                    $.ajax(
-                        {
-                            url: "admin-logon-records?sayfa=" + node.replace(regexp, '') + "&siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
-                            type: "GET",
-                            contentType: false,
-                            cache: false,
-                            processData: false,
-                            success: function (data) {
-                                $("#uye-giris-kayitlari").html(data);
-                            }
-                        });
-                });
-                $('body').on("change", 'select#siralama2', function (event) {
-                    var regexp = /[^0-9]/g;
-                    var regexp2 = /[^a-z]/g;
-
-                    var siralama = $("select#siralama2").val();
-                    var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-
-                    $.ajax(
-                        {
-                            url: "admin-logon-records?siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
-                            type: "GET",
-                            contentType: false,
-                            cache: false,
-                            processData: false,
-                            success: function (data) {
-                                $("#uye-giris-kayitlari").html(data);
-                            }
-                        });
-                });
-                $('body').on("click", '.filtre-buton2', function (event) {
-                    var regexp = /[^0-9]/g;
-                    var regexp2 = /[^a-z]/g;
-
-                    var siralama = $("select#siralama2").val();
-                    var filtre_durum = $("input[name='filtre_durum']:checked").attr("id");
-
-                    $.ajax(
-                        {
-                            url: "admin-logon-records?siralama=" + siralama.replace(regexp, '') + "&filtre_durum=" + filtre_durum.replace(regexp2, ''),
-                            type: "GET",
-                            contentType: false,
-                            cache: false,
-                            processData: false,
-                            success: function (data) {
-                                $("#uye-giris-kayitlari").html(data);
-                            }
-                        });
-                });
+                    }
+                }).data("ui-autocomplete")._renderItem = function (ul, item) {
+                    if (item.notFound) {
+                        var inner_html = '<div class="media">Not found</div>';
+                    } else {
+                        var inner_html = '<a href="report-' + item.class.id + '-' + item.id + '"><div class="media"><div class="media-left"><img src="' + item.avatar + '" class="studentAvatar"></div><div class="media-body"><h4 class="media-heading">' + item.name + '</h4><strong>Class: ' + item.class.name + '</div></div></a>';
+                    }
+                    return $("<li></li>")
+                        .data("ui-autocomplete-item", item)
+                        .append(inner_html)
+                        .appendTo(ul);
+                };
             });
         </script>
         <?php
     } else if($uyerol == "teacher") {
     ?>
+        <div class="modal fade in" id="modal-student" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content modal-student-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="modal-send-mail-to-parent" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content modal-send-mail-to-parent-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="modal-send-message" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content modal-send-message-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="modal-edit-student" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content modal-edit-student-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="modal-edit-behavior" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content modal-edit-behavior-content">
+
+                </div>
+            </div>
+        </div>
+        <div class="modal fade in" id="modal-add-behavior" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add Behavior</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="Add-Behavior-Form">
+                            <div class="form-group">
+                                <label for="name">Behavior Name:</label>
+                                <div class="form-line">
+                                    <input class="form-control" name="name" id="name" placeholder="Behavior name..."
+                                           type="text">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="type">Behavior Type:</label>
+                                <select class="form-control" name="type" id="type">
+                                    <option value="0">Choose...</option>
+                                    <option value="1">Positive</option>
+                                    <option value="2">Negative</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="point">Behavior Point(only number):</label>
+                                <div class="form-line">
+                                    <input class="form-control" name="point" id="point" placeholder="Behavior point..."
+                                           type="text">
+                                </div>
+                            </div>
+                            <input type="hidden" name="hidden_student_id" id="hidden_student_id">
+                            <input type="hidden" name="hidden_class_id" id="hidden_class_id">
+                            <div id="Add-Behavior-Result"></div>
+                            <div class="form-group">
+                                <button type="submit"
+                                        class="btn btn-primary btn-block btn-lg waves-effect Add-Behavior-Button">Add
+                                    Behavior
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+        <script src="https://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js"></script>
+        <script src="plugins/jquery-datatable/jquery.dataTables.min.js"></script>
+        <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
+        <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
+        <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
+        <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
+        <script src="plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
         <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+        <script src="js/student-point-actions.js"></script>
         <script>
         $(document).ready(function () {
             $(".autocomplete").autocomplete({
@@ -421,12 +481,15 @@ if (!isset($page_request)) {
                     } else if (input_length === 0) {
                         $('.autocomplete').autocomplete('close');
                     }
+                },
+                select: function(event, ui) {
+                    return false;
                 }
             }).data("ui-autocomplete")._renderItem = function (ul, item) {
                 if (item.notFound) {
                     var inner_html = '<div class="media">Not found</div>';
                 } else {
-                    var inner_html = '<a href="#" data-toggle="modal" data-target="#editProfileModal"><div class="media"><div class="media-left"><img src="' + item.avatar + '" class="studentAvatar"></div><div class="media-body"><h4 class="media-heading">' + item.name + '</h4><strong>Class: ' + item.class.name + '</div></div></a>';
+                    var inner_html = '<a href="#" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla" id="' + item.id + '" class_id="' + item.class.id + '"><div class="media"><div class="media-left"><img src="' + item.avatar + '" class="studentAvatar"></div><div class="media-body"><h4 class="media-heading">' + item.name + '</h4><strong>Class: ' + item.class.name + '</div></div></a>';
                 }
                 return $("<li></li>")
                     .data("ui-autocomplete-item", item)
@@ -687,90 +750,6 @@ if (!isset($page_request)) {
                                                 <span>Black</span>
                                             </div>
                                         </div>
-                                        <!--
-                                            <ul class="demo-choose-skin renksecx">
-                                                <li data-theme="red">
-                                                    <div class="red"></div>
-                                                    <span>Red</span>
-                                                </li>
-                                                <li data-theme="pink">
-                                                    <div class="pink"></div>
-                                                    <span>Pink</span>
-                                                </li>
-                                                <li data-theme="purple">
-                                                    <div class="purple"></div>
-                                                    <span>Purple</span>
-                                                </li>
-                                                <li data-theme="deep-purple">
-                                                    <div class="deep-purple"></div>
-                                                    <span>Deep Purple</span>
-                                                </li>
-                                                <li data-theme="indigo">
-                                                    <div class="indigo"></div>
-                                                    <span>Indigo</span>
-                                                </li>
-                                                <li data-theme="blue">
-                                                    <div class="blue"></div>
-                                                    <span>Blue</span>
-                                                </li>
-                                                <li data-theme="light-blue">
-                                                    <div class="light-blue"></div>
-                                                    <span>Light Blue</span>
-                                                </li>
-                                                <li data-theme="cyan">
-                                                    <div class="cyan"></div>
-                                                    <span>Cyan</span>
-                                                </li>
-                                                <li data-theme="teal">
-                                                    <div class="teal"></div>
-                                                    <span>Teal</span>
-                                                </li>
-                                                <li data-theme="green">
-                                                    <div class="green"></div>
-                                                    <span>Green</span>
-                                                </li>
-                                                <li data-theme="light-green">
-                                                    <div class="light-green"></div>
-                                                    <span>Light Green</span>
-                                                </li>
-                                                <li data-theme="lime">
-                                                    <div class="lime"></div>
-                                                    <span>Lime</span>
-                                                </li>
-                                                <li data-theme="yellow">
-                                                    <div class="yellow"></div>
-                                                    <span>Yellow</span>
-                                                </li>
-                                                <li data-theme="amber">
-                                                    <div class="amber"></div>
-                                                    <span>Amber</span>
-                                                </li>
-                                                <li data-theme="orange">
-                                                    <div class="orange"></div>
-                                                    <span>Orange</span>
-                                                </li>
-                                                <li data-theme="deep-orange">
-                                                    <div class="deep-orange"></div>
-                                                    <span>Deep Orange</span>
-                                                </li>
-                                                <li data-theme="brown">
-                                                    <div class="brown"></div>
-                                                    <span>Brown</span>
-                                                </li>
-                                                <li data-theme="grey">
-                                                    <div class="grey"></div>
-                                                    <span>Grey</span>
-                                                </li>
-                                                <li data-theme="blue-grey">
-                                                    <div class="blue-grey"></div>
-                                                    <span>Blue Grey</span>
-                                                </li>
-                                                <li data-theme="black">
-                                                    <div class="black"></div>
-                                                    <span>Black</span>
-                                                </li>
-                                            </ul>
-                                            -->
                                         <input type="hidden" name="class_color" id="class_color">
                                     </div>
                                     <?php
@@ -942,7 +921,7 @@ if (!isset($page_request)) {
                                     <div class="form-group">
                                         <label for="stateID">StateID:</label>
                                         <div class="form-line">
-                                            <input class="form-control" name="stateID" id="stateID" type="text" placeholder="State id..." oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                                            <input class="form-control" name="stateID" id="stateID" type="text" placeholder="State id...">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -2296,7 +2275,8 @@ if (!isset($page_request)) {
                             <div class="get-students"></div>
                         </div>
                         <div role="tabpanel" class="tab-pane fade" id="groups">
-                            <button class="btn btn-default btn-block btn-lg waves-effect" id="createGroup" data-toggle="modal" data-target="#createGroupModal" data-class="<?=$sinifid?>" ><i class="material-icons">add</i><span>Create Group</span></button>
+                            <button class="btn btn-default btn-block btn-lg waves-effect hidden-md hidden-lg m-b-10" id="createGroup" data-toggle="modal" data-target="#createGroupModal" data-class="<?=$sinifid?>" ><i class="material-icons">add</i><span>Create Group</span></button>
+                            <button type="button" class="btn btn-default btn-circle-lg waves-effect waves-circle waves-float visible-lg fixedCreateGroupButton" id="createGroup" data-toggle="modal" data-target="#createGroupModal" data-class="<?=$sinifid?>"><i class="material-icons">add</i></button>
                             <div class="get-groups"></div>
                         </div>
                     </div>
@@ -2550,7 +2530,6 @@ if (!isset($page_request)) {
                 </div>
             </div>
         </nav>
-
         <script src="plugins/jquery/jquery.min.js"></script>
         <script src="plugins/jquery/jquery-ui.min.js"></script>
         <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
@@ -6522,11 +6501,13 @@ if (!isset($page_request)) {
                             <div class="panel-heading">
                                 <div class="media">
                                     <div class="media-left">
-                                        <a href="javascript:;"><img src="<?= $yazogrencix["avatar"] ?>"></a>
+                                        <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla"
+                                           id="<?= $ogrenciid ?>" class_id="<?= $sinifid ?>"><img src="<?= $yazogrencix["avatar"] ?>"></a>
                                     </div>
                                     <div class="media-body">
                                         <h4 class="media-heading">
-                                            <a href="javascript:;"><?= $yazogrencix["name"] ?></a><br>
+                                            <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla"
+                                               id="<?= $ogrenciid ?>" class_id="<?= $sinifid ?>"><?= $yazogrencix["name"] ?></a><br>
                                             <small><?= $yazogrencix["email"] ?></small>
                                         </h4>
                                     </div>
@@ -6623,10 +6604,94 @@ if (!isset($page_request)) {
             </div>
         </div>
     </section>
+    <div class="modal fade in" id="modal-student" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content modal-student-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="modal-send-mail-to-parent" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content modal-send-mail-to-parent-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="modal-send-message" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content modal-send-message-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="modal-edit-student" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content modal-edit-student-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="modal-edit-behavior" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content modal-edit-behavior-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade in" id="modal-add-behavior" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Add Behavior</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="Add-Behavior-Form">
+                        <div class="form-group">
+                            <label for="name">Behavior Name:</label>
+                            <div class="form-line">
+                                <input class="form-control" name="name" id="name" placeholder="Behavior name..."
+                                       type="text">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Behavior Type:</label>
+                            <select class="form-control" name="type" id="type">
+                                <option value="0">Choose...</option>
+                                <option value="1">Positive</option>
+                                <option value="2">Negative</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="point">Behavior Point(only number):</label>
+                            <div class="form-line">
+                                <input class="form-control" name="point" id="point" placeholder="Behavior point..."
+                                       type="text">
+                            </div>
+                        </div>
+                        <input type="hidden" name="hidden_student_id" id="hidden_student_id">
+                        <input type="hidden" name="hidden_class_id" id="hidden_class_id">
+                        <div id="Add-Behavior-Result"></div>
+                        <div class="form-group">
+                            <button type="submit"
+                                    class="btn btn-primary btn-block btn-lg waves-effect Add-Behavior-Button">Add
+                                Behavior
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="plugins/jquery/jquery.min.js"></script>
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="https://cdn.jsdelivr.net/npm/promise-polyfill@7.1.0/dist/promise.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="plugins/jquery-sparkline/jquery.sparkline.js"></script>
     <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
@@ -6635,6 +6700,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
     <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
     <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
+    <script src="js/student-point-actions.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -6666,7 +6733,7 @@ if (!isset($page_request)) {
                                 sliceColors: ['#4CAF50', '#F44336']
                             });
                         });
-                        $('.report-behavior-list').DataTable({
+                        $('.report-behavior-list2').DataTable({
                             responsive: {
                                 details: {
                                     display: $.fn.dataTable.Responsive.display.modal({
@@ -6721,7 +6788,7 @@ if (!isset($page_request)) {
                                         sliceColors: ['#4CAF50', '#F44336']
                                     });
                                 });
-                                $('.report-behavior-list').DataTable({
+                                $('.report-behavior-list2').DataTable({
                                     responsive: {
                                         details: {
                                             display: $.fn.dataTable.Responsive.display.modal({
@@ -6779,7 +6846,7 @@ if (!isset($page_request)) {
                                         sliceColors: ['#4CAF50', '#F44336']
                                     });
                                 });
-                                $('.report-behavior-list').DataTable({
+                                $('.report-behavior-list2').DataTable({
                                     responsive: {
                                         details: {
                                             display: $.fn.dataTable.Responsive.display.modal({
@@ -6837,7 +6904,7 @@ if (!isset($page_request)) {
                                         sliceColors: ['#4CAF50', '#F44336']
                                     });
                                 });
-                                $('.report-behavior-list').DataTable({
+                                $('.report-behavior-list2').DataTable({
                                     responsive: {
                                         details: {
                                             display: $.fn.dataTable.Responsive.display.modal({

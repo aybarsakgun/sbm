@@ -1,43 +1,10 @@
 <?php
-	/*
-	if(!defined('VAL4')) {
+	if(!defined('AJAX') && !defined('VAL3')) {
 	   die('Security');
 	}
 	
-	define('VAL5', TRUE);
-	*/
-	use PHPMailer\PHPMailer\PHPMailer;
-	use PHPMailer\PHPMailer\Exception;
-	require 'PHPMailer/src/Exception.php';
-	require 'PHPMailer/src/PHPMailer.php';
-	require 'PHPMailer/src/SMTP.php';
-	function SendMail($uMail,$uName,$Message,$Subject)
-	{						
-		$mail = new PHPMailer(true);
-		$mail->isSMTP(); 
-		$mail->SMTPDebug  = 0;                     
-		$mail->SMTPAuth   = true;      	
-		$mail->SMTPSecure = "ssl";                 
-		$mail->Host       = "bree.guzelhosting.com";      
-		$mail->Port       = 465;             
-		$mail->addAddress($uMail, $uName);
-		$mail->Username = "sbm@aybarsakgun.com";  
-		$mail->Password = "student123bm.";            
-		$mail->setFrom('sbm@aybarsakgun.com','Student Behavior Management');
-		$mail->addReplyTo("sbm@aybarsakgun.com","Student Behavior Management");
-		$mail->Subject = $Subject;
-		$mail->CharSet = "UTF-8";
-		$mail->AddEmbeddedImage('img/sbmlogo.png', 'logo');
-		$mail->msgHTML($Message);
-		if(!$mail->send())
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
+	define('VAL4', TRUE);
+	require_once 'settings.php';
 	function SessionStartUser() 
 	{
 		$session_name = 'sbmuser';

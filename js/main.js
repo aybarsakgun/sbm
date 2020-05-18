@@ -168,6 +168,14 @@ $.AdminBSB.search = {
                 _this.hideSearchBar();
             }
         });
+        $searchBar.find('input[type="text"]').on('blur', function (e) {
+            $("ul.ui-autocomplete, .ui-widget-content").hide();
+        });
+        $searchBar.find('input[type="text"]').on('focus', function (e) {
+            if ($('ul.ui-autocomplete, .ui-widget-content > li').length !== 0) {
+                $("ul.ui-autocomplete, .ui-widget-content").show();
+            }
+        });
     },
     showSearchBar: function () {
         $searchBar.addClass('open');
@@ -178,8 +186,9 @@ $.AdminBSB.search = {
     },
     hideSearchBar: function () {
         $searchBar.removeClass('open');
-        $searchBar.find('input[type="text"]').val('');
-        $('.autocomplete').autocomplete('close');
+        // $searchBar.find('input[type="text"]').val('');
+        // $('.autocomplete').autocomplete('close');
+        $("ul.ui-autocomplete, .ui-widget-content").hide();
     }
 };
 $.AdminBSB.navbar = {

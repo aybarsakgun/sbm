@@ -1,4 +1,5 @@
 <?php
+define('AJAX', TRUE);
 $base_request = "signin";
 require_once 'database.php';
 require_once 'functions.php';
@@ -86,9 +87,9 @@ else
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<meta name="description" content="Sign in panel of Student Behavior Management">
-		<meta name="author" content="Student Behavior Management">
-		<title>Sign In - Student Behavior Management</title>
+		<meta name="description" content="Sign in panel of <?=$companyInformations['companyName']?>">
+		<meta name="author" content="<?=$companyInformations['companyName']?>">
+		<title>Sign In - <?=$companyInformations['companyName']?></title>
 		<link href="img/favicon.png" rel="icon" type="image/png">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700&subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">
@@ -130,7 +131,7 @@ else
 					<?php
 					}
 					?>
-					<div class="alert bg-orange">Student Behavior Management sistemine kayıtlı Google hesabınızla giriş yapabilirsiniz.</div>
+					<div class="alert bg-orange"><?=$companyInformations['companyName']?> sistemine kayıtlı Google hesabınızla giriş yapabilirsiniz.</div>
 					<div class="btn-wrapper text-center">
 						<a href="<?=$signinlink?>" class="btn btn-block g-sign-in-button">
 							<img src="img/google.svg" width="22"><strong class="p-l-5">Sign in with Google</strong>

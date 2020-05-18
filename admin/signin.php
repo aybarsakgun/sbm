@@ -1,4 +1,5 @@
 <?php
+define('AJAX', TRUE);
 require_once 'class.admin.php';
 SessionStartAdmin();
 if(empty($_SESSION['sbmt'])) {
@@ -17,10 +18,10 @@ $base_request = filter_input(INPUT_GET, 'br', FILTER_SANITIZE_STRING);
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<meta name="description" content="Admin panel of Student Behavior Management">
-		<meta name="author" content="Student Behavior Management">
+		<meta name="description" content="Admin panel of <?=$companyInformations['companyName']?>">
+		<meta name="author" content="<?=$companyInformations['companyName']?>">
 		<meta name="sbmtoken" content="<?=$sbmtoken?>">
-		<title>Admin Panel - Student Behavior Management</title>
+		<title>Admin Panel - <?=$companyInformations['companyName']?></title>
 		<link href="../img/favicon.png" rel="icon" type="image/png">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700&subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">

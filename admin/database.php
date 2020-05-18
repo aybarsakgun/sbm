@@ -4,10 +4,10 @@ if(!defined('VAL3')) {
 }
 define('VAL4', TRUE);
 
-$DB_host = "localhost";
-$DB_user = "root";
-$DB_pass = "";
-$DB_name = "sbm";
+$DB_host = $databaseSettings['host'];
+$DB_user = $databaseSettings['user'];
+$DB_pass = $databaseSettings['password'];
+$DB_name = $databaseSettings['databaseName'];
 
 try
 {
@@ -21,7 +21,7 @@ catch(PDOException $e)
     echo $e->getMessage();
 }
 
-//date_default_timezone_set("Europe/Istanbul");
+date_default_timezone_set($companyInformations['timeZone']);
 
 define("SECURE", FALSE);
 if(isset($base_request) && $base_request == "admin")

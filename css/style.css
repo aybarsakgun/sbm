@@ -8126,7 +8126,7 @@ fieldset[disabled] .form-control {
   position: fixed;
   top: -100px;
   left: 0;
-  z-index: 9999999;
+  z-index: 13;
   width: 100%;
   -moz-transition: 0.25s;
   -o-transition: 0.25s;
@@ -8655,16 +8655,16 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>td.child { white-space: normal!imp
 .group-board {
   /*background: #2c7cbc;*/
   display: flex;
-  margin-top: 12px;
+  /*margin-top: 12px;*/
   padding-bottom: 12px;
   padding-right: 15px;
   padding-left: 15px;
   border-radius: 3px;
   /*width: 550px;*/
   width: 100%;
-  height: calc(100vh - 186px);
+  height: calc(100vh - 130px);
   white-space: nowrap;
-  overflow: scroll;
+  overflow: auto;
   /*min-height: 300px;*/
 }
 
@@ -8900,13 +8900,9 @@ time.icon span {
   margin-top: 2px;
   list-style: none;
   background-color: #ffffff;
-  border: 1px solid #ddd;
-  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-  -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-}
-.ui-autocomplete {
   width: 100%!important;
+  max-height: 300px;
+  overflow-x: auto;
 }
 .ui-autocomplete > li.ui-state-focus {
   background-color: #DDD;
@@ -8944,4 +8940,13 @@ time.icon span {
 }
 .ui-autocomplete a:hover {
   text-decoration: none!important;
+}
+button.fixedCreateGroupButton {
+  right: 13px;
+  bottom: 60px;
+  position: fixed;
+  z-index: 99999999;
+}
+.group-give-points {
+  cursor: pointer;
 }

@@ -1,4 +1,5 @@
 <?php
+define('AJAX', TRUE);
 $base_request = "signup";
 $user_role = $_GET["ur"];
 require_once 'database.php'; // SIGN UP ERROR NULL ISE ŞART KOS Aşağıdakilere 
@@ -160,9 +161,9 @@ else
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="Sign up panel of Student Behavior Management">
-        <meta name="author" content="Student Behavior Management">
-        <title>Sign Up - Student Behavior Management</title>
+        <meta name="description" content="Sign up panel of <?=$companyInformations['companyName']?>">
+        <meta name="author" content="<?=$companyInformations['companyName']?>">
+        <title>Sign Up - <?=$companyInformations['companyName']?></title>
         <link href="img/favicon.png" rel="icon" type="image/png">
         <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&subset=latin,cyrillic-ext" rel="stylesheet" type="text/css">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" type="text/css">
@@ -204,7 +205,7 @@ else
                         <?php
                     }
                     ?>
-                    <div class="alert bg-orange">Student Behavior Management sistemine kayıtlı Google hesabınızla giriş yapabilirsiniz.</div>
+                    <div class="alert bg-orange"><?=$companyInformations['companyName']?> sistemine kayıtlı Google hesabınızla giriş yapabilirsiniz.</div>
                     <div class="btn-wrapper text-center">
                         <a href="<?=$signuplink.'&login_hint='.$email_decode?>" class="btn btn-block g-sign-in-button">
                             <img src="img/google.svg" width="22"><strong class="p-l-5">Sign up with Google</strong>

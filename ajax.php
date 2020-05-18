@@ -1,4 +1,5 @@
 <?php
+define('AJAX', TRUE);
 require_once 'database.php';
 require_once 'functions.php';
 SessionStartUser();
@@ -366,71 +367,8 @@ if(isset($page_request))
             if($ekleogrenci->execute(array(":name"=>$student_name,":email"=>$student_email,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentname,":parentemail"=>$parentemail,":parentemail2"=>$parentemail2,":parentphone"=>$parentphone,":parentphone2"=>$parentphone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade)))
             {
                 $mail_encoded = rtrim(strtr(base64_encode($student_email), '+/', '-_'), '=');
-                $message = '
-                <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-                <html>
-                <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-                <title>You have been invited as a student - Student Behavior Management</title>
-                <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-                <style type="text/css">
-                html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-                    @media only screen and (min-device-width: 750px) {
-                        .table750 {width: 750px !important;}
-                    }
-                    @media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-                      table[class="table750"] {width: 100% !important;}
-                      .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-                      .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-                      .mob_left {text-align: left !important;}
-                      .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-                      .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-                      .mob_center {text-align: center !important;}
-                      .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-                      .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-                      .mob_div {display: block !important;}
-                    }
-                   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-                      .mod_div {display: block !important;}
-                   }
-                    .table750 {width: 750px;}
-                </style>
-                </head>
-                <body style="margin: 0; padding: 0;">
-
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-                    <tr>
-                    <td align="center" valign="top">   			
-                        <!--[if (gte mso 9)|(IE)]>
-                         <table border="0" cellspacing="0" cellpadding="0">
-                         <tr><td align="center" valign="top" width="750"><![endif]-->
-                        <table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-                            <tr>
-                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                                <td align="center" valign="top" style="background: #ffffff;">
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                     <tr>
-                                        <td align="right" valign="top">
-                                           <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-                                        </td>
-                                     </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                     <tr>
-                                        <td align="left" valign="top">
-                                           <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-                                           <a href="#" target="_blank" style="display: block; max-width: 128px;">
-                                              <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-                                           </a>
-                                           <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-                                        </td>
-                                     </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+                $subject = "You've been invited as a student";
+                $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
                                      <tr>
                                         <td align="left" valign="top">
                                            <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 52px; line-height: 60px; font-weight: 300; letter-spacing: -1.5px;">
@@ -444,7 +382,7 @@ if(isset($page_request))
                                            <table class="mob_btn" cellpadding="0" cellspacing="0" border="0" style="background: #27cbcc; border-radius: 4px;">
                                               <tr>
                                                  <td align="center" valign="top"> 
-                                                    <a href="http://localhost/sbm/signup-'.$mail_encoded.'-st-'.$invite_tokenxd.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
+                                                    <a href="'.$companyInformations['companyURL'].'signup-'.$mail_encoded.'-st-'.$invite_tokenxd.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                        <font face="Source Sans Pro, sans-serif" color="#ffffff" style="font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                           <span style="font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">Tıkla!</span>
                                                        </font>
@@ -455,44 +393,8 @@ if(isset($page_request))
                                            <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
                                         </td>
                                      </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                     <tr>
-                                        <td align="center" valign="top">
-                                           <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                              <tr>
-                                                 <td align="center" valign="top">
-                                                    <div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-                                                    <font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-                                                    </font>
-                                                    <div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-                                                    <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-                                                    </font>
-                                                    <div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-                                                 </td>
-                                              </tr>
-                                           </table>
-                                        </td>
-                                     </tr>
-                                  </table>  
-
-                               </td>
-                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                            </tr>
-                         </table>
-                         <!--[if (gte mso 9)|(IE)]>
-                         </td></tr>
-                         </table><![endif]-->
-                      </td>
-                   </tr>
-                </table>
-                </body>
-                </html>
-                ';
-                $subject = "You've been invited as a student - Student Behavior Management";
+                                  </table>';
+                $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
                 SendMail($student_email,$student_name,$message,$subject);
                 echo 1;
                 exit();
@@ -617,71 +519,8 @@ if(isset($page_request))
                 $ekleogrenci->execute(array(":name"=>$fullName,":email"=>$eMail,":classes"=>$siniflar,":schools"=>$uyeokul,":role"=>"student",":invitetoken"=>$invite_tokenxd,":invitedate"=>$now,":avatar"=>$destin,":registertype"=>2,":parentname"=>$parentName,":parentemail"=>$parentEmail,":parentemail2"=>$parentEmail2,":parentphone"=>$parentPhone,":parentphone2"=>$parentPhone2,":homeroom"=>$homeroom,":gender"=>$gender,":stateID"=>$stateID,":grade"=>$grade));
 
                 $mail_encoded = rtrim(strtr(base64_encode($eMail), '+/', '-_'), '=');
-                $message = '
-                <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-                <html>
-                <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-                <title>You have been invited as a student - Student Behavior Management</title>
-                <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-                <style type="text/css">
-                html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-                    @media only screen and (min-device-width: 750px) {
-                        .table750 {width: 750px !important;}
-                    }
-                    @media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-                      table[class="table750"] {width: 100% !important;}
-                      .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-                      .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-                      .mob_left {text-align: left !important;}
-                      .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-                      .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-                      .mob_center {text-align: center !important;}
-                      .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-                      .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-                      .mob_div {display: block !important;}
-                    }
-                   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-                      .mod_div {display: block !important;}
-                   }
-                    .table750 {width: 750px;}
-                </style>
-                </head>
-                <body style="margin: 0; padding: 0;">
-
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-                    <tr>
-                    <td align="center" valign="top">   			
-                        <!--[if (gte mso 9)|(IE)]>
-                         <table border="0" cellspacing="0" cellpadding="0">
-                         <tr><td align="center" valign="top" width="750"><![endif]-->
-                        <table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-                            <tr>
-                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                                <td align="center" valign="top" style="background: #ffffff;">
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                     <tr>
-                                        <td align="right" valign="top">
-                                           <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-                                        </td>
-                                     </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                     <tr>
-                                        <td align="left" valign="top">
-                                           <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-                                           <a href="#" target="_blank" style="display: block; max-width: 128px;">
-                                              <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-                                           </a>
-                                           <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-                                        </td>
-                                     </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+                $subject = "You've been invited as a student";
+                $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
                                      <tr>
                                         <td align="left" valign="top">
                                            <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 52px; line-height: 60px; font-weight: 300; letter-spacing: -1.5px;">
@@ -695,7 +534,7 @@ if(isset($page_request))
                                            <table class="mob_btn" cellpadding="0" cellspacing="0" border="0" style="background: #27cbcc; border-radius: 4px;">
                                               <tr>
                                                  <td align="center" valign="top"> 
-                                                    <a href="http://localhost/sbm/signup-'.$mail_encoded.'-st-'.$invite_tokenxd.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
+                                                    <a href="'.$companyInformations['companyURL'].'signup-'.$mail_encoded.'-st-'.$invite_tokenxd.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                        <font face="Source Sans Pro, sans-serif" color="#ffffff" style="font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                           <span style="font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">Tıkla!</span>
                                                        </font>
@@ -706,44 +545,8 @@ if(isset($page_request))
                                            <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
                                         </td>
                                      </tr>
-                                  </table>
-
-                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                     <tr>
-                                        <td align="center" valign="top">
-                                           <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                              <tr>
-                                                 <td align="center" valign="top">
-                                                    <div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-                                                    <font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-                                                    </font>
-                                                    <div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-                                                    <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-                                                    </font>
-                                                    <div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-                                                 </td>
-                                              </tr>
-                                           </table>
-                                        </td>
-                                     </tr>
-                                  </table>  
-
-                               </td>
-                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                            </tr>
-                         </table>
-                         <!--[if (gte mso 9)|(IE)]>
-                         </td></tr>
-                         </table><![endif]-->
-                      </td>
-                   </tr>
-                </table>
-                </body>
-                </html>
-                ';
-                $subject = "You've been invited as a student - Student Behavior Management";
+                                  </table>';
+                $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
                 SendMail($eMail,$fullName,$message,$subject);
                 $addedStudent++;
             }
@@ -1135,71 +938,8 @@ if(isset($page_request))
                             $ogrenciekle = $DB_con->prepare("INSERT INTO users (google_id,name,email,classes,schools,role,invite_token,invite_date,avatar,register_type) VALUES (:gid,:name,:email,:classes,:schools,:role,:invitetoken,:invitedate,:avatar,:registertype)");
                             if ($ogrenciekle->execute(array(":gid" => $student->getUserId(), ":name" => $student->profile->name->getFullName(), ":email" => $student->profile->emailAddress, ":classes" => $yazsinifid["id"], ":schools" => $uyeokul, ":role" => "student", ":invitetoken" => $invite_token, ":invitedate" => $simdi, ":avatar" => $destin, ":registertype"=>1))) {
                                 $mail_encoded = rtrim(strtr(base64_encode($student->profile->emailAddress), '+/', '-_'), '=');
-                                $message = '
-                                <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-                                <html>
-                                <head>
-                                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-                                <title>You have been invited as a student - Student Behavior Management</title>
-                                <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-                                <style type="text/css">
-                                html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-                                    @media only screen and (min-device-width: 750px) {
-                                        .table750 {width: 750px !important;}
-                                    }
-                                    @media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-                                      table[class="table750"] {width: 100% !important;}
-                                      .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-                                      .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-                                      .mob_left {text-align: left !important;}
-                                      .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-                                      .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-                                      .mob_center {text-align: center !important;}
-                                      .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-                                      .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-                                      .mob_div {display: block !important;}
-                                    }
-                                   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-                                      .mod_div {display: block !important;}
-                                   }
-                                    .table750 {width: 750px;}
-                                </style>
-                                </head>
-                                <body style="margin: 0; padding: 0;">
-
-                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-                                    <tr>
-                                    <td align="center" valign="top">   			
-                                        <!--[if (gte mso 9)|(IE)]>
-                                         <table border="0" cellspacing="0" cellpadding="0">
-                                         <tr><td align="center" valign="top" width="750"><![endif]-->
-                                        <table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-                                            <tr>
-                                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                                                <td align="center" valign="top" style="background: #ffffff;">
-
-                                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                                     <tr>
-                                                        <td align="right" valign="top">
-                                                           <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-                                                        </td>
-                                                     </tr>
-                                                  </table>
-
-                                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                                     <tr>
-                                                        <td align="left" valign="top">
-                                                           <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-                                                           <a href="#" target="_blank" style="display: block; max-width: 128px;">
-                                                              <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-                                                           </a>
-                                                           <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-                                                        </td>
-                                                     </tr>
-                                                  </table>
-
-                                                  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+                                $subject = "You've been invited as a student";
+                                $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
                                                      <tr>
                                                         <td align="left" valign="top">
                                                            <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 52px; line-height: 60px; font-weight: 300; letter-spacing: -1.5px;">
@@ -1213,7 +953,7 @@ if(isset($page_request))
                                                            <table class="mob_btn" cellpadding="0" cellspacing="0" border="0" style="background: #27cbcc; border-radius: 4px;">
                                                               <tr>
                                                                  <td align="center" valign="top"> 
-                                                                    <a href="http://localhost/sbm/signup-' . $mail_encoded . '-st-' . $invite_token . '" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
+                                                                    <a href="'.$companyInformations['companyURL'].'signup-' . $mail_encoded . '-st-' . $invite_token . '" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                                        <font face="Source Sans Pro, sans-serif" color="#ffffff" style="font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
                                                                           <span style="font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">Tıkla!</span>
                                                                        </font>
@@ -1224,44 +964,8 @@ if(isset($page_request))
                                                            <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
                                                         </td>
                                                      </tr>
-                                                  </table>
-
-                                                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-                                                     <tr>
-                                                        <td align="center" valign="top">
-                                                           <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-                                                              <tr>
-                                                                 <td align="center" valign="top">
-                                                                    <div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-                                                                    <font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-                                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-                                                                    </font>
-                                                                    <div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-                                                                    <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-                                                                       <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-                                                                    </font>
-                                                                    <div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-                                                                 </td>
-                                                              </tr>
-                                                           </table>
-                                                        </td>
-                                                     </tr>
-                                                  </table>  
-
-                                               </td>
-                                               <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-                                            </tr>
-                                         </table>
-                                         <!--[if (gte mso 9)|(IE)]>
-                                         </td></tr>
-                                         </table><![endif]-->
-                                      </td>
-                                   </tr>
-                                </table>
-                                </body>
-                                </html>
-                                ';
-                                $subject = "You've been invited as a student - Student Behavior Management";
+                                                  </table>';
+                                $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
                                 SendMail($student->profile->emailAddress,$val2,$message,$subject);
                                 $eklenenogrenci++;
                             }
@@ -1360,27 +1064,29 @@ if(isset($page_request))
 		if($sorguogrenciler->rowCount() > 0)
 		{
 		    echo '<div class="row">';
-            $sorgupuansx = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE type = 1 AND class_id = :classid) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE type = 2 AND class_id = :classid2) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE class_id = :classid3) as toplampuans");
+            $sorgupuansx = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE type = 1 AND class_id = :classid $pointsByTimeQuery) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE type = 2 AND class_id = :classid2 $pointsByTimeQuery) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE class_id = :classid3 $pointsByTimeQuery) as toplampuans");
             $sorgupuansx->execute(array(":classid"=>$sinifid,":classid2"=>$sinifid,":classid3"=>$sinifid));
             $yazpuansx = $sorgupuansx->fetch(PDO::FETCH_ASSOC);
             $a = $yazpuansx["negatifpuans"];
             $b = $yazpuansx["pozitifpuans"];
             $c = $yazpuansx["toplampuans"];
 		    ?>
+            <?php if($yazsinifid["point_show"] != 3) { ?>
             <div class="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-xs-12">
                 <div class="info-box" style="margin-bottom:13px!important;">
                     <div class="icon">
                         <div class="chart chart-pie" id="whole-class" data-chartcolor="orange"><?= empty($b) ? "0" : abs($b) ?>,<?= empty($a) ? "0" : abs($a) ?></div>
                     </div>
                     <div class="content">
-                        <div class="text nowrapwithellipsis">WHOLE CLASS</div>
-                        <span class="label bg-green"><?= empty($b) ? "0" : $b ?></span>
-                        <span class="label bg-red"><?= empty($a) ? "0" : $a ?></span>
-                        <span class="label bg-blue"><?= empty($c) ? "0" : $c ?></span>
+                        <div class="text nowrapwithellipsis">ALL</div>
+                        <?php if($yazsinifid["point_show"] == 1) { ?><span class="label bg-green"><?= empty($b) ? "0" : $b ?></span><?php } ?>
+                        <?php if($yazsinifid["point_show"] == 1) { ?><span class="label bg-red"><?= empty($a) ? "0" : $a ?></span><?php } ?>
+                        <?php if($yazsinifid["point_show"] != 3) { ?><span class="label bg-blue"><?= empty($c) ? "0" : $c ?></span><?php } ?>
                     </div>
                 </div>
             </div>
             <?php
+            }
 		    $json_ogrenciler = "";
 			while($yazogrenciler = $sorguogrenciler->fetch(PDO::FETCH_ASSOC)) {
 			    if($yazsinifid["student_show"] == 2) {
@@ -2728,71 +2434,8 @@ if(isset($page_request))
             if($sorgu->execute(array(":name"=>$teacher_name,":email"=>$teacher_email,":schools"=>$uyeokul,":role"=>"teacher",":invitetoken"=>$invite_token,":invitedate"=>$now,":avatar"=>""))) //$destin
             {
                 $mail_encoded = rtrim(strtr(base64_encode($teacher_email), '+/', '-_'), '=');
-                $message = '
-				<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-				<html>
-				<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-				<title>You have been invited as a teacher - Student Behavior Management</title>
-				<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-				<style type="text/css">
-				html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-					@media only screen and (min-device-width: 750px) {
-						.table750 {width: 750px !important;}
-					}
-					@media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-					  table[class="table750"] {width: 100% !important;}
-					  .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-					  .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-					  .mob_left {text-align: left !important;}
-					  .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-					  .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-					  .mob_center {text-align: center !important;}
-					  .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-					  .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-					  .mob_div {display: block !important;}
-					}
-				   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-					  .mod_div {display: block !important;}
-				   }
-					.table750 {width: 750px;}
-				</style>
-				</head>
-				<body style="margin: 0; padding: 0;">
-
-				<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-					<tr>
-					<td align="center" valign="top">   			
-						<!--[if (gte mso 9)|(IE)]>
-						 <table border="0" cellspacing="0" cellpadding="0">
-						 <tr><td align="center" valign="top" width="750"><![endif]-->
-						<table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-							<tr>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-								<td align="center" valign="top" style="background: #ffffff;">
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="right" valign="top">
-										   <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-									 <tr>
-										<td align="left" valign="top">
-										   <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-										   <a href="#" target="_blank" style="display: block; max-width: 128px;">
-											  <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-										   </a>
-										   <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+                $subject = "You've been invited as a teacher";
+                $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
 									 <tr>
 										<td align="left" valign="top">
 										   <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 52px; line-height: 60px; font-weight: 300; letter-spacing: -1.5px;">
@@ -2806,7 +2449,7 @@ if(isset($page_request))
 										   <table class="mob_btn" cellpadding="0" cellspacing="0" border="0" style="background: #27cbcc; border-radius: 4px;">
 											  <tr>
 												 <td align="center" valign="top"> 
-													<a href="http://localhost/sbm/signup-'.$mail_encoded.'-gc-'.$invite_token.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
+													<a href="'.$companyInformations['companyURL'].'signup-'.$mail_encoded.'-gc-'.$invite_token.'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
 													   <font face="Source Sans Pro, sans-serif" color="#ffffff" style="font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
 														  <span style="font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">Tıkla!</span>
 													   </font>
@@ -2817,44 +2460,8 @@ if(isset($page_request))
 										   <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
 										</td>
 									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="center" valign="top">
-										   <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-											  <tr>
-												 <td align="center" valign="top">
-													<div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-													</font>
-													<div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-													</font>
-													<div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-												 </td>
-											  </tr>
-										   </table>
-										</td>
-									 </tr>
-								  </table>  
-
-							   </td>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-							</tr>
-						 </table>
-						 <!--[if (gte mso 9)|(IE)]>
-						 </td></tr>
-						 </table><![endif]-->
-					  </td>
-				   </tr>
-				</table>
-				</body>
-				</html>
-				';
-                $subject = "You've been invited as a teacher - Student Behavior Management";
+								  </table>';
+                $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
                 if(SendMail($teacher_email,$teacher_name,$message,$subject))
                 {
                     echo 1;
@@ -2881,71 +2488,8 @@ if(isset($page_request))
                 exit();
             }
             $mail_encoded = rtrim(strtr(base64_encode($teacher_email), '+/', '-_'), '=');
-            $message = '
-			<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-			<html>
-			<head>
-			<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-			<title>You have been invited as a teacher - Student Behavior Management</title>
-			<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-			<style type="text/css">
-			html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-				@media only screen and (min-device-width: 750px) {
-					.table750 {width: 750px !important;}
-				}
-				@media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-				  table[class="table750"] {width: 100% !important;}
-				  .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-				  .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-				  .mob_left {text-align: left !important;}
-				  .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-				  .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-				  .mob_center {text-align: center !important;}
-				  .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-				  .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-				  .mob_div {display: block !important;}
-				}
-			   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-				  .mod_div {display: block !important;}
-			   }
-				.table750 {width: 750px;}
-			</style>
-			</head>
-			<body style="margin: 0; padding: 0;">
-
-			<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-				<tr>
-				<td align="center" valign="top">   			
-					<!--[if (gte mso 9)|(IE)]>
-					 <table border="0" cellspacing="0" cellpadding="0">
-					 <tr><td align="center" valign="top" width="750"><![endif]-->
-					<table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-						<tr>
-						   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-							<td align="center" valign="top" style="background: #ffffff;">
-
-							  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-								 <tr>
-									<td align="right" valign="top">
-									   <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-									</td>
-								 </tr>
-							  </table>
-
-							  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-								 <tr>
-									<td align="left" valign="top">
-									   <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-									   <a href="#" target="_blank" style="display: block; max-width: 128px;">
-										  <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-									   </a>
-									   <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-									</td>
-								 </tr>
-							  </table>
-
-							  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+            $subject = "You've been invited as a teacher";
+            $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
 								 <tr>
 									<td align="left" valign="top">
 									   <font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 52px; line-height: 60px; font-weight: 300; letter-spacing: -1.5px;">
@@ -2959,7 +2503,7 @@ if(isset($page_request))
 									   <table class="mob_btn" cellpadding="0" cellspacing="0" border="0" style="background: #27cbcc; border-radius: 4px;">
 										  <tr>
 											 <td align="center" valign="top"> 
-												<a href="http://localhost/sbm/signup-'.$mail_encoded.'-gc-'.$yazUye["invite_token"].'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
+												<a href="'.$companyInformations['companyURL'].'signup-'.$mail_encoded.'-gc-'.$yazUye["invite_token"].'" target="_blank" style="display: block; border: 1px solid #27cbcc; border-radius: 4px; padding: 12px 23px; font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
 												   <font face="Source Sans Pro, sans-serif" color="#ffffff" style="font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">
 													  <span style="font-family: Source Sans Pro, Arial, Verdana, Tahoma, Geneva, sans-serif; color: #ffffff; font-size: 20px; line-height: 30px; text-decoration: none; white-space: nowrap; font-weight: 600;">Tıkla!</span>
 												   </font>
@@ -2970,44 +2514,8 @@ if(isset($page_request))
 									   <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
 									</td>
 								 </tr>
-							  </table>
-
-							  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-								 <tr>
-									<td align="center" valign="top">
-									   <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-										  <tr>
-											 <td align="center" valign="top">
-												<div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-												<font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-												   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-												</font>
-												<div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-												<font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-												   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-												</font>
-												<div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-											 </td>
-										  </tr>
-									   </table>
-									</td>
-								 </tr>
-							  </table>  
-
-						   </td>
-						   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-						</tr>
-					 </table>
-					 <!--[if (gte mso 9)|(IE)]>
-					 </td></tr>
-					 </table><![endif]-->
-				  </td>
-			   </tr>
-			</table>
-			</body>
-			</html>
-			';
-            $subject = "You've been invited as a teacher - Student Behavior Management";
+							  </table>';
+            $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
             if(SendMail($teacher_email,$teacher_name,$message,$subject))
             {
                 echo 5;
@@ -5258,7 +4766,7 @@ if(isset($page_request))
         if($sorguHistory->rowCount() > 0)
         {
             $tableecho .= '
-                <table class="table table-bordered table-striped table-hover report-behavior-list dataTable nowrap" style="width:100%">
+                <table class="table table-bordered table-striped table-hover report-behavior-list2 dataTable nowrap" style="width:100%">
                     <thead>
                     <tr>
                         <th>Behavior Name</th>
@@ -5411,71 +4919,8 @@ if(isset($page_request))
                         if($studentParentMail != "") {
                             $ogrenciadxd = $yazstudentclass['name'];
                             $generatedMessage = str_replace('{{studentName}}', $ogrenciadxd, $message_template);
-                            $message = '
-				<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-				<html>
-				<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-				<title>New message - Student Behavior Management</title>
-				<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-				<style type="text/css">
-				html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-					@media only screen and (min-device-width: 750px) {
-						.table750 {width: 750px !important;}
-					}
-					@media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-					  table[class="table750"] {width: 100% !important;}
-					  .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-					  .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-					  .mob_left {text-align: left !important;}
-					  .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-					  .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-					  .mob_center {text-align: center !important;}
-					  .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-					  .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-					  .mob_div {display: block !important;}
-					}
-				   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-					  .mod_div {display: block !important;}
-				   }
-					.table750 {width: 750px;}
-				</style>
-				</head>
-				<body style="margin: 0; padding: 0;">
-
-				<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-					<tr>
-					<td align="center" valign="top">   			
-						<!--[if (gte mso 9)|(IE)]>
-						 <table border="0" cellspacing="0" cellpadding="0">
-						 <tr><td align="center" valign="top" width="750"><![endif]-->
-						<table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-							<tr>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-								<td align="center" valign="top" style="background: #ffffff;">
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="right" valign="top">
-										   <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-									 <tr>
-										<td align="left" valign="top">
-										   <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-										   <a href="#" target="_blank" style="display: block; max-width: 128px;">
-											  <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-										   </a>
-										   <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+                            $subject = "New message";
+                            $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
 									 <tr>
 										<td align="left" valign="top">
 										   <font face="Source Sans Pro, sans-serif" color="#585858" style="font-size: 24px; line-height: 32px;">
@@ -5484,44 +4929,8 @@ if(isset($page_request))
 										   <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
 										</td>
 									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="center" valign="top">
-										   <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-											  <tr>
-												 <td align="center" valign="top">
-													<div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-													</font>
-													<div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-													</font>
-													<div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-												 </td>
-											  </tr>
-										   </table>
-										</td>
-									 </tr>
-								  </table>  
-
-							   </td>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-							</tr>
-						 </table>
-						 <!--[if (gte mso 9)|(IE)]>
-						 </td></tr>
-						 </table><![endif]-->
-					  </td>
-				   </tr>
-				</table>
-				</body>
-				</html>
-				';
-                            $subject = "New message - Student Behavior Management";
+								  </table>';
+                            $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
                             if(SendMail($studentParentMail,$yazstudentclass["parent_name"],$message,$subject))
                             {
                                 $sentMessageCount++;
@@ -5860,71 +5269,8 @@ if(isset($page_request))
         if($studentParentMail != "") {
             $ogrenciadxd = $yazstudentclass['name'];
             $generatedMessage = str_replace('{{studentName}}', $ogrenciadxd, $message_template);
-            $message = '
-				<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-				<html>
-				<head>
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
-				<title>New message - Student Behavior Management</title>
-				<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700" rel="stylesheet">
-				<style type="text/css">
-				html { -webkit-text-size-adjust: none; -ms-text-size-adjust: none;}
-
-					@media only screen and (min-device-width: 750px) {
-						.table750 {width: 750px !important;}
-					}
-					@media only screen and (max-device-width: 750px), only screen and (max-width: 750px){
-					  table[class="table750"] {width: 100% !important;}
-					  .mob_b {width: 93% !important; max-width: 93% !important; min-width: 93% !important;}
-					  .mob_b1 {width: 100% !important; max-width: 100% !important; min-width: 100% !important;}
-					  .mob_left {text-align: left !important;}
-					  .mob_soc {width: 50% !important; max-width: 50% !important; min-width: 50% !important;}
-					  .mob_menu {width: 50% !important; max-width: 50% !important; min-width: 50% !important; box-shadow: inset -1px -1px 0 0 rgba(255, 255, 255, 0.2); }
-					  .mob_center {text-align: center !important;}
-					  .top_pad {height: 15px !important; max-height: 15px !important; min-height: 15px !important;}
-					  .mob_pad {width: 15px !important; max-width: 15px !important; min-width: 15px !important;}
-					  .mob_div {display: block !important;}
-					}
-				   @media only screen and (max-device-width: 550px), only screen and (max-width: 550px){
-					  .mod_div {display: block !important;}
-				   }
-					.table750 {width: 750px;}
-				</style>
-				</head>
-				<body style="margin: 0; padding: 0;">
-
-				<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f3f3f3; min-width: 350px; font-size: 1px; line-height: normal;">
-					<tr>
-					<td align="center" valign="top">   			
-						<!--[if (gte mso 9)|(IE)]>
-						 <table border="0" cellspacing="0" cellpadding="0">
-						 <tr><td align="center" valign="top" width="750"><![endif]-->
-						<table cellpadding="0" cellspacing="0" border="0" width="750" class="table750" style="width: 100%; max-width: 750px; min-width: 350px; background: #f3f3f3;">
-							<tr>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-								<td align="center" valign="top" style="background: #ffffff;">
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="right" valign="top">
-										   <div class="top_pad" style="height: 25px; line-height: 25px; font-size: 23px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-									 <tr>
-										<td align="left" valign="top">
-										   <div style="height: 39px; line-height: 39px; font-size: 37px;">&nbsp;</div>
-										   <a href="#" target="_blank" style="display: block; max-width: 128px;">
-											  <img src="cid:logo" alt="img" width="160" border="0" style="display: block; width: 160px;" />
-										   </a>
-										   <div style="height: 73px; line-height: 73px; font-size: 71px;">&nbsp;</div>
-										</td>
-									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
+            $subject = "New message";
+            $mainBodyHTML = '<table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
 									 <tr>
 										<td align="left" valign="top">
 										   <font face="Source Sans Pro, sans-serif" color="#585858" style="font-size: 24px; line-height: 32px;">
@@ -5933,44 +5279,8 @@ if(isset($page_request))
 										   <div style="height: 75px; line-height: 75px; font-size: 73px;">&nbsp;</div>
 										</td>
 									 </tr>
-								  </table>
-
-								  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100% !important; min-width: 100%; max-width: 100%; background: #f3f3f3;">
-									 <tr>
-										<td align="center" valign="top">
-										   <table cellpadding="0" cellspacing="0" border="0" width="88%" style="width: 88% !important; min-width: 88%; max-width: 88%;">
-											  <tr>
-												 <td align="center" valign="top">
-													<div style="height: 34px; line-height: 34px; font-size: 32px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#868686" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #868686; font-size: 17px; line-height: 20px;">Copyright &copy; 2019 Student Behavior Management.</span>
-													</font>
-													<div style="height: 3px; line-height: 3px; font-size: 1px;">&nbsp;</div>
-													<font face="Source Sans Pro, sans-serif" color="#1a1a1a" style="font-size: 17px; line-height: 20px;">
-													   <span style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px;"><a href="mailto:sbm@aybarsakgun.com" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">sbm@aybarsakgun.com</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="tel:5555555555" style="font-family: Source Sans Pro, Arial, Tahoma, Geneva, sans-serif; color: #1a1a1a; font-size: 17px; line-height: 20px; text-decoration: none;">+90 555 555 55 55</a></span>
-													</font>
-													<div style="height: 35px; line-height: 35px; font-size: 33px;">&nbsp;</div>
-												 </td>
-											  </tr>
-										   </table>
-										</td>
-									 </tr>
-								  </table>  
-
-							   </td>
-							   <td class="mob_pad" width="25" style="width: 25px; max-width: 25px; min-width: 25px;">&nbsp;</td>
-							</tr>
-						 </table>
-						 <!--[if (gte mso 9)|(IE)]>
-						 </td></tr>
-						 </table><![endif]-->
-					  </td>
-				   </tr>
-				</table>
-				</body>
-				</html>
-			';
-            $subject = "New message - Student Behavior Management";
+								  </table>';
+            $message = createEmailTemplate($subject, $mainBodyHTML, $companyInformations);
             if(SendMail($studentParentMail,$yazstudentclass["parent_name"],$message,$subject))
             {
                 echo 1;
@@ -6897,10 +6207,7 @@ if(isset($page_request))
                         <span class="card-header-text">
                             <?=$fetchGroups["name"]?>
                             <a href="#" class="pull-right" id="editGroup" data-toggle="modal" data-target="#editGroupModal" data-class="<?=$class?>" data-group="<?=$fetchGroups['id']?>">
-                                <i class="material-icons font-17">edit</i>
-                            </a>
-                            <a href="#" class="pull-right group-give-points" data-group-id="<?=$fetchGroups["id"]?>" data-group-name="<?=$fetchGroups["name"]?>">
-                                <i class="material-icons font-17">note_add</i>
+                                <i class="material-icons font-17" style="margin-right: -6px;">more_vert</i>
                             </a>
                         </span>
                     </div>
@@ -6954,7 +6261,7 @@ if(isset($page_request))
                         ?>
                         <div class="card-footer">
                         <span class="card-header-text">
-                            <span class="badge <?=$groupTotalPoint > 0 ? 'bg-green' : 'bg-red'?> btn-block"><?=$groupTotalPoint > 0 ? '+ ' : '- '?><?=abs($groupTotalPoint)?> Points</span>
+                            <span class="badge <?=$groupTotalPoint > 0 ? 'bg-green' : 'bg-red'?> btn-block group-give-points" data-group-id="<?=$fetchGroups["id"]?>" data-group-name="<?=$fetchGroups["name"]?>"><?=$groupTotalPoint > 0 ? '+ ' : '- '?><?=abs($groupTotalPoint)?> Points</span>
                         </div>
                         <?php
                     }
@@ -7726,7 +7033,7 @@ if(isset($page_request))
                 }
             }
         }
-        $searchStudent = $DB_con->prepare("SELECT name,avatar,classes FROM users WHERE schools = :school AND role = :role AND name LIKE :searchString" . (count($additionalQuery) > 0 ? " AND (" . implode(" OR ", $additionalQuery) . ")" : ""));
+        $searchStudent = $DB_con->prepare("SELECT id,name,avatar,classes FROM users WHERE schools = :school AND role = :role AND name LIKE :searchString" . (count($additionalQuery) > 0 ? " AND (" . implode(" OR ", $additionalQuery) . ")" : ""));
         $searchStudent->execute(count($additionalQuery) == 0 ? array(":school"=>$uyeokul,":role"=>"student",":searchString"=>"%".$searchString."%") : $additionalQueryParams);
         if ($searchStudent->rowCount() > 0) {
             while($fetchStudent = $searchStudent->fetch(PDO::FETCH_ASSOC)) {
@@ -7737,6 +7044,7 @@ if(isset($page_request))
                         $fetchClass = $findClass->fetch(PDO::FETCH_ASSOC);
                         $result["items"][] = [
                             'name' => $fetchStudent['name'],
+                            'id' => $fetchStudent['id'],
                             'avatar' => $fetchStudent['avatar'],
                             'class' => ['name' => $fetchClass['name'], 'id' => $class]
                         ];

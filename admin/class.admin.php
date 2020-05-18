@@ -1,4 +1,7 @@
 <?php
+if(!defined('AJAX') && !defined('VAL2')) {
+    die('Security');
+}
 define('VAL3', TRUE);
 
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -88,15 +91,12 @@ if (
 	@exit;
 }
 
+require_once("../settings.php");
 require_once 'database.php';
 require_once 'functions.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-require '../PHPMailer/src/Exception.php';
-require '../PHPMailer/src/PHPMailer.php';
-require '../PHPMailer/src/SMTP.php';
 
 class ADMIN
 {	
