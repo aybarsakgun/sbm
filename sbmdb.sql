@@ -236,7 +236,15 @@ CREATE TABLE `schools` (
   `id` int(11) NOT NULL,
   `name` varchar(128) COLLATE utf8mb4_turkish_ci NOT NULL,
   `code` varchar(10) COLLATE utf8mb4_turkish_ci NOT NULL,
-  `date_type` int(11) NOT NULL DEFAULT 1
+  `date_type` int(11) NOT NULL DEFAULT 1,
+  `quarter1st` date DEFAULT NULL,
+  `quarter2st` date DEFAULT NULL,
+  `quarter3st` date DEFAULT NULL,
+  `quarter4st` date DEFAULT NULL,
+  `quarter1fn` date DEFAULT NULL,
+  `quarter2fn` date DEFAULT NULL,
+  `quarter3fn` date DEFAULT NULL,
+  `quarter4fn` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_turkish_ci;
 
 --
