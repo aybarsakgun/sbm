@@ -4,10 +4,17 @@ $base_request = "signin";
 require_once 'database.php';
 require_once 'functions.php';
 SessionStartUser();
+$sbmAutoLogin = false;
+$loginhint = "";
 if(LoginCheckUser($DB_con) == true)
 {
 	header("Location: home");
 	exit();
+} else if (LoginCheckUser($DB_con) == false && !empty($_COOKIE['sbmAutoLogin']) && !isset($_GET['error'])) {
+    $sbmAutoLogin = true;
+    $loginhint = '&login_hint='.$_COOKIE['sbmAutoLogin'];
+} else if (LoginCheckUser($DB_con) == false && !empty($_COOKIE['sbmAutoLogin']) && isset($_GET['error'])) {
+    setcookie('sbmAutoLogin', null, -1, '/');
 }
 if(isset($_GET['code']))
 {
@@ -35,7 +42,7 @@ if($gClient->getAccessToken())
 		$getUserMail = filter_var($gpUserData["google_email"], FILTER_SANITIZE_EMAIL);
 		$_SESSION['user_mail'] = $getUserMail;
 		$_SESSION['user_login_string'] = hash('sha512', $gpUserData["google_id"].$gpUserData["google_email"].$browser.$ip);
-		
+        setcookie("sbmAutoLogin", $gpUserData["google_email"], time()+3600*24*30, '/');
 		$status = 1;
 		$platform = "google";
 		$date = date("d F Y H:i:s");
@@ -133,7 +140,7 @@ else
 					?>
 					<div class="alert bg-orange"><?=$companyInformations['companyName']?> sistemine kayıtlı Google hesabınızla giriş yapabilirsiniz.</div>
 					<div class="btn-wrapper text-center">
-						<a href="<?=$signinlink?>" class="btn btn-block g-sign-in-button">
+						<a href="<?=$signinlink?><?=$loginhint?>" class="btn btn-block g-sign-in-button" id="sbmLoginButton">
 							<img src="img/google.svg" width="22"><strong class="p-l-5">Sign in with Google</strong>
 						</a>
 					</div>
@@ -144,6 +151,11 @@ else
 		<script src="plugins/bootstrap/js/bootstrap.min.js"></script>
 		<script src="plugins/node-waves/waves.min.js"></script>
 		<script src="js/sign-in.js"></script>
+        <?php if ($sbmAutoLogin == true) { ?>
+        <script>
+            document.getElementById("sbmLoginButton").click();
+        </script>
+        <?php } ?>
 	</body>
 
 </html>

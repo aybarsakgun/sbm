@@ -22,6 +22,8 @@ RewriteRule ^give-behavior-multiple$ ajax.php?pr=give-behavior-multiple [L,QSA]
 RewriteRule ^signout$ ajax.php?pr=logout [L,QSA]
 RewriteRule ^get-students$ ajax.php?pr=get-students [L,QSA]
 
+RewriteRule ^class-report-([0-9]+)$ index.php?pr=class-report&class_id=$1 [L,QSA]
+
 RewriteRule ^sync-gc$ index.php?pr=sync-gc [L,QSA]
 RewriteRule ^add-student$ index.php?pr=add-student [L,QSA]
 RewriteRule ^add-student-a$ ajax.php?pr=add-student [L,QSA]
@@ -129,3 +131,8 @@ RewriteRule ^stats-a$ ajax.php?pr=stats [L,QSA]
 RewriteRule ^security$ index.php?pr=security [L,QSA]
 
 RewriteRule ^search-student$ ajax.php?pr=search-student [L,QSA]
+
+RewriteRule ^teacher-report-([0-9]+)-([0-9]+)$ index.php?pr=teacher-report&class_id=$1&teacher_id=$2 [L,QSA]
+RewriteRule ^get-teacher-report-([0-9]+)$ ajax.php?pr=get-teacher-report&teacher=$1 [L,QSA]
+
+RewriteRule ^get-class-report-([0-9]+)$ ajax.php?pr=get-class-report&class=$1 [L,QSA]

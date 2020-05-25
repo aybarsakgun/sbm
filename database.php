@@ -52,7 +52,12 @@ $gClient->setClientId(GOOGLE_CLIENT_ID);
 $gClient->setClientSecret(GOOGLE_CLIENT_SECRET);
 $gClient->setRedirectUri(GOOGLE_REDIRECT_URL);
 $gClient->setAccessType("offline");
-$gClient->setApprovalPrompt("auto");
+if (!empty($_COOKIE['sbmAutoLogin'])) {
+    $gClient->setPrompt("none");
+} else {
+    $gClient->setPrompt("select_account");
+    $gClient->setApprovalPrompt("auto");
+}
 $gClient->setIncludeGrantedScopes(true);
 if(isset($base_request))
 {

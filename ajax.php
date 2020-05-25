@@ -2198,6 +2198,7 @@ if(isset($page_request))
 				$params["secure"], 
 				$params["httponly"]);
 		session_destroy();
+        setcookie('sbmAutoLogin', null, -1, '/');
 		$gClient->revokeToken();
 		echo 1;		
 	}
@@ -3098,7 +3099,7 @@ if(isset($page_request))
                                 ?>
                                 <tr>
                                     <td class="baslik_td">
-                                        <span class="baslik"><?=$yaz["name"]?></span>
+                                        <span class="baslik"><a href="class-report-<?=$yaz["id"]?>"><?=$yaz["name"]?></a></span>
                                         <div class="visible-xs">
                                             <strong>Teachers:</strong> <?=$yaz["teachersx"]?><br>
                                             <strong>Register Type:</strong> <?php if($yaz["gc_id"] != NULL) { echo "Google Classroom"; } else { echo 'Manual'; } ?><br>
@@ -3393,11 +3394,11 @@ if(isset($page_request))
 
                 if($filtre_yazisi != "")
                 {
-                    $sorguyazisi = "SELECT users.name,users.email,users.invite_date,users.register_date,users.update_date,users.id AS teacherid,(SELECT group_concat(classes.name) FROM classes WHERE FIND_IN_SET(users.id, classes.teachers) AND school = :school) as sinifad FROM users WHERE $filtre_yazisi AND role = :role AND schools = :school2 $siralama_yazisi LIMIT :limit , :sayfada";
+                    $sorguyazisi = "SELECT users.name,users.email,users.classes,users.invite_date,users.register_date,users.update_date,users.id AS teacherid,(SELECT concat(group_concat(classes.name), '+_+',group_concat(classes.id)) FROM classes WHERE FIND_IN_SET(users.id, classes.teachers) AND school = :school) as sinifad FROM users WHERE $filtre_yazisi AND role = :role AND schools = :school2 $siralama_yazisi LIMIT :limit , :sayfada";
                 }
                 else if($filtre_yazisi == "")
                 {
-                    $sorguyazisi = "SELECT users.name,users.email,users.invite_date,users.register_date,users.update_date,users.id AS teacherid,(SELECT group_concat(classes.name) FROM classes WHERE FIND_IN_SET(users.id, classes.teachers) AND school = :school) as sinifad FROM users WHERE role = :role AND schools = :school2 $siralama_yazisi LIMIT :limit , :sayfada";
+                    $sorguyazisi = "SELECT users.name,users.email,users.classes,users.invite_date,users.register_date,users.update_date,users.id AS teacherid,(SELECT concat(group_concat(classes.name), '+_+',group_concat(classes.id)) FROM classes WHERE FIND_IN_SET(users.id, classes.teachers) AND school = :school) as sinifad FROM users WHERE role = :role AND schools = :school2 $siralama_yazisi LIMIT :limit , :sayfada";
                 }
 
                 $sorgu = $DB_con->prepare($sorguyazisi);
@@ -3438,13 +3439,23 @@ if(isset($page_request))
                         {
                             while($yaz = $sorgu->fetch(PDO::FETCH_ASSOC))
                             {
+                                list($classesNames, $classesIds) = explode("+_+", $yaz["sinifad"]);
                                 ?>
                                 <tr>
                                     <td class="baslik_td">
-                                        <span class="baslik"><?=$yaz["name"]?></span>
+                                        <span class="baslik">
+                                            <?php
+                                            $explodeClassIds = explode(",", $classesIds);
+                                            if ($explodeClassIds[0] != "" || $explodeClassIds[0] != null) {
+                                                echo '<a href="teacher-report-'.$explodeClassIds[0].'-'.$yaz['teacherid'].'">'.$yaz["name"].'</a>';
+                                            } else {
+                                                echo $yaz["name"];
+                                            }
+                                            ?>
+                                        </span>
                                         <div class="visible-xs">
                                             <strong>E-mail:</strong> <?=$yaz["email"]?><br>
-                                            <strong>Classes:</strong> <?=$yaz["sinifad"]?><br>
+                                            <strong>Classes:</strong> <?=$classesNames?><br>
                                             <strong>Invite Date:</strong> <?=$yaz["invite_date"]?><br>
                                             <strong>Register Date:</strong> <?php if($yaz["register_date"] != "") { echo $yaz["register_date"]; } else { echo "Kayıt olmadı."; }?><br>
                                             <strong>Update Date:</strong> <?=$yaz["update_date"]?><br>
@@ -3458,7 +3469,7 @@ if(isset($page_request))
                                         </div>
                                     </td>
                                     <td class="visible-sm visible-md visible-lg"><?=$yaz["email"]?></td>
-                                    <td class="visible-sm visible-md visible-lg"><?=$yaz["sinifad"]?></td>
+                                    <td class="visible-sm visible-md visible-lg"><?=$classesNames?></td>
                                     <td class="visible-md visible-lg"><?=$yaz["invite_date"]?></td>
                                     <td class="visible-md visible-lg"><?php if($yaz["register_date"] != "") { echo $yaz["register_date"]; } else { echo "Kayıt olmadı."; }?></td>
                                     <td class="visible-md visible-lg"><?=$yaz["update_date"]?></td>
@@ -4649,6 +4660,7 @@ if(isset($page_request))
         $sinifsorguyazisi2 = "";
         $sinifsorguyazisipre2 = "";
         $siralama_yazisi = "";
+        $unitType = "day";
         $gelensiniflarexp = !empty($_GET["classes"]) ? explode(",", $_GET["classes"]) : array();
         if(count($gelensiniflarexp) > 0)
         {
@@ -4681,6 +4693,9 @@ if(isset($page_request))
             echo json_encode(array('general'=>'','table'=>'<div class="alert alert-info">Henüz öğrenciye ait herhangi bir sınıf seçmediniz.</div>'));
             exit();
         }
+        $findSchoolQuery = $DB_con->prepare("SELECT quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+        $findSchoolQuery->execute(array(":id" => $uyeokul));
+        $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
         $timefilterstatus = isset($_GET['timefilter']) ? (int) $_GET['timefilter'] : 0;
         $suanzamanxd = date("Y-m-d");
         $buaybasixd = date("Y-m-01");
@@ -4725,11 +4740,37 @@ if(isset($page_request))
                 if(!empty($_GET["date1"]) && !empty($_GET["date2"]))
                 {
                     $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$_GET["date1"]." 00:00:00' AND '".$_GET["date2"]." 23:59:59')";
+                } else {
+                    $siralama_yazisi = "";
                 }
+            } else {
+                $siralama_yazisi = "";
             }
-        }
-        else
-        {
+        } else if($timefilterstatus == 8) {
+            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter1st'] . " 00:00:00' AND '" . $fetchSchool['quarter1fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 9) {
+            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter2st'] . " 00:00:00' AND '" . $fetchSchool['quarter2fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 10) {
+            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter3st'] . " 00:00:00' AND '" . $fetchSchool['quarter3fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 11) {
+            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter4st'] . " 00:00:00' AND '" . $fetchSchool['quarter4fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else {
             $siralama_yazisi = "";
         }
         $sorgupuans = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE student_id = :studentid AND type = 1 AND ($sinifsorguyazisi) $siralama_yazisi) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE student_id = :studentid2 AND type = 2 AND ($sinifsorguyazisi) $siralama_yazisi) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE student_id = :studentid3 AND ($sinifsorguyazisi) $siralama_yazisi) as toplampuans, (SELECT SUM(point) FROM feedbacks_students WHERE student_id = :studentid4 AND type <> :type AND ($sinifsorguyazisi) $siralama_yazisi) as toplampuans2");
@@ -4737,7 +4778,7 @@ if(isset($page_request))
         $yazpuans = $sorgupuans->fetch(PDO::FETCH_ASSOC);
         $a = $yazpuans["negatifpuans"] != NULL ? abs($yazpuans["negatifpuans"]) : 0;
         $b = $yazpuans["pozitifpuans"] != NULL ? $yazpuans["pozitifpuans"] : 0;
-        $sorguteachers = $DB_con->prepare("SELECT users.name,users.avatar FROM users INNER JOIN classes ON FIND_IN_SET(users.id, classes.teachers) > 0 WHERE role = :role AND school = :school AND ($sinifsorguyazisi2) GROUP BY users.id");
+        $sorguteachers = $DB_con->prepare("SELECT users.id,users.name,users.avatar,classes.id as classid FROM users INNER JOIN classes ON FIND_IN_SET(users.id, classes.teachers) > 0 WHERE role = :role AND school = :school AND ($sinifsorguyazisi2) GROUP BY users.id");
         $sorguteachers->execute(array(":role"=>"teacher",":school"=>$uyeokul));
 
         $teachersecho = "";
@@ -4746,11 +4787,11 @@ if(isset($page_request))
             <div class="panel-heading">
                 <div class="media">
                     <div class="media-left">
-                        <a href="javascript:;"><img src="'.$yazteachers["avatar"].'"></a>
+                        <a href="'.($uyerol == 'admin' ? 'teacher-report-'.$yazteachers['classid'].'-'.$yazteachers['id'] : 'javascript:;').'"><img src="'.$yazteachers["avatar"].'"></a>
                     </div>
                     <div class="media-body">
                         <h4 class="media-heading">
-                            <a href="javascript:;">'.$yazteachers["name"].'</a>
+                            <a href="'.($uyerol == 'admin' ? 'teacher-report-'.$yazteachers['classid'].'-'.$yazteachers['id'] : 'javascript:;').'">'.$yazteachers["name"].'</a>
                         </h4>
                         Teacher
                     </div>
@@ -4815,6 +4856,123 @@ if(isset($page_request))
                 $tableecho = '<div class="alert alert-warning">Seçtiğiniz zaman aralığına göre öğrenciye verilen davranış notu bulunamadı.</div>';
             }
         }
+        $reportChart = $DB_con->prepare("SELECT feedbacks_students.date as x, SUM(point) as y,type FROM feedbacks_students WHERE (type = 1 OR type = 2) AND student_id = ".$ogrenciid." AND (".$sinifsorguyazisi.") $siralama_yazisi GROUP BY feedbacks_students.date ORDER BY feedbacks_students.date ASC");
+        $reportChart->execute();
+        $fetchReportChart = $reportChart->fetchAll(PDO::FETCH_ASSOC);
+        $positiveX = "1";
+        $negativeX = "2";
+        $getPositives = array_filter($fetchReportChart, function ($item) use ($positiveX) {
+            if ($item['type'] && $item['type'] == $positiveX) {
+                return true;
+            }
+            return false;
+        });
+        $getNegatives = array_filter($fetchReportChart, function ($item) use ($negativeX) {
+            if ($item['type'] && $item['type'] == $negativeX) {
+                return true;
+            }
+            return false;
+        });
+        foreach ($getPositives as $i => $v) {
+            unset($getPositives[$i]['type']);
+        }
+        foreach ($getNegatives as $i => $v) {
+            unset($getNegatives[$i]['type']);
+        }
+        $getPositiveDatas = json_encode(array_values($getPositives));
+        $getNegativeDatas = json_encode(array_values($getNegatives));
+        $reportChartEcho = '
+        <script type="text/javascript">
+            function createChart(chartId) {
+                if (chartId === "reportChart") {
+                    if (window.reportChart && !window.reportChart instanceof HTMLDocument) {
+                        window.reportChart.destroy();
+                    }
+                    var ctx = document.getElementById(chartId).getContext("2d");
+                    window.reportChart = new Chart(ctx, getChartJs(chartId));
+                } 
+            }
+            function getChartJs(type) {
+                var config = null;
+                if (type === "reportChart") {
+                    config = {
+                        type: "line",
+                        data: {
+                            datasets: [{
+                                label: "Positive",
+                                data: '.$getPositiveDatas.',
+                                borderColor: "rgba(76, 175, 80, 0.75)",
+                                backgroundColor: "rgba(76, 175, 80, 0.3)",
+                                pointBorderColor: "rgba(76, 175, 80, 0)",
+                                pointBackgroundColor: "rgba(76, 175, 80, 0.9)",
+                                pointBorderWidth: 1,
+                                lineTension: 0
+                            }, {
+                                label: "Negative",
+                                data: '.$getNegativeDatas.',
+                                borderColor: "rgba(244, 67, 54, 0.75)",
+                                backgroundColor: "rgba(244, 67, 54, 0.3)",
+                                pointBorderColor: "rgba(244, 67, 54, 0)",
+                                pointBackgroundColor: "rgba(244, 67, 54, 0.9)",
+                                pointBorderWidth: 1,
+                                lineTension: 0
+                            }]
+                        },
+                        options: {
+                            fill: false,
+                            responsive: true,
+                            scales: {
+                                xAxes: [{
+                                    type: "time",
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Date",
+                                    },
+                                    distribution: "series",
+                                    offset: true,
+                                    ticks: {
+                                        major: {
+                                            enabled: true,
+                                            fontStyle: "bold"
+                                        },
+                                        source: "data",
+                                        autoSkip: true,
+                                        autoSkipPadding: 75,
+                                        maxRotation: 0,
+                                        sampleSize: 100
+                                    },
+                                    time: {
+                                        unit: "'.$unitType.'",
+                                        tooltipFormat: "MMM D, YYYY hh:mm A",
+                                        displayFormats: {
+                                            second: "h:MM:SS",
+                                            minute: "h:MM",
+                                            hour: "hA",
+                                            day: "MMM D",
+                                            month: "YYYY MMM",
+                                            year: "YYYY"
+                                        },                            
+                                    },
+                                }],
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true,
+                                    },
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Behavior Points",
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+                return config;
+            }
+        </script>
+        ';
         echo json_encode(array('general'=>'
             <div class="info-box hover-zoom-effect">
                 <div class="icon bg-light-blue">
@@ -4840,7 +4998,7 @@ if(isset($page_request))
                 </div>
                 '.$teachersecho.'
             </div>
-        ','table'=>$tableecho));
+        ','table'=>$tableecho, 'chart' => $reportChartEcho));
     }
     else if($page_request == "send-messages")
     {
@@ -5718,8 +5876,44 @@ if(isset($page_request))
             echo 0;
             exit();
         }
-        $sorgu = $DB_con->prepare("UPDATE schools SET name = :name , date_type = :datetype WHERE id = :id");
-        if($sorgu->execute(array(":name"=>$school_name,":datetype"=>$date_type,":id"=>$uyeokul)))
+        $quarter1st = filter_input(INPUT_POST, 'quarter1DateSt', FILTER_SANITIZE_STRING);
+        $quarter2st = filter_input(INPUT_POST, 'quarter2DateSt', FILTER_SANITIZE_STRING);
+        $quarter3st = filter_input(INPUT_POST, 'quarter3DateSt', FILTER_SANITIZE_STRING);
+        $quarter4st = filter_input(INPUT_POST, 'quarter4DateSt', FILTER_SANITIZE_STRING);
+        $quarter1fn = filter_input(INPUT_POST, 'quarter1DateFn', FILTER_SANITIZE_STRING);
+        $quarter2fn = filter_input(INPUT_POST, 'quarter2DateFn', FILTER_SANITIZE_STRING);
+        $quarter3fn = filter_input(INPUT_POST, 'quarter3DateFn', FILTER_SANITIZE_STRING);
+        $quarter4fn = filter_input(INPUT_POST, 'quarter4DateFn', FILTER_SANITIZE_STRING);
+        if ((!empty($quarter1st) && strlen($quarter1st) != 10) || (!empty($quarter2st) && strlen($quarter2st) != 10) || (!empty($quarter3st) && strlen($quarter3st) != 10) || (!empty($quarter4st) && strlen($quarter4st) != 10) || (!empty($quarter1fn) && strlen($quarter1fn) != 10) || (!empty($quarter2fn) && strlen($quarter2fn) != 10) || (!empty($quarter3fn) && strlen($quarter3fn) != 10) || (!empty($quarter4fn) && strlen($quarter4fn) != 10)) {
+            echo 0;
+            exit();
+        }
+        if ((!empty($quarter1st) && empty($quarter1fn)) || (empty($quarter1st) && !empty($quarter1fn))) {
+            echo 4;
+            exit();
+        }
+        if ((!empty($quarter2st) && empty($quarter2fn)) || (empty($quarter2st) && !empty($quarter2fn))) {
+            echo 4;
+            exit();
+        }
+        if ((!empty($quarter3st) && empty($quarter3fn)) || (empty($quarter3st) && !empty($quarter3fn))) {
+            echo 4;
+            exit();
+        }
+        if ((!empty($quarter4st) && empty($quarter4fn)) || (empty($quarter4st) && !empty($quarter4fn))) {
+            echo 4;
+            exit();
+        }
+        $quarter1st = empty($quarter1st) ? NULL : $quarter1st;
+        $quarter2st = empty($quarter2st) ? NULL : $quarter2st;
+        $quarter3st = empty($quarter3st) ? NULL : $quarter3st;
+        $quarter4st = empty($quarter4st) ? NULL : $quarter4st;
+        $quarter1fn = empty($quarter1fn) ? NULL : $quarter1fn;
+        $quarter2fn = empty($quarter2fn) ? NULL : $quarter2fn;
+        $quarter3fn = empty($quarter3fn) ? NULL : $quarter3fn;
+        $quarter4fn = empty($quarter4fn) ? NULL : $quarter4fn;
+        $sorgu = $DB_con->prepare("UPDATE schools SET name = :name , date_type = :datetype , quarter1st = :quarter1st , quarter2st = :quarter2st , quarter3st = :quarter3st , quarter4st = :quarter4st , quarter1fn = :quarter1fn , quarter2fn = :quarter2fn , quarter3fn = :quarter3fn , quarter4fn = :quarter4fn WHERE id = :id");
+        if($sorgu->execute(array(":name"=>$school_name,":datetype"=>$date_type,":quarter1st"=>$quarter1st,":quarter2st"=>$quarter2st,":quarter3st"=>$quarter3st,":quarter4st"=>$quarter4st,":quarter1fn"=>$quarter1fn,":quarter2fn"=>$quarter2fn,":quarter3fn"=>$quarter3fn,":quarter4fn"=>$quarter4fn,":id"=>$uyeokul)))
         {
             echo 1;
             exit();
@@ -6572,6 +6766,9 @@ if(isset($page_request))
             echo 0;
             exit();
         }
+        $findSchoolQuery = $DB_con->prepare("SELECT quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+        $findSchoolQuery->execute(array(":id" => $uyeokul));
+        $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
         $timeFilterStatus = isset($_GET['timefilter']) ? (int) $_GET['timefilter'] : 0;
         $now = date("Y-m-d");
         $headOfMonth = date("Y-m-01");
@@ -6619,6 +6816,38 @@ if(isset($page_request))
                 } else {
                     $dateFilterQueryString = "";
                 }
+            } else {
+                $dateFilterQueryString = "";
+            }
+        }
+        else if($timeFilterStatus == 8)
+        {
+            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter1st'] . " 00:00:00' AND '" . $fetchSchool['quarter1fn'] . " 23:59:59')";
+            } else {
+                $dateFilterQueryString = "";
+            }
+        }
+        else if($timeFilterStatus == 9)
+        {
+            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter2st'] . " 00:00:00' AND '" . $fetchSchool['quarter2fn'] . " 23:59:59')";
+            } else {
+                $dateFilterQueryString = "";
+            }
+        }
+        else if($timeFilterStatus == 10)
+        {
+            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter3st'] . " 00:00:00' AND '" . $fetchSchool['quarter3fn'] . " 23:59:59')";
+            } else {
+                $dateFilterQueryString = "";
+            }
+        }
+        else if($timeFilterStatus == 11)
+        {
+            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                $dateFilterQueryString = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter4st'] . " 00:00:00' AND '" . $fetchSchool['quarter4fn'] . " 23:59:59')";
             } else {
                 $dateFilterQueryString = "";
             }
@@ -7053,6 +7282,703 @@ if(isset($page_request))
             }
         }
         echo json_encode($result);
+    }
+    else if($page_request == "get-teacher-report") {
+        $teacherId = filter_input(INPUT_GET, 'teacher', FILTER_VALIDATE_INT);
+        if ($teacherId === false) {
+            echo 0;
+            exit();
+        }
+        if (!isset($_GET["classes"])) {
+            echo 0;
+            exit();
+        }
+        if ($uyerol != "admin") {
+            echo 0;
+            exit();
+        }
+        $sinifsorguyazisi = "";
+        $sinifsorguyazisipre = "";
+        $sinifsorguyazisi2 = "";
+        $sinifsorguyazisipre2 = "";
+        $siralama_yazisi = "";
+        $unitType = "day";
+        $gelensiniflarexp = !empty($_GET["classes"]) ? explode(",", $_GET["classes"]) : array();
+        if (count($gelensiniflarexp) > 0) {
+            foreach ($gelensiniflarexp as $gelensinif) {
+                if (filter_var($gelensinif, FILTER_VALIDATE_INT)) {
+                    $sorgusinifid = $DB_con->prepare("SELECT id,name FROM classes WHERE id = :id AND FIND_IN_SET(:teacher, teachers) AND school = :school AND status = :status");
+                    $sorgusinifid->execute(array(":id" => $gelensinif, ":teacher" => $teacherId, ":school" => $uyeokul, ":status" => 1));
+                    if ($sorgusinifid->rowCount() != 1) {
+                        echo 0;
+                        exit();
+                    }
+                    $sinifsorguyazisi .= $sinifsorguyazisipre . "class_id = " . $gelensinif . " ";
+                    $sinifsorguyazisipre = "OR ";
+                    $sinifsorguyazisi2 .= $sinifsorguyazisipre2 . "classes.id = " . $gelensinif . " ";
+                    $sinifsorguyazisipre2 = "OR ";
+                } else {
+                    echo 0;
+                    exit();
+                }
+            }
+        } else {
+
+            echo json_encode(array('general' => '', 'table' => '<div class="alert alert-info">Henüz öğretmene ait herhangi bir sınıf seçmediniz.</div>'));
+            exit();
+        }
+        $behaviorFilterQuery = "";
+        $behaviorFilterQueryPre = "";
+        $behaviorFilter = !empty($_GET["behaviors"]) ? explode(",", $_GET["behaviors"]) : array();
+        if (count($behaviorFilter) > 0) {
+            foreach ($behaviorFilter as $behavior) {
+                if (filter_var($behavior, FILTER_VALIDATE_INT)) {
+                    $findBehaviorName = $DB_con->prepare("SELECT name FROM feedbacks_students WHERE id = :id AND teacher = :teacher AND type <> :type");
+                    $findBehaviorName->execute(array(":id" => $behavior, ":teacher" => $teacherId, ":type" => 3));
+                    if ($findBehaviorName->rowCount() != 1) {
+                        echo 0;
+                        exit();
+                    }
+                    $fetchBehaviorName = $findBehaviorName->fetch(PDO::FETCH_ASSOC);
+                    $behaviorFilterQuery .= $behaviorFilterQueryPre . "name = '" . $fetchBehaviorName['name'] . "' ";
+                    $behaviorFilterQueryPre = "OR ";
+                } else {
+                    echo 0;
+                    exit();
+                }
+            }
+        }
+        $findSchoolQuery = $DB_con->prepare("SELECT quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+        $findSchoolQuery->execute(array(":id" => $uyeokul));
+        $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
+        $timefilterstatus = isset($_GET['timefilter']) ? (int)$_GET['timefilter'] : 0;
+        $suanzamanxd = date("Y-m-d");
+        $buaybasixd = date("Y-m-01");
+        $buaysonuxd = date("Y-m-t");
+        $dunzamanxd = date('Y-m-d', strtotime("-1 days"));
+        $gecenhaftaxd = date('Y-m-d', strtotime("-7 days"));
+        $gecenhaftaxd2 = date('Y-m-d', strtotime("-14 days"));
+        $gecenaybasixd = date('Y-m-01', strtotime("-1 month"));
+        $gecenaysonuxd = date('Y-m-t', strtotime("-1 month"));
+        if ($timefilterstatus == 0) {
+            $siralama_yazisi = "";
+        } else if ($timefilterstatus == 1) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $suanzamanxd . " 00:00:00' AND '" . $suanzamanxd . " 23:59:59')";
+            $unitType = "hour";
+        } else if ($timefilterstatus == 2) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $dunzamanxd . " 00:00:00' AND '" . $dunzamanxd . " 23:59:59')";
+            $unitType = "hour";
+        } else if ($timefilterstatus == 3) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $gecenhaftaxd . " 00:00:00' AND '" . $suanzamanxd . "  23:59:59')";
+        } else if ($timefilterstatus == 4) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $gecenhaftaxd2 . " 00:00:00' AND '" . $gecenhaftaxd . " 23:59:59')";
+        } else if ($timefilterstatus == 5) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $buaybasixd . " 00:00:00' AND '" . $buaysonuxd . " 23:59:59')";
+        } else if ($timefilterstatus == 6) {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $gecenaybasixd . " 00:00:00' AND '" . $gecenaysonuxd . " 23:59:59')";
+        } else if ($timefilterstatus == 7) {
+            if (isset($_GET["date1"]) && isset($_GET["date2"])) {
+                if (!empty($_GET["date1"]) && !empty($_GET["date2"])) {
+                    $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $_GET["date1"] . " 00:00:00' AND '" . $_GET["date2"] . " 23:59:59')";
+                } else {
+                    $siralama_yazisi = "";
+                }
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 8) {
+            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter1st'] . " 00:00:00' AND '" . $fetchSchool['quarter1fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 9) {
+            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter2st'] . " 00:00:00' AND '" . $fetchSchool['quarter2fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 10) {
+            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter3st'] . " 00:00:00' AND '" . $fetchSchool['quarter3fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 11) {
+            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter4st'] . " 00:00:00' AND '" . $fetchSchool['quarter4fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else {
+            $siralama_yazisi = "";
+        }
+        if ($behaviorFilterQuery != "") {
+            $behaviorFilterQuery = " AND (" . $behaviorFilterQuery . ") ";
+        }
+        $sorgupuans = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE teacher = :tid AND type = 1 AND ($sinifsorguyazisi) $behaviorFilterQuery $siralama_yazisi) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE teacher = :tid2 AND type = 2 AND ($sinifsorguyazisi) $behaviorFilterQuery $siralama_yazisi) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE teacher = :tid3 AND ($sinifsorguyazisi) $behaviorFilterQuery $siralama_yazisi) as toplampuans, (SELECT SUM(point) FROM feedbacks_students WHERE teacher = :tid4 AND type <> :type AND ($sinifsorguyazisi) $behaviorFilterQuery $siralama_yazisi) as toplampuans2");
+        $sorgupuans->execute(array(":tid" => $teacherId, ":tid2" => $teacherId, ":tid3" => $teacherId, ":tid4" => $teacherId, ":type" => 3));
+        $yazpuans = $sorgupuans->fetch(PDO::FETCH_ASSOC);
+        $a = $yazpuans["negatifpuans"] != NULL ? abs($yazpuans["negatifpuans"]) : 0;
+        $b = $yazpuans["pozitifpuans"] != NULL ? $yazpuans["pozitifpuans"] : 0;
+        $sorguteachers = $DB_con->prepare("SELECT users.id,users.name,users.avatar,classes.id as classid FROM users INNER JOIN classes ON FIND_IN_SET(users.id, classes.teachers) > 0 WHERE role = :role AND users.id <> :teacherid AND school = :school AND ($sinifsorguyazisi2) GROUP BY users.id");
+        $sorguteachers->execute(array(":role" => "teacher", ":teacherid" => $teacherId, ":school" => $uyeokul));
+        $teachersecho = "";
+        while ($yazteachers = $sorguteachers->fetch(PDO::FETCH_ASSOC)) {
+            $teachersecho .= '
+            <div class="panel-heading">
+                <div class="media">
+                    <div class="media-left">
+                        <a href="teacher-report-' . $yazteachers['classid'] . '-' . $yazteachers['id'] . '"><img src="' . $yazteachers["avatar"] . '"></a>
+                    </div>
+                    <div class="media-body">
+                        <h4 class="media-heading">
+                            <a href="teacher-report-' . $yazteachers['classid'] . '-' . $yazteachers['id'] . '">' . $yazteachers["name"] . '</a>
+                        </h4>
+                        Teacher
+                    </div>
+                </div>
+            </div>
+            ';
+        }
+
+        $tableecho = "";
+
+        $sorguHistory = $DB_con->prepare("SELECT id,name,point,type,description,student_id,date,class_id FROM feedbacks_students WHERE ($sinifsorguyazisi) $behaviorFilterQuery AND teacher = :teacher $siralama_yazisi ORDER BY id DESC");
+        $sorguHistory->execute(array(":teacher" => $teacherId));
+        if ($sorguHistory->rowCount() > 0) {
+            $tableecho .= '
+                <table class="table table-bordered table-striped table-hover report-behavior-list2 dataTable nowrap" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Behavior Name</th>
+                        <th>Type</th>
+                        <th>Point</th>
+                        <th>Class</th>
+                        <th>Student</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ';
+            while ($yazHistory = $sorguHistory->fetch(PDO::FETCH_ASSOC)) {
+                $findStudentQuery = $DB_con->prepare("SELECT name FROM users WHERE id = :id AND role = :role AND schools = :school");
+                $findStudentQuery->execute(array(":id" => $yazHistory["student_id"], ":role" => "student", ":school" => $uyeokul));
+                $fetchStudent = $findStudentQuery->fetch(PDO::FETCH_ASSOC);
+                $sorguSinifad = $DB_con->prepare("SELECT name FROM classes WHERE id = :id");
+                $sorguSinifad->execute(array(":id" => $yazHistory["class_id"]));
+                $yazSinifad = $sorguSinifad->fetch(PDO::FETCH_ASSOC);
+                $tableecho .= '
+                        <tr>
+                            <td>' . $yazHistory["name"] . '</td>
+                            <td>' . ($yazHistory["type"] == 1 ? "<b class='col-green'>Positive</b>" : ($yazHistory["type"] == 2 ? "<b class='col-red'>Negative</b>" : ($yazHistory['type'] == 3 ? "<b class='col-blue'>Redeem</b>" : ""))) . '</td>
+                            <td>' . ($yazHistory["type"] == 3 ? abs($yazHistory["point"]) : $yazHistory["point"]) . '</td>
+                            <td>' . $yazSinifad["name"] . '</td>
+                            <td>' . $fetchStudent["name"] . '</td>
+                            <td>' . printDate($DB_con, $yazHistory["date"], $uyeokul) . '</td>
+                            <td>' . $yazHistory["description"] . '</td>
+                        </tr>
+                        ';
+            }
+            $tableecho .= '
+                    </tbody>
+                </table>
+                ';
+        } else {
+            if ($siralama_yazisi == "") {
+                $tableecho = '<div class="alert alert-warning">Henüz öğretmenin verdiği davranış notu bulunmamakta.</div>';
+            } else {
+                $tableecho = '<div class="alert alert-warning">Seçtiğiniz zaman aralığına göre öğretmenin verdiği davranış notu bulunamadı.</div>';
+            }
+        }
+        // $teacherChart = $DB_con->prepare("SELECT GROUP_CONCAT(feedbacks_students.date) as x, GROUP_CONCAT(point) as y,type FROM feedbacks_students WHERE (type = 1 OR type = 2) AND teacher = ".$teacherId." AND ".$sinifsorguyazisi." $siralama_yazisi GROUP BY DATE(feedbacks_students.date) ORDER BY feedbacks_students.date ASC");
+        $reportChart = $DB_con->prepare("SELECT feedbacks_students.date as x, SUM(point) as y,type FROM feedbacks_students WHERE (type = 1 OR type = 2) AND teacher = ".$teacherId." AND (".$sinifsorguyazisi.") $siralama_yazisi GROUP BY feedbacks_students.date ORDER BY feedbacks_students.date ASC");
+        $reportChart->execute();
+        $fetchReportChart = $reportChart->fetchAll(PDO::FETCH_ASSOC);
+//        foreach($fetchTeacherChart as $i => $v) {
+//            $fetchTeacherChart[$i]['x'] = explode(",", $fetchTeacherChart[$i]['x']);
+//            $fetchTeacherChart[$i]['y'] = explode(",", $fetchTeacherChart[$i]['y']);
+//        }
+        $positiveX = "1";
+        $negativeX = "2";
+        $getPositives = array_filter($fetchReportChart, function ($item) use ($positiveX) {
+            if ($item['type'] && $item['type'] == $positiveX) {
+                return true;
+            }
+            return false;
+        });
+        $getNegatives = array_filter($fetchReportChart, function ($item) use ($negativeX) {
+            if ($item['type'] && $item['type'] == $negativeX) {
+                return true;
+            }
+            return false;
+        });
+        foreach ($getPositives as $i => $v) {
+            unset($getPositives[$i]['type']);
+        }
+        foreach ($getNegatives as $i => $v) {
+            unset($getNegatives[$i]['type']);
+        }
+//        $getLabels = [];
+//        foreach($fetchTeacherChart as $dataTeacher) {
+//            if (!in_array(date('Y-m-d', strtotime($dataTeacher['x'])), $getLabels)) {
+//                $getLabels[] = date('Y-m-d', strtotime($dataTeacher['x']));
+//            }
+//        }
+//        $getLabels = json_encode($getLabels);
+        $getPositiveDatas = json_encode(array_values($getPositives));
+        $getNegativeDatas = json_encode(array_values($getNegatives));
+        $reportChartEcho = '
+        <script type="text/javascript">
+            function createChart(chartId) {
+                if (chartId === "reportChart") {
+                    if (window.reportChart && !window.reportChart instanceof HTMLDocument) {
+                        window.reportChart.destroy();
+                    }
+                    var ctx = document.getElementById(chartId).getContext("2d");
+                    window.reportChart = new Chart(ctx, getChartJs(chartId));
+                } 
+            }
+            function getChartJs(type) {
+                var config = null;
+//                var labelArray = "getLabels";
+                if (type === "reportChart") {
+                    config = {
+                        type: "line",
+                        data: {
+//                            labels: labelArray.map(function(data) { var splitData = data.split("-"); return new Date(splitData[0], splitData[1], splitData[2]); }),
+                            datasets: [{
+                                label: "Positive",
+                                data: '.$getPositiveDatas.',
+                                borderColor: "rgba(76, 175, 80, 0.75)",
+                                backgroundColor: "rgba(76, 175, 80, 0.3)",
+                                pointBorderColor: "rgba(76, 175, 80, 0)",
+                                pointBackgroundColor: "rgba(76, 175, 80, 0.9)",
+                                pointBorderWidth: 1,
+//                                showLine: true,
+//                                fill: false,
+                                lineTension: 0
+                            }, {
+                                label: "Negative",
+                                data: '.$getNegativeDatas.',
+                                borderColor: "rgba(244, 67, 54, 0.75)",
+                                backgroundColor: "rgba(244, 67, 54, 0.3)",
+                                pointBorderColor: "rgba(244, 67, 54, 0)",
+                                pointBackgroundColor: "rgba(244, 67, 54, 0.9)",
+                                pointBorderWidth: 1,
+//                                showLine: true,
+//                                fill: false,
+                                lineTension: 0
+                            }]
+                        },
+                        options: {
+                            fill: false,
+                            responsive: true,
+                            scales: {
+                                xAxes: [{
+                                    type: "time",
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Date",
+                                    },
+                                    distribution: "series",
+                                    offset: true,
+                                    ticks: {
+                                        major: {
+                                            enabled: true,
+                                            fontStyle: "bold"
+                                        },
+                                        source: "data",
+                                        autoSkip: true,
+                                        autoSkipPadding: 75,
+                                        maxRotation: 0,
+                                        sampleSize: 100
+                                    },
+                                    time: {
+                                        unit: "'.$unitType.'",
+                                        tooltipFormat: "MMM D, YYYY hh:mm A",
+                                        displayFormats: {
+                                            second: "h:MM:SS",
+                                            minute: "h:MM",
+                                            hour: "hA",
+                                            day: "MMM D",
+                                            month: "YYYY MMM",
+                                            year: "YYYY"
+                                        },                            
+                                    },
+                                }],
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true,
+                                    },
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Behavior Points",
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+                return config;
+            }
+        </script>
+        ';
+        echo json_encode(array('general' => '
+            <div class="info-box hover-zoom-effect">
+                <div class="icon bg-light-blue">
+                    <i class="material-icons">school</i>
+                </div>
+                <div class="content">
+                    <div class="text nowrapwithellipsis">TOTAL GIVEN POINT</div>
+                    <div class="number"><b class="col-light-blue">' . ($yazpuans["toplampuans"] != NULL ? $yazpuans["toplampuans"] : 0) . '<small class="font-15"> (W/O Redeem: ' . ($yazpuans["toplampuans2"] != NULL ? $yazpuans["toplampuans2"] : 0) . ')</small></b></div>
+                </div>
+            </div>
+            <div class="info-box">
+                <div class="icon">
+                    <div class="chart chart-pie" data-chartcolor="orange">' . $b . ',' . $a . '</div>
+                </div>
+                <div class="content">
+                    <div class="text nowrapwithellipsis">POSITIVE / NEGATIVE GIVEN POINTS</div>
+                    <div class="number"><b class="col-green">' . $b . '</b> / <b class="col-red">-' . $a . '</b> Points</div>
+                </div>
+            </div>
+            ' . ($sorguteachers->rowCount() > 0 ? '
+            <div class="panel panel-default panel-post">
+                <div class="panel-heading">
+                    <h4>Other ' . (count(explode(",", $_GET["classes"])) > 1 ? 'Classes' : 'Class') . ' Teacher(s):</h4>
+                </div>
+                ' . $teachersecho . '
+            </div>
+            ' : '') . '
+        ', 'table' => $tableecho, 'chart' => $reportChartEcho));
+    }
+    else if($page_request == "get-class-report")
+    {
+        $classId = filter_input(INPUT_GET, 'class', FILTER_VALIDATE_INT);
+        if($classId === false)
+        {
+            echo 0;
+            exit();
+        }
+        if($uyerol != "admin")
+        {
+            echo 0;
+            exit();
+        }
+        $behaviorFilterQuery = "";
+        $behaviorFilterQueryPre = "";
+        $unitType = "day";
+        $behaviorFilter = !empty($_GET["behaviors"]) ? explode(",", $_GET["behaviors"]) : array();
+        if(count($behaviorFilter) > 0)
+        {
+            foreach($behaviorFilter as $behavior)
+            {
+                if(filter_var($behavior, FILTER_VALIDATE_INT))
+                {
+                    $findBehaviorName = $DB_con->prepare("SELECT name FROM feedbacks_students WHERE id = :id AND class_id = :classid AND type <> :type");
+                    $findBehaviorName->execute(array(":id"=>$behavior,":classid"=>$classId,":type"=>3));
+                    if($findBehaviorName->rowCount() != 1)
+                    {
+                        echo 0;
+                        exit();
+                    }
+                    $fetchBehaviorName = $findBehaviorName->fetch(PDO::FETCH_ASSOC);
+                    $behaviorFilterQuery .= $behaviorFilterQueryPre."name = '".$fetchBehaviorName['name']."' ";
+                    $behaviorFilterQueryPre = "OR ";
+                }
+                else
+                {
+                    echo 0;
+                    exit();
+                }
+            }
+        }
+        $findSchoolQuery = $DB_con->prepare("SELECT quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+        $findSchoolQuery->execute(array(":id" => $uyeokul));
+        $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
+        $timefilterstatus = isset($_GET['timefilter']) ? (int) $_GET['timefilter'] : 0;
+        $suanzamanxd = date("Y-m-d");
+        $buaybasixd = date("Y-m-01");
+        $buaysonuxd = date("Y-m-t");
+        $dunzamanxd = date('Y-m-d',strtotime("-1 days"));
+        $gecenhaftaxd = date('Y-m-d',strtotime("-7 days"));
+        $gecenhaftaxd2 = date('Y-m-d',strtotime("-14 days"));
+        $gecenaybasixd = date('Y-m-01',strtotime("-1 month"));
+        $gecenaysonuxd = date('Y-m-t',strtotime("-1 month"));
+        if($timefilterstatus == 0)
+        {
+            $siralama_yazisi = "";
+        }
+        else if($timefilterstatus == 1)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$suanzamanxd." 00:00:00' AND '".$suanzamanxd." 23:59:59')";
+        }
+        else if($timefilterstatus == 2)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$dunzamanxd." 00:00:00' AND '".$dunzamanxd." 23:59:59')";
+        }
+        else if($timefilterstatus == 3)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$gecenhaftaxd." 00:00:00' AND '".$suanzamanxd."  23:59:59')";
+        }
+        else if($timefilterstatus == 4)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$gecenhaftaxd2." 00:00:00' AND '".$gecenhaftaxd." 23:59:59')";
+        }
+        else if($timefilterstatus == 5)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$buaybasixd." 00:00:00' AND '".$buaysonuxd." 23:59:59')";
+        }
+        else if($timefilterstatus == 6)
+        {
+            $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$gecenaybasixd." 00:00:00' AND '".$gecenaysonuxd." 23:59:59')";
+        }
+        else if($timefilterstatus == 7)
+        {
+            if(isset($_GET["date1"]) && isset($_GET["date2"]))
+            {
+                if(!empty($_GET["date1"]) && !empty($_GET["date2"]))
+                {
+                    $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '".$_GET["date1"]." 00:00:00' AND '".$_GET["date2"]." 23:59:59')";
+                } else {
+                    $siralama_yazisi = "";
+                }
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 8) {
+            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter1st'] . " 00:00:00' AND '" . $fetchSchool['quarter1fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 9) {
+            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter2st'] . " 00:00:00' AND '" . $fetchSchool['quarter2fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 10) {
+            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter3st'] . " 00:00:00' AND '" . $fetchSchool['quarter3fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else if($timefilterstatus == 11) {
+            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                $siralama_yazisi = "AND (feedbacks_students.date BETWEEN '" . $fetchSchool['quarter4st'] . " 00:00:00' AND '" . $fetchSchool['quarter4fn'] . " 23:59:59')";
+            } else {
+                $siralama_yazisi = "";
+            }
+        } else {
+            $siralama_yazisi = "";
+        }
+        if ($behaviorFilterQuery != "") {
+            $behaviorFilterQuery = " AND (".$behaviorFilterQuery.") ";
+        }
+        $sorgupuans = $DB_con->prepare("SELECT (SELECT SUM(point) FROM feedbacks_students WHERE class_id = :tid AND type = 1 $behaviorFilterQuery $siralama_yazisi) as pozitifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE class_id = :tid2 AND type = 2 $behaviorFilterQuery $siralama_yazisi) as negatifpuans,(SELECT SUM(point) FROM feedbacks_students WHERE class_id = :tid3 $behaviorFilterQuery $siralama_yazisi) as toplampuans, (SELECT SUM(point) FROM feedbacks_students WHERE class_id = :tid4 AND type <> :type $behaviorFilterQuery $siralama_yazisi) as toplampuans2");
+        $sorgupuans->execute(array(":tid"=>$classId,":tid2"=>$classId,":tid3"=>$classId,":tid4"=>$classId,":type"=>3));
+        $yazpuans = $sorgupuans->fetch(PDO::FETCH_ASSOC);
+        $a = $yazpuans["negatifpuans"] != NULL ? abs($yazpuans["negatifpuans"]) : 0;
+        $b = $yazpuans["pozitifpuans"] != NULL ? $yazpuans["pozitifpuans"] : 0;
+
+        $tableecho = "";
+
+        $sorguHistory = $DB_con->prepare("SELECT id,name,point,type,description,student_id,date,teacher FROM feedbacks_students WHERE class_id = :classid $behaviorFilterQuery $siralama_yazisi ORDER BY id DESC");
+        $sorguHistory->execute(array(":classid"=>$classId));
+        if($sorguHistory->rowCount() > 0)
+        {
+            $tableecho .= '
+                <table class="table table-bordered table-striped table-hover report-behavior-list2 dataTable nowrap" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Behavior Name</th>
+                        <th>Type</th>
+                        <th>Point</th>
+                        <th>Teacher</th>
+                        <th>Student</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ';
+            while($yazHistory = $sorguHistory->fetch(PDO::FETCH_ASSOC))
+            {
+                $findStudentQuery = $DB_con->prepare("SELECT name FROM users WHERE id = :id AND role = :role AND schools = :school");
+                $findStudentQuery->execute(array(":id"=>$yazHistory["student_id"],":role"=>"student",":school"=>$uyeokul));
+                $fetchStudent = $findStudentQuery->fetch(PDO::FETCH_ASSOC);
+                $findTeacherQuery = $DB_con->prepare("SELECT name FROM users WHERE id = :id AND role = :role AND schools = :school");
+                $findTeacherQuery->execute(array(":id"=>$yazHistory["teacher"],":role"=>"teacher",":school"=>$uyeokul));
+                $fetchTeacher = $findTeacherQuery->fetch(PDO::FETCH_ASSOC);
+                $tableecho .= '
+                        <tr>
+                            <td>'.$yazHistory["name"].'</td>
+                            <td>'.($yazHistory["type"] == 1 ? "<b class='col-green'>Positive</b>" : ($yazHistory["type"] == 2 ? "<b class='col-red'>Negative</b>" : ($yazHistory['type'] == 3 ? "<b class='col-blue'>Redeem</b>" : ""))).'</td>
+                            <td>'.($yazHistory["type"] == 3 ? abs($yazHistory["point"]) : $yazHistory["point"]) .'</td>
+                            <td>'.$fetchTeacher["name"].'</td>
+                            <td>'.$fetchStudent["name"].'</td>
+                            <td>'.printDate($DB_con, $yazHistory["date"], $uyeokul).'</td>
+                            <td>'.$yazHistory["description"].'</td>
+                        </tr>
+                        ';
+            }
+            $tableecho .= '
+                    </tbody>
+                </table>
+                ';
+        }
+        else
+        {
+            if($siralama_yazisi == "") {
+                $tableecho = '<div class="alert alert-warning">There is no behavior point given in the classroom yet.</div>';
+            }
+            else
+            {
+                $tableecho = '<div class="alert alert-warning">The behavior point given in the class was not found according to your filter.</div>';
+            }
+        }
+        $reportChart = $DB_con->prepare("SELECT feedbacks_students.date as x, SUM(point) as y,type FROM feedbacks_students WHERE (type = 1 OR type = 2) AND class_id = ".$classId." $siralama_yazisi GROUP BY feedbacks_students.date ORDER BY feedbacks_students.date ASC");
+        $reportChart->execute();
+        $fetchReportChart = $reportChart->fetchAll(PDO::FETCH_ASSOC);
+        $positiveX = "1";
+        $negativeX = "2";
+        $getPositives = array_filter($fetchReportChart, function ($item) use ($positiveX) {
+            if ($item['type'] && $item['type'] == $positiveX) {
+                return true;
+            }
+            return false;
+        });
+        $getNegatives = array_filter($fetchReportChart, function ($item) use ($negativeX) {
+            if ($item['type'] && $item['type'] == $negativeX) {
+                return true;
+            }
+            return false;
+        });
+        foreach ($getPositives as $i => $v) {
+            unset($getPositives[$i]['type']);
+        }
+        foreach ($getNegatives as $i => $v) {
+            unset($getNegatives[$i]['type']);
+        }
+        $getPositiveDatas = json_encode(array_values($getPositives));
+        $getNegativeDatas = json_encode(array_values($getNegatives));
+        $reportChartEcho = '
+        <script type="text/javascript">
+            function createChart(chartId) {
+                if (chartId === "reportChart") {
+                    if (window.reportChart && !window.reportChart instanceof HTMLDocument) {
+                        window.reportChart.destroy();
+                    }
+                    var ctx = document.getElementById(chartId).getContext("2d");
+                    window.reportChart = new Chart(ctx, getChartJs(chartId));
+                } 
+            }
+            function getChartJs(type) {
+                var config = null;
+                if (type === "reportChart") {
+                    config = {
+                        type: "line",
+                        data: {
+                            datasets: [{
+                                label: "Positive",
+                                data: '.$getPositiveDatas.',
+                                borderColor: "rgba(76, 175, 80, 0.75)",
+                                backgroundColor: "rgba(76, 175, 80, 0.3)",
+                                pointBorderColor: "rgba(76, 175, 80, 0)",
+                                pointBackgroundColor: "rgba(76, 175, 80, 0.9)",
+                                pointBorderWidth: 1,
+                                lineTension: 0
+                            }, {
+                                label: "Negative",
+                                data: '.$getNegativeDatas.',
+                                borderColor: "rgba(244, 67, 54, 0.75)",
+                                backgroundColor: "rgba(244, 67, 54, 0.3)",
+                                pointBorderColor: "rgba(244, 67, 54, 0)",
+                                pointBackgroundColor: "rgba(244, 67, 54, 0.9)",
+                                pointBorderWidth: 1,
+                                lineTension: 0
+                            }]
+                        },
+                        options: {
+                            fill: false,
+                            responsive: true,
+                            scales: {
+                                xAxes: [{
+                                    type: "time",
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Date",
+                                    },
+                                    distribution: "series",
+                                    offset: true,
+                                    ticks: {
+                                        major: {
+                                            enabled: true,
+                                            fontStyle: "bold"
+                                        },
+                                        source: "data",
+                                        autoSkip: true,
+                                        autoSkipPadding: 75,
+                                        maxRotation: 0,
+                                        sampleSize: 100
+                                    },
+                                    time: {
+                                        unit: "'.$unitType.'",
+                                        tooltipFormat: "MMM D, YYYY hh:mm A",
+                                        displayFormats: {
+                                            second: "h:MM:SS",
+                                            minute: "h:MM",
+                                            hour: "hA",
+                                            day: "MMM D",
+                                            month: "YYYY MMM",
+                                            year: "YYYY"
+                                        },                            
+                                    },
+                                }],
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true,
+                                    },
+                                    display: true,
+                                    scaleLabel: {
+                                        display: true,
+                                        labelString: "Behavior Points",
+                                    }
+                                }]
+                            }
+                        }
+                    }
+                }
+                return config;
+            }
+        </script>
+        ';
+        echo json_encode(array('general'=>'
+            <div class="info-box hover-zoom-effect">
+                <div class="icon bg-light-blue">
+                    <i class="material-icons">school</i>
+                </div>
+                <div class="content">
+                    <div class="text nowrapwithellipsis">TOTAL GIVEN POINT</div>
+                    <div class="number"><b class="col-light-blue">'.($yazpuans["toplampuans"] != NULL ? $yazpuans["toplampuans"] : 0).'<small class="font-15"> (W/O Redeem: '.($yazpuans["toplampuans2"] != NULL ? $yazpuans["toplampuans2"] : 0).')</small></b></div>
+                </div>
+            </div>
+            <div class="info-box">
+                <div class="icon">
+                    <div class="chart chart-pie" data-chartcolor="orange">'.$b.','.$a.'</div>
+                </div>
+                <div class="content">
+                    <div class="text nowrapwithellipsis">POSITIVE / NEGATIVE GIVEN POINTS</div>
+                    <div class="number"><b class="col-green">'.$b.'</b> / <b class="col-red">-'.$a.'</b> Points</div>
+                </div>
+            </div>
+        ','table'=>$tableecho, 'chart' => $reportChartEcho));
     }
 }
 ?>

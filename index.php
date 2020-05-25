@@ -230,6 +230,239 @@ if (!isset($page_request)) {
                                         </div>
                                     </div>
                                     <?php
+                                } else {
+                                    $getTodayStats = $DB_con->prepare("SELECT 
+(SELECT SUM(point) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = $uyeokul AND type = 1 AND DATE(feedbacks_students.date) = CURDATE()) as totalPositive,
+(SELECT SUM(point) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = $uyeokul AND type = 2 AND DATE(feedbacks_students.date) = CURDATE()) as totalNegative, 
+(SELECT FORMAT(totalPositive/ABS(totalNegative), 2) + 0) as ratio,
+(SELECT CONCAT(users.name, '+_+',CONCAT(SUM(point), '+_+', CONCAT(users.id, '+_+', class_id))) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.student_id WHERE classes.school = $uyeokul AND DATE(feedbacks_students.date) = CURDATE() GROUP BY student_id ORDER BY SUM(point) DESC LIMIT 1) as bestStudent,
+(SELECT CONCAT(users.name, '+_+',CONCAT(SUM(point), '+_+', CONCAT(users.id, '+_+', class_id))) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.student_id WHERE classes.school = $uyeokul AND DATE(feedbacks_students.date) = CURDATE() GROUP BY student_id ORDER BY SUM(point) ASC LIMIT 1) as worstStudent,
+(SELECT CONCAT(users.name, '+_+',CONCAT(SUM(point), '+_+', CONCAT(users.id, '+_+', class_id))) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.teacher WHERE classes.school = $uyeokul AND type = 1 AND DATE(feedbacks_students.date) = CURDATE() GROUP BY teacher ORDER BY SUM(point) DESC LIMIT 1) as mostPositiveTeacher,
+(SELECT CONCAT(users.name, '+_+',CONCAT(SUM(point), '+_+', CONCAT(users.id, '+_+', class_id)))  FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id INNER JOIN users ON users.id = feedbacks_students.teacher WHERE classes.school = $uyeokul AND type = 2 AND DATE(feedbacks_students.date) = CURDATE() GROUP BY teacher ORDER BY SUM(point) DESC LIMIT 1) as mostNegativeTeacher,
+(SELECT CONCAT(classes.name, '+_+',CONCAT(SUM(point), '+_+', classes.id)) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = $uyeokul AND DATE(feedbacks_students.date) = CURDATE() GROUP BY class_id ORDER BY SUM(point) DESC LIMIT 1) as bestClass,
+(SELECT CONCAT(classes.name, '+_+',CONCAT(SUM(point), '+_+', classes.id)) FROM feedbacks_students INNER JOIN classes ON classes.id = feedbacks_students.class_id WHERE classes.school = $uyeokul AND DATE(feedbacks_students.date) = CURDATE() GROUP BY class_id ORDER BY SUM(point) ASC LIMIT 1) as worstClass");
+                                    $getTodayStats->execute();
+                                    $fetchTodayStats = $getTodayStats->fetch(PDO::FETCH_ASSOC);
+                                    ?>
+                                    <div class="col-xs-12">
+                                    <div class="card">
+                                        <div class="header">
+                                            <h2>Today's Stats</h2>
+                                        </div>
+                                        <div class="body">
+                                            <div class="row clearfix">
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <a href="javascript:;" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon">
+                                                                <i class="material-icons col-green">check</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Total Positive</div>
+                                                                <div class="number"><?= $fetchTodayStats['totalPositive'] ?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <a href="javascript:;" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon">
+                                                                <i class="material-icons col-red">close</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Total Negative</div>
+                                                                <div class="number"><?= $fetchTodayStats['totalNegative'] ?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <a href="javascript:;" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon">
+                                                                <i class="material-icons col-orange">thumbs_up_down</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Positive/Negative Ratio</div>
+                                                                <div class="number"><?= $fetchTodayStats['ratio'] ?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodeBestStudent = explode('+_+', $fetchTodayStats['bestStudent']);
+                                                    $bestStudentResult = [];
+                                                    if (count($explodeBestStudent) > 1) {
+                                                        $bestStudentResult = [
+                                                            "url" => 'report-'.$explodeBestStudent[3].'-'.$explodeBestStudent[2],
+                                                            "name" => $explodeBestStudent[0].' ('.$explodeBestStudent[1].')'
+                                                        ];
+                                                    } else {
+                                                        $bestStudentResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$bestStudentResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon bg-green">
+                                                                <i class="material-icons">thumb_up</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Best Student</div>
+                                                                <div class="number"><?=$bestStudentResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodeWorstStudent = explode('+_+', $fetchTodayStats['worstStudent']);
+                                                    $worstStudentResult = [];
+                                                    if (count($explodeWorstStudent) > 1) {
+                                                        $worstStudentResult = [
+                                                            "url" => 'report-'.$explodeWorstStudent[3].'-'.$explodeWorstStudent[2],
+                                                            "name" => $explodeWorstStudent[0].' ('.$explodeWorstStudent[1].')'
+                                                        ];
+                                                    } else {
+                                                        $worstStudentResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$worstStudentResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon bg-red">
+                                                                <i class="material-icons">thumb_down</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Worst Student</div>
+                                                                <div class="number"><?=$worstStudentResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodePositiveTeacher = explode('+_+', $fetchTodayStats['mostPositiveTeacher']);
+                                                    $positiveTeacherResult = [];
+                                                    if (count($explodePositiveTeacher) > 1) {
+                                                        $positiveTeacherResult = [
+                                                            "url" => 'teacher-report-'.$explodePositiveTeacher[3].'-'.$explodePositiveTeacher[2],
+                                                            "name" => $explodePositiveTeacher[0].' ('.$explodePositiveTeacher[1].')'
+                                                        ];
+                                                    } else {
+                                                        $positiveTeacherResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$positiveTeacherResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon">
+                                                                <i class="material-icons col-green">thumb_up</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Positive Teacher</div>
+                                                                <div class="number"><?=$positiveTeacherResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodeNegativeTeacher = explode('+_+', $fetchTodayStats['mostNegativeTeacher']);
+                                                    $negativeTeacherResult = [];
+                                                    if (count($explodeNegativeTeacher) > 1) {
+                                                        $negativeTeacherResult = [
+                                                            "url" => 'teacher-report-'.$explodeNegativeTeacher[3].'-'.$explodeNegativeTeacher[2],
+                                                            "name" => $explodeNegativeTeacher[0].' ('.$explodeNegativeTeacher[1].')'
+                                                        ];
+                                                    } else {
+                                                        $negativeTeacherResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$negativeTeacherResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon">
+                                                                <i class="material-icons col-red">thumb_down</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Negative Teacher</div>
+                                                                <div class="number"><?=$negativeTeacherResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodeBestClass = explode('+_+', $fetchTodayStats['bestClass']);
+                                                    $bestClassResult = [];
+                                                    if (count($explodeBestClass) > 1) {
+                                                        $bestClassResult = [
+                                                            "url" => 'class-report-'.$explodeBestClass[2],
+                                                            "name" => $explodeBestClass[0].' ('.$explodeBestClass[1].')'
+                                                        ];
+                                                    } else {
+                                                        $bestClassResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$bestClassResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon bg-green">
+                                                                <i class="material-icons">mood</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Best Class</div>
+                                                                <div class="number"><?=$bestClassResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                                                    <?php
+                                                    $explodeWorstClass = explode('+_+', $fetchTodayStats['worstClass']);
+                                                    $worstClassResult = [];
+                                                    if (count($explodeWorstClass) > 1) {
+                                                        $worstClassResult = [
+                                                            "url" => 'class-report-'.$explodeWorstClass[2],
+                                                            "name" => $explodeWorstClass[0].' ('.$explodeWorstClass[1].')'
+                                                        ];
+                                                    } else {
+                                                        $worstClassResult = [
+                                                            "url" => 'javascript:;',
+                                                            "name" => 'Unknown (?)',
+                                                        ];
+                                                    }
+                                                    ?>
+                                                    <a href="<?=$worstClassResult['url']?>" class="info-kutu">
+                                                        <div class="info-box hover-expand-effect">
+                                                            <div class="icon bg-red">
+                                                                <i class="material-icons">mood_bad</i>
+                                                            </div>
+                                                            <div class="content">
+                                                                <div class="text">Worst Class</div>
+                                                                <div class="number"><?=$worstClassResult['name']?></div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <?php
                                 }
                                 ?>
                             </div>
@@ -305,6 +538,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <?php
     if ($uyerol == "admin") {
@@ -784,6 +1019,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -980,6 +1217,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -1205,6 +1444,8 @@ if (!isset($page_request)) {
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         function CSVImportGetHeaders()
@@ -1604,6 +1845,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -1694,6 +1937,8 @@ if (!isset($page_request)) {
         echo "Forbidden";
         exit();
     }
+    $gClient->setPrompt(null);
+    $gClient->setApprovalPrompt("auto");
     if(isset($_GET['code']))
     {
         $gClient->authenticate($_GET['code']);
@@ -1739,6 +1984,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -1976,6 +2223,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
     <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
     <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -2546,6 +2795,8 @@ if (!isset($page_request)) {
         <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
         <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
         <script src="plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
+        <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+        <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
         <script src="js/main.js"></script>
         <script type="text/javascript">
             function loadTemplateText(template_id) {
@@ -4656,6 +4907,8 @@ if (!isset($page_request)) {
         <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
         <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
         <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
+        <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+        <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
         <script src="js/main.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {
@@ -4792,6 +5045,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -4856,97 +5111,84 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="panel panel-default panel-post">
-                    <div class="panel-heading">
-                        <h4><strong>Students</strong></h4>
-                    </div>
-                </div>
                 <div class="row clearfix">
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <div class="form-group">
-                            <select class="form-control" id="siralama" name="siralama">
-                                <option value="0">Tarihe göre (Önce en yeni öğrenci)</option>
-                                <option value="1">Tarihe göre (Önce en eski öğrenci)</option>
-                                <option value="2">Davranış notları toplamına göre (Önce en yüksek)</option>
-                                <option value="3">Davranış notları toplamına göre (Önce en düşük)</option>
-                                <option value="4">Adına göre (A-Z)</option>
-                                <option value="5">Adına göre (Z-A)</option>
-                                <option value="6">Soyadına göre (A-Z)</option>
-                                <option value="7">Soyadına göre (Z-A)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <div class="input-group">
-                            <div class="form-line">
-                                <input type="text" class="form-control" name="arama" id="arama"
-                                       placeholder="Tabloda ara..."
-                                       onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
-                                       onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4>Students</h4>
                             </div>
-                            <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                            <div class="panel-heading">
+                                <div class="form-group">
+                                    <select class="form-control" id="siralama" name="siralama">
+                                        <option value="0">By date (Newest student)</option>
+                                        <option value="1">By date (Oldest student)</option>
+                                        <option value="2">Total behavior point (Highest)</option>
+                                        <option value="3">Total behavior point (Lowest)</option>
+                                        <option value="4">By name (A-Z)</option>
+                                        <option value="5">By name (Z-A)</option>
+                                        <option value="6">By surname (A-Z)</option>
+                                        <option value="7">By surname (Z-A)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <div class="form-line">
+                                        <input type="text" class="form-control" name="arama" id="arama"
+                                               placeholder="Search in students..."
+                                               onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
+                                               onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                                    </div>
+                                    <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                                </div>
+                                <div class="notice notice-info" style="margin-top:0px;">
+                                    <strong>Info: </strong>You can search by <b>student name and e-mail address</b> from the results.
+                                </div>
+                                <label>Class:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="sinif" name="sinif">
+                                        <option value="0">Choose...</option>
+                                        <?php
+                                        $sorgusinifs = $DB_con->prepare("SELECT classes.id,classes.name,group_concat(users.name) AS teachersname FROM classes INNER JOIN users ON FIND_IN_SET(users.id,teachers) > 0 WHERE school = :school GROUP BY classes.id");
+                                        $sorgusinifs->execute(array(":school" => $uyeokul));
+                                        while ($yazsinifs = $sorgusinifs->fetch(PDO::FETCH_ASSOC)) {
+                                            ?>
+                                            <option value="<?= $yazsinifs["id"] ?>"><?= $yazsinifs["name"] ?>
+                                                (Öğretmenler: <?= $yazsinifs["teachersname"] ?>)
+                                            </option>
+                                            <?php
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <label>Point Type:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="puan" name="puan">
+                                        <option value="0">Total Behavior Points With Redeem Points</option>
+                                        <option value="4">Total Behavior Points Without Redeem Points</option>
+                                        <option value="1">Only Positive Behavior Points</option>
+                                        <option value="2">Only Negative Behavior Points</option>
+                                        <option value="3">Only Redeem Points</option>
+                                    </select>
+                                </div>
+                                <label>Register Type:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="kayit" name="kayit">
+                                        <option value="0">Choose...</option>
+                                        <option value="1">Google Classroom</option>
+                                        <option value="2">Manual/CSV</option>
+                                    </select>
+                                </div>
+                                <label>Registration Status:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="kayit2" name="kayit2">
+                                        <option value="0">Choose...</option>
+                                        <option value="1">Registered</option>
+                                        <option value="2">Unregistered</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="notice notice-info" style="margin-top:0px;">
-                            <strong>Bilgi: </strong>Sonuçlar arasından öğrencinin, <b>tam adına ve e-posta adresine</b>
-                            göre arama yapabilirsiniz.
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Class:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="sinif" name="sinif">
-                                <option value="0">Seçiniz...</option>
-                                <?php
-                                $sorgusinifs = $DB_con->prepare("SELECT classes.id,classes.name,group_concat(users.name) AS teachersname FROM classes INNER JOIN users ON FIND_IN_SET(users.id,teachers) > 0 WHERE school = :school GROUP BY classes.id");
-                                $sorgusinifs->execute(array(":school" => $uyeokul));
-                                while ($yazsinifs = $sorgusinifs->fetch(PDO::FETCH_ASSOC)) {
-                                    ?>
-                                    <option value="<?= $yazsinifs["id"] ?>"><?= $yazsinifs["name"] ?>
-                                        (Öğretmenler: <?= $yazsinifs["teachersname"] ?>)
-                                    </option>
-                                    <?php
-                                }
-                                ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Puan Türü:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="puan" name="puan">
-                                <option value="0">Total Behavior Points With Redeem Points</option>
-                                <option value="4">Total Behavior Points Without Redeem Points</option>
-                                <option value="1">Only Positive Behavior Points</option>
-                                <option value="2">Only Negative Behavior Points</option>
-                                <option value="3">Only Redeem Points</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Kayıt Türü:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="kayit" name="kayit">
-                                <option value="0">Seçiniz...</option>
-                                <option value="1">Google Classroom</option>
-                                <option value="2">Manuel/CSV</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Kayıt Durumu:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="kayit2" name="kayit2">
-                                <option value="0">Seçiniz...</option>
-                                <option value="1">Kaydoldu</option>
-                                <option value="2">Kaydolmadı</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="students">
-
-                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-9 col-xl-9" id="students"></div>
                 </div>
             </div>
         </div>
@@ -4963,6 +5205,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -5363,69 +5607,60 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="panel panel-default panel-post">
-                    <div class="panel-heading">
-                        <h4><strong>Teachers</strong></h4>
-                    </div>
-                </div>
                 <div class="row clearfix">
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <div class="form-group">
-                            <select class="form-control" id="siralama" name="siralama">
-                                <option value="0">Tarihe göre (Önce en yeni öğretmen)</option>
-                                <option value="1">Tarihe göre (Önce en eski öğretmen)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <div class="input-group">
-                            <div class="form-line">
-                                <input type="text" class="form-control" name="arama" id="arama"
-                                       placeholder="Tabloda ara..."
-                                       onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
-                                       onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4>Teachers</h4>
                             </div>
-                            <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                            <div class="panel-heading">
+                                <div class="form-group">
+                                    <select class="form-control" id="siralama" name="siralama">
+                                        <option value="0">By date (Newest teacher)</option>
+                                        <option value="1">By date (Oldest teacher)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <div class="form-line">
+                                        <input type="text" class="form-control" name="arama" id="arama"
+                                               placeholder="Search in students..."
+                                               onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
+                                               onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                                    </div>
+                                    <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                                </div>
+                                <div class="notice notice-info" style="margin-top:0px;">
+                                    <strong>Info: </strong>You can search by <b>teacher name and e-mail address</b> from the results.
+                                </div>
+                                <label>Class:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="sinif" name="sinif">
+                                        <option value="0">Choose...</option>
+                                        <?php
+                                        $sorgusinifs = $DB_con->prepare("SELECT classes.id,classes.name,group_concat(users.name) AS teachersname FROM classes INNER JOIN users ON FIND_IN_SET(users.id,teachers) > 0 WHERE school = :school GROUP BY classes.id");
+                                        $sorgusinifs->execute(array(":school" => $uyeokul));
+                                        while ($yazsinifs = $sorgusinifs->fetch(PDO::FETCH_ASSOC)) {
+                                            ?>
+                                            <option value="<?= $yazsinifs["id"] ?>"><?= $yazsinifs["name"] ?>
+                                                (Teachers: <?= $yazsinifs["teachersname"] ?>)
+                                            </option>
+                                            <?php
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <label>Registration Status:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="kayit" name="kayit">
+                                        <option value="0">Choose...</option>
+                                        <option value="1">Registered</option>
+                                        <option value="2">Unregistered</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="notice notice-info" style="margin-top:0px;">
-                            <strong>Bilgi: </strong>Sonuçlar arasından öğretmenin, <b>tam adına ve e-posta adresine</b>
-                            göre arama yapabilirsiniz.
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Class:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="sinif" name="sinif">
-                                <option value="0">Seçiniz...</option>
-                                <?php
-                                $sorgusinifs = $DB_con->prepare("SELECT classes.id,classes.name,group_concat(users.name) AS teachersname FROM classes INNER JOIN users ON FIND_IN_SET(users.id,teachers) > 0 WHERE school = :school GROUP BY classes.id");
-                                $sorgusinifs->execute(array(":school" => $uyeokul));
-                                while ($yazsinifs = $sorgusinifs->fetch(PDO::FETCH_ASSOC)) {
-                                    ?>
-                                    <option value="<?= $yazsinifs["id"] ?>"><?= $yazsinifs["name"] ?>
-                                        (Öğretmenler: <?= $yazsinifs["teachersname"] ?>)
-                                    </option>
-                                    <?php
-                                }
-                                ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                        <label>Kayıt Durumu:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="kayit" name="kayit">
-                                <option value="0">Seçiniz...</option>
-                                <option value="1">Kaydoldu</option>
-                                <option value="2">Kaydolmadı</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="teachers">
-
-                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-9 col-xl-9" id="teachers"></div>
                 </div>
             </div>
         </div>
@@ -5442,6 +5677,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -5677,41 +5914,37 @@ if (!isset($page_request)) {
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-                <div class="panel panel-default panel-post">
-                    <div class="panel-heading">
-                        <h4><strong>Classes</strong></h4>
-                    </div>
-                </div>
                 <div class="row clearfix">
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="input-group">
-                            <div class="form-line">
-                                <input type="text" class="form-control" name="arama" id="arama"
-                                       placeholder="Tabloda ara..."
-                                       onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
-                                       onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4>Classes</h4>
                             </div>
-                            <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                            <div class="panel-heading">
+                                <div class="input-group">
+                                    <div class="form-line">
+                                        <input type="text" class="form-control" name="arama" id="arama"
+                                               placeholder="Search in classes..."
+                                               onkeyup="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');"
+                                               onblur="this.value=this.value.replace(/[^a-zA-Z0-9ÇŞĞÜÖİçşğüöı _]/g,'');">
+                                    </div>
+                                    <a href="javascript:;" class="input-group-addon" id="arama-buton"><i class="material-icons">search</i></a>
+                                </div>
+                                <div class="notice notice-info" style="margin-top:0px;">
+                                    <strong>Info: </strong>You can search by <b>class name</b> from the results.
+                                </div>
+                                <label>Register Type:</label>
+                                <div class="form-group">
+                                    <select class="form-control" id="kayit" name="kayit">
+                                        <option value="0">Choose...</option>
+                                        <option value="1">Google Classroom</option>
+                                        <option value="2">Manual</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <div class="notice notice-info" style="margin-top:0px;">
-                            <strong>Bilgi: </strong>Sonuçlar arasından sınıfın, <b>adına</b> göre arama yapabilirsiniz.
-                        </div>
-                    </div>
-                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                        <label>Kayıt Türü:</label>
-                        <div class="form-group">
-                            <select class="form-control" id="kayit" name="kayit">
-                                <option value="0">Seçiniz...</option>
-                                <option value="1">Google Classroom</option>
-                                <option value="2">Manual</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12" id="classes">
-
-                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-9 col-xl-9" id="classes"></div>
                 </div>
             </div>
         </div>
@@ -5728,6 +5961,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -5959,6 +6194,8 @@ if (!isset($page_request)) {
     <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
@@ -6277,6 +6514,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -6449,6 +6688,8 @@ if (!isset($page_request)) {
         <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
         <script src="plugins/node-waves/waves.min.js"></script>
         <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+        <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+        <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
         <script src="js/main.js"></script>
         </body>
         </html>
@@ -6485,7 +6726,7 @@ if (!isset($page_request)) {
         exit();
     }
     $yazogrencix = $sorguogrencixd->fetch(PDO::FETCH_ASSOC);
-    $sorguokulad = $DB_con->prepare("SELECT name FROM schools WHERE id = :id");
+    $sorguokulad = $DB_con->prepare("SELECT name,quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
     $sorguokulad->execute(array(":id" => $uyeokul));
     $yazokulad = $sorguokulad->fetch(PDO::FETCH_ASSOC);
     ?>
@@ -6501,13 +6742,22 @@ if (!isset($page_request)) {
                             <div class="panel-heading">
                                 <div class="media">
                                     <div class="media-left">
+                                        <?php if ($uyerol == 'teacher') { ?>
                                         <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla"
                                            id="<?= $ogrenciid ?>" class_id="<?= $sinifid ?>"><img src="<?= $yazogrencix["avatar"] ?>"></a>
+                                        <?php } else if ($uyerol == 'admin') { ?>
+                                            <a href="javascript:;"><img src="<?= $yazogrencix["avatar"] ?>"></a>
+                                        <?php } ?>
                                     </div>
                                     <div class="media-body">
                                         <h4 class="media-heading">
-                                            <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla"
-                                               id="<?= $ogrenciid ?>" class_id="<?= $sinifid ?>"><?= $yazogrencix["name"] ?></a><br>
+                                            <?php if ($uyerol == 'teacher') { ?>
+                                                <a href="javascript:;" data-toggle="modal" data-target="#modal-student" class="ogrenci-puanla"
+                                                   id="<?= $ogrenciid ?>" class_id="<?= $sinifid ?>"><?= $yazogrencix["name"] ?></a>
+                                            <?php } else if ($uyerol == 'admin') { ?>
+                                                <a href="javascript:;"><?= $yazogrencix["name"] ?></a>
+                                            <?php } ?>
+                                            <br>
                                             <small><?= $yazogrencix["email"] ?></small>
                                         </h4>
                                     </div>
@@ -6519,6 +6769,12 @@ if (!isset($page_request)) {
                                         <h4 class="media-heading">
                                             School: <a href="javascript:;"><?= $yazokulad["name"] ?></a>
                                         </h4>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Chart:
+                                        </h4>
+                                        <div class="switch">
+                                            <label>Hide<input type="checkbox" id="reportChartToggle" checked=""><span class="lever switch-col-orange"></span>Show</label>
+                                        </div>
                                         <h4 class="media-heading m-t-10 p-b-5">
                                             Class(es):
                                         </h4>
@@ -6555,6 +6811,20 @@ if (!isset($page_request)) {
                                             <option value="5">This month (<?= date("F") ?>)</option>
                                             <option value="6">Last month (<?= date("F", strtotime('-1 month')) ?>)
                                             </option>
+                                            <?php
+                                            if ($yazokulad['quarter1st'] != NULL && $yazokulad['quarter1fn'] != NULL) {
+                                                echo '<option value="8">1st Quarter</option>';
+                                            }
+                                            if ($yazokulad['quarter2st'] != NULL && $yazokulad['quarter2fn'] != NULL) {
+                                                echo '<option value="9">2nd Quarter</option>';
+                                            }
+                                            if ($yazokulad['quarter3st'] != NULL && $yazokulad['quarter3fn'] != NULL) {
+                                                echo '<option value="10">3rd Quarter</option>';
+                                            }
+                                            if ($yazokulad['quarter4st'] != NULL && $yazokulad['quarter4fn'] != NULL) {
+                                                echo '<option value="11">4rd Quarter</option>';
+                                            }
+                                            ?>
                                             <option value="7">Custom date range</option>
                                         </select>
                                         <div class="custom-range-filter m-t-15" style="display:none;">
@@ -6599,11 +6869,19 @@ if (!isset($page_request)) {
                         </div>
                         <div id="studentReportContent"></div>
                     </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="reportChartDiv">
+                        <div class="card">
+                            <div class="body">
+                                <canvas id="reportChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="studentReportContent2"></div>
                 </div>
             </div>
         </div>
     </section>
+    <div id="reportChartContainer"></div>
     <div class="modal fade in" id="modal-student" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content modal-student-content">
@@ -6702,6 +6980,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
     <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
     <script src="js/student-point-actions.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="plugins/chartjs/chart-js.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -6723,7 +7003,8 @@ if (!isset($page_request)) {
                     processData: false,
                     dataType: 'json',
                     success: function (data) {
-
+                        $('#reportChartContainer').html(data.chart);
+                        createChart('reportChart');
                         $("#studentReportContent").html(data.general);
                         $("#studentReportContent2").html(data.table);
                         $.each($('.chart.chart-pie'), function (i, key) {
@@ -6758,11 +7039,35 @@ if (!isset($page_request)) {
                 placeholder: '____-__-__',
                 clearIncomplete: true
             });
+            $('body').on('click', '#reportChartToggle', function() {
+                var idSelector = function () {
+                    return $('.classCheckBox').data("class-id");
+                };
+                var checkedClasses = $("input[type='checkbox'].classCheckBox:checked").map(idSelector).get();
+                if (checkedClasses.length == 0) {
+                    return false;
+                }
+               if ($(this).is(':checked')) {
+
+                   $('#reportChartDiv').fadeIn(500);
+               } else {
+                   $('#reportChartDiv').fadeOut(500);
+               }
+            });
             $('body').on('click', '.classCheckBox', function (e) {
                 var idSelector = function () {
                     return $(this).data("class-id");
                 };
                 var checkedClasses = $("input[type='checkbox'].classCheckBox:checked").map(idSelector).get();
+                if (checkedClasses.length == 0) {
+                    $('#reportChartDiv').fadeOut(500);
+                } else {
+                    if ($('#reportChartToggle').is(':checked')) {
+                        $('#reportChartDiv').fadeIn(500);
+                    } else {
+                        $('#reportChartDiv').fadeOut(500);
+                    }
+                }
                 var timefilter = $("select#timefilter").val();
                 var regexp = /[^0-9]/g;
                 var date1 = $("input.date1").val();
@@ -6779,6 +7084,9 @@ if (!isset($page_request)) {
                             if (data == 0) {
                                 $("#studentReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
                             } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
                                 $("#studentReportContent").html(data.general);
                                 $("#studentReportContent2").html(data.table);
                                 $.each($('.chart.chart-pie'), function (i, key) {
@@ -6837,6 +7145,9 @@ if (!isset($page_request)) {
                             if (data == 0) {
                                 $("#studentReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
                             } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
                                 $("#studentReportContent").html(data.general);
                                 $("#studentReportContent2").html(data.table);
                                 $.each($('.chart.chart-pie'), function (i, key) {
@@ -6895,6 +7206,9 @@ if (!isset($page_request)) {
                             if (data == 0) {
                                 $("#studentReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
                             } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
                                 $("#studentReportContent").html(data.general);
                                 $("#studentReportContent2").html(data.table);
                                 $.each($('.chart.chart-pie'), function (i, key) {
@@ -7125,6 +7439,8 @@ if (!isset($page_request)) {
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
     <script src="//cdn.ckeditor.com/4.13.0/basic/ckeditor.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         function loadTemplates() {
@@ -7425,6 +7741,9 @@ if (!isset($page_request)) {
         echo "Forbidden";
         exit();
     }
+    $getSchool = $DB_con->prepare("SELECT quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+    $getSchool->execute(array(":id"=>$uyeokul));
+    $fetchSchool = $getSchool->fetch(PDO::FETCH_ASSOC);
     ?>
     <section class="content">
         <div class="container-fluid">
@@ -7445,6 +7764,20 @@ if (!isset($page_request)) {
                                     <option value="5">This month (<?= date("F") ?>)</option>
                                     <option value="6">Last month (<?= date("F", strtotime('-1 month')) ?>)
                                     </option>
+                                    <?php
+                                    if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                                        echo '<option value="8">1st Quarter</option>';
+                                    }
+                                    if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                                        echo '<option value="9">2nd Quarter</option>';
+                                    }
+                                    if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                                        echo '<option value="10">3rd Quarter</option>';
+                                    }
+                                    if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                                        echo '<option value="11">4rd Quarter</option>';
+                                    }
+                                    ?>
                                     <option value="7">Custom date range</option>
                                 </select>
                                 <div class="custom-range-filter m-t-15" style="display:none;">
@@ -7843,6 +8176,8 @@ if (!isset($page_request)) {
     <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
     <script src="plugins/node-waves/waves.min.js"></script>
     <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -7916,6 +8251,965 @@ if (!isset($page_request)) {
                         processData: false,
                         success: function (data) {
                             $("#uye-giris-kayitlari").html(data);
+                        }
+                    });
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+} else if ($page_request == "teacher-report") {
+    $classId = filter_input(INPUT_GET, 'class_id', FILTER_VALIDATE_INT);
+    if ($classId === false) {
+        echo 404;
+        exit();
+    }
+    $teacherId = filter_input(INPUT_GET, 'teacher_id', FILTER_VALIDATE_INT);
+    if ($teacherId === false) {
+        echo 404;
+        exit();
+    }
+    if ($uyerol != "admin") {
+        echo "Forbidden";
+        exit();
+    }
+    $findTeacherQuery = $DB_con->prepare("SELECT name,avatar,email FROM users WHERE id = :id AND FIND_IN_SET(:id2, (SELECT teachers FROM classes WHERE id = :cid AND school = :school)) AND role = :role AND schools = :school2");
+    $findTeacherQuery->execute(array(":id" => $teacherId, ":id2" => $teacherId, ":cid" => $classId, ":school" => $uyeokul, ":role" => "teacher", ":school2" => $uyeokul));
+    if ($findTeacherQuery->rowCount() != 1) {
+        echo 404;
+        exit();
+    }
+    $fetchTeacher = $findTeacherQuery->fetch(PDO::FETCH_ASSOC);
+    $findSchoolQuery = $DB_con->prepare("SELECT name,quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+    $findSchoolQuery->execute(array(":id" => $uyeokul));
+    $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="row clearfix">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4>Report of Teacher:</h4>
+                            </div>
+                            <div class="panel-heading">
+                                <div class="media">
+                                    <div class="media-left">
+                                        <a href="javascript:;"><img src="<?= $fetchTeacher["avatar"] ?>"></a>
+                                    </div>
+                                    <div class="media-body">
+                                        <h4 class="media-heading">
+                                            <a href="javascript:;"><?= $fetchTeacher["name"] ?></a><br>
+                                            <small><?= $fetchTeacher["email"] ?></small>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-heading">
+                                <div class="media">
+                                    <div class="media-body">
+                                        <h4 class="media-heading">
+                                            School: <a href="javascript:;"><?= $fetchSchool["name"] ?></a>
+                                        </h4>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Chart:
+                                        </h4>
+                                        <div class="switch">
+                                            <label>Hide<input type="checkbox" id="reportChartToggle" checked=""><span class="lever switch-col-orange"></span>Show</label>
+                                        </div>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Class(es):
+                                        </h4>
+                                        <?php
+                                        $findTeacherClassesQuery = $DB_con->prepare("SELECT id,name,color,status FROM classes WHERE FIND_IN_SET(:teacherId,teachers) AND school = :school AND status = :status ORDER BY id ASC");
+                                        $findTeacherClassesQuery->execute(array(":teacherId" => $teacherId, ":school" => $uyeokul, ":status" => 1));
+                                        while ($fetchTeacherClasses = $findTeacherClassesQuery->fetch(PDO::FETCH_ASSOC)) {
+                                            ?>
+                                            <div class="form-group">
+                                                <input type="checkbox" id="class_<?= $fetchTeacherClasses["id"] ?>"
+                                                       class="filled-in chk-col-orange classCheckBox"
+                                                       data-class-id="<?= $fetchTeacherClasses["id"] ?>"
+                                                       value="<?= $fetchTeacherClasses["id"] ?>" <?php if ($classId == $fetchTeacherClasses["id"]) {
+                                                    echo "checked";
+                                                } ?>>
+                                                <label for="class_<?= $fetchTeacherClasses["id"] ?>"><?= $fetchTeacherClasses["name"] ?></label>
+                                            </div>
+                                            <?php
+                                        }
+                                        $findTeacherUsedBehaviors = $DB_con->prepare("SELECT id,name,type FROM feedbacks_students WHERE teacher = :teacherId AND type <> :type GROUP BY name");
+                                        $findTeacherUsedBehaviors->execute(array(":teacherId" => $teacherId, ":type" => 3));
+                                        if ($findTeacherUsedBehaviors->rowCount() > 0) {
+                                            echo '<h4 class="media-heading m-t-10 p-b-5">Filter by behavior type:</h4>';
+                                            while ($fetchTeacherUsedBehaviors = $findTeacherUsedBehaviors->fetch(PDO::FETCH_ASSOC)) {
+                                                ?>
+                                                <div class="form-group">
+                                                    <input type="checkbox"
+                                                           id="behavior_<?= $fetchTeacherUsedBehaviors["id"] ?>"
+                                                           class="filled-in chk-col-orange behaviorCheckBox"
+                                                           data-behavior-id="<?= $fetchTeacherUsedBehaviors["id"] ?>"
+                                                           value="<?= $fetchTeacherUsedBehaviors["id"] ?>">
+                                                    <label for="behavior_<?= $fetchTeacherUsedBehaviors["id"] ?>"
+                                                           class="<?= ($fetchTeacherUsedBehaviors['type'] == 1 ? 'col-green' : 'col-red') ?>"><?= $fetchTeacherUsedBehaviors["name"] ?></label>
+                                                </div>
+                                                <?php
+                                            }
+                                        }
+                                        ?>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Filter by time:
+                                        </h4>
+                                        <select class="form-control" id="timefilter" name="timefilter">
+                                            <option value="0">All time</option>
+                                            <option value="1">Today</option>
+                                            <option value="2">Yesterday</option>
+                                            <option value="3">This week</option>
+                                            <option value="4">Last week</option>
+                                            <option value="5">This month (<?= date("F") ?>)</option>
+                                            <option value="6">Last month (<?= date("F", strtotime('-1 month')) ?>)
+                                            </option>
+                                            <?php
+                                            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                                                echo '<option value="8">1st Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                                                echo '<option value="9">2nd Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                                                echo '<option value="10">3rd Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                                                echo '<option value="11">4rd Quarter</option>';
+                                            }
+                                            ?>
+                                            <option value="7">Custom date range</option>
+                                        </select>
+                                        <div class="custom-range-filter m-t-15" style="display:none;">
+                                            <h4 class="media-heading p-b-5">
+                                                Custom date range:
+                                            </h4>
+                                            <div class="row">
+                                                <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">date_range</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input type="text" class="form-control date1">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">compare_arrows</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input type="text" class="form-control date2">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                    <button type="button"
+                                                            class="btn btn-success btn-block btn-sm waves-effect applytimefilter">
+                                                        Apply
+                                                    </button>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                    <div id="apply-alert"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="teacherReportContent"></div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="reportChartDiv">
+                        <div class="card">
+                            <div class="body">
+                                <canvas id="reportChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="teacherReportContent2"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div id="reportChartContainer"></div>
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
+    <script src="plugins/jquery-sparkline/jquery.sparkline.js"></script>
+    <script src="plugins/jquery-datatable/jquery.dataTables.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="plugins/chartjs/chart-js.min.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.date1').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $('.date2').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $.ajaxSetup({
+                headers: {'sbmtoken': $('meta[name="sbmtoken"]').attr('content')}
+            });
+            $.ajax(
+                {
+                    url: "get-teacher-report-<?=$teacherId?>?classes=<?=$classId?>",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        $('#reportChartContainer').html(data.chart);
+                        createChart('reportChart');
+                        $("#teacherReportContent").html(data.general);
+                        $("#teacherReportContent2").html(data.table);
+                        $.each($('.chart.chart-pie'), function (i, key) {
+                            $(key).sparkline(undefined, {
+                                type: 'pie',
+                                height: '50px',
+                                sliceColors: ['#4CAF50', '#F44336']
+                            });
+                        });
+                        $('.report-behavior-list2').DataTable({
+                            responsive: {
+                                details: {
+                                    display: $.fn.dataTable.Responsive.display.modal({
+                                        header: function (row) {
+                                            return 'Details:';
+                                        }
+                                    }),
+                                    renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                        tableClass: 'table'
+                                    })
+                                }
+                            }
+                        });
+
+                    }
+                });
+            $('.custom-range-filter').find('.date1').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('.custom-range-filter').find('.date2').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('body').on('click', '#reportChartToggle', function() {
+                var idSelector = function () {
+                    return $('.classCheckBox').data("class-id");
+                };
+                var checkedClasses = $("input[type='checkbox'].classCheckBox:checked").map(idSelector).get();
+                if (checkedClasses.length == 0) {
+                    return false;
+                }
+                if ($(this).is(':checked')) {
+
+                    $('#reportChartDiv').fadeIn(500);
+                } else {
+                    $('#reportChartDiv').fadeOut(500);
+                }
+            });
+            $('body').on('click', '.classCheckBox', function (e) {
+                var idSelector = function () {
+                    return $(this).data("class-id");
+                };
+                var checkedClasses = $("input[type='checkbox'].classCheckBox:checked").map(idSelector).get();
+                if (checkedClasses.length == 0) {
+                    $('#reportChartDiv').fadeOut(500);
+                } else {
+                    if ($('#reportChartToggle').is(':checked')) {
+                        $('#reportChartDiv').fadeIn(500);
+                    } else {
+                        $('#reportChartDiv').fadeOut(500);
+                    }
+                }
+                var idSelector2 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector2).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                $.ajax(
+                    {
+                        url: "get-teacher-report-<?=$teacherId?>?classes=" + checkedClasses + "&behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2,
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#teacherReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#teacherReportContent").html(data.general);
+                                $("#teacherReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+            $('body').on('click', '.behaviorCheckBox', function (e) {
+                var idSelector = function () {
+                    return $(this).data("class-id");
+                };
+                var checkedClasses = $("input[type='checkbox'].classCheckBox:checked").map(idSelector).get();
+                var idSelector2 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector2).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                $.ajax(
+                    {
+                        url: "get-teacher-report-<?=$teacherId?>?classes=" + checkedClasses + "&behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2,
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#teacherReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#teacherReportContent").html(data.general);
+                                $("#teacherReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+            $('body').on("change", 'select#timefilter', function (event) {
+                if ($("select#timefilter").val() === "7") {
+                    $('.custom-range-filter').show();
+                    return false;
+                } else {
+                    if ($('.custom-range-filter').is(":visible")) {
+                        $('.custom-range-filter').hide();
+                    }
+                }
+                var idSelector2 = function () {
+                    return $(this).data("class-id");
+                };
+                var checkedClasses2 = $("input[type='checkbox'].classCheckBox:checked").map(idSelector2).get();
+                var idSelector3 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector3).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                $.ajax(
+                    {
+                        url: "get-teacher-report-<?=$teacherId?>?classes=" + checkedClasses2 + "&behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#teacherReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                // createChart('reportChart');
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#teacherReportContent").html(data.general);
+                                $("#teacherReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+            $('body').on("click", '.applytimefilter', function (event) {
+                if ($("select#timefilter").val() !== "7") return false;
+                $('#apply-alert').html("");
+                if ($("input.date1").val().length === 0 || $("input.date2").val().length === 0) {
+                    $('#apply-alert').html("<div class='alert alert-danger m-t-10'>Lütfen filtrelemek istediğiniz zaman aralığını eksiksiz doldurunuz.</div>");
+                    return false;
+                }
+                var idSelector3 = function () {
+                    return $(this).data("class-id");
+                };
+                var checkedClasses3 = $("input[type='checkbox'].classCheckBox:checked").map(idSelector3).get();
+                var idSelector4 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector4).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                $.ajax(
+                    {
+                        url: "get-teacher-report-<?=$teacherId?>?classes=" + checkedClasses3 + "&behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2,
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#teacherReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#teacherReportContent").html(data.general);
+                                $("#teacherReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+} else if ($page_request == "class-report") {
+    $classId = filter_input(INPUT_GET, 'class_id', FILTER_VALIDATE_INT);
+    if ($classId === false) {
+        echo 404;
+        exit();
+    }
+    if ($uyerol != "admin") {
+        echo "Forbidden";
+        exit();
+    }
+    $findClassQuery = $DB_con->prepare("SELECT name,teachers FROM classes WHERE id = :id AND status = :status AND school = :school");
+    $findClassQuery->execute(array(":id" => $classId, ":status" => 1, ":school" => $uyeokul));
+    if ($findClassQuery->rowCount() != 1) {
+        echo 404;
+        exit();
+    }
+    $fetchClass = $findClassQuery->fetch(PDO::FETCH_ASSOC);
+    $findSchoolQuery = $DB_con->prepare("SELECT name,quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
+    $findSchoolQuery->execute(array(":id" => $uyeokul));
+    $fetchSchool = $findSchoolQuery->fetch(PDO::FETCH_ASSOC);
+    ?>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row clearfix">
+                <div class="row clearfix">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                        <div class="panel panel-default panel-post">
+                            <div class="panel-heading">
+                                <h4>Report of Class:</h4>
+                            </div>
+                            <div class="panel-heading">
+                                <div class="media">
+                                    <div class="media-body">
+                                        <h4 class="media-heading">
+                                            <a href="javascript:;"><?= $fetchClass["name"] ?></a><br>
+                                            <small>
+                                                <strong>Teachers: </strong>
+                                                <?php
+                                                $explodeTeachers = explode(",", $fetchClass['teachers']);
+                                                $prefixTeacher = "";
+                                                foreach($explodeTeachers as $teacher) {
+                                                    $findTeacherQuery = $DB_con->prepare("SELECT name FROM users WHERE id = :id AND schools = :school AND role = :role");
+                                                    $findTeacherQuery->execute(array(":id"=>$teacher,":school"=>$uyeokul,":role"=>"teacher"));
+                                                    if ($findTeacherQuery->rowCount() == 1) {
+                                                        $fetchTeacher = $findTeacherQuery->fetch(PDO::FETCH_ASSOC);
+                                                        echo "<a href='teacher-report-" . $classId . "-" . $teacher . "'>" . $prefixTeacher . $fetchTeacher["name"] . "</a>";
+                                                        $prefixTeacher = ", ";
+                                                    }
+                                                }
+                                                ?>
+                                            </small>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-heading">
+                                <div class="media">
+                                    <div class="media-body">
+                                        <h4 class="media-heading">
+                                            School: <a href="javascript:;"><?= $fetchSchool["name"] ?></a>
+                                        </h4>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Chart:
+                                        </h4>
+                                        <div class="switch">
+                                            <label>Hide<input type="checkbox" id="reportChartToggle" checked=""><span class="lever switch-col-orange"></span>Show</label>
+                                        </div>
+                                        <?php
+                                        $findClassUsedBehaviors = $DB_con->prepare("SELECT id,name,type FROM feedbacks_students WHERE class_id = :classId AND type <> :type GROUP BY name");
+                                        $findClassUsedBehaviors->execute(array(":classId" => $classId, ":type" => 3));
+                                        if ($findClassUsedBehaviors->rowCount() > 0) {
+                                            echo '<h4 class="media-heading m-t-10 p-b-5">Filter by behavior type:</h4>';
+                                            while ($fetchClassUsedBehaviors = $findClassUsedBehaviors->fetch(PDO::FETCH_ASSOC)) {
+                                                ?>
+                                                <div class="form-group">
+                                                    <input type="checkbox"
+                                                           id="behavior_<?= $fetchClassUsedBehaviors["id"] ?>"
+                                                           class="filled-in chk-col-orange behaviorCheckBox"
+                                                           data-behavior-id="<?= $fetchClassUsedBehaviors["id"] ?>"
+                                                           value="<?= $fetchClassUsedBehaviors["id"] ?>">
+                                                    <label for="behavior_<?= $fetchClassUsedBehaviors["id"] ?>"
+                                                           class="<?= ($fetchClassUsedBehaviors['type'] == 1 ? 'col-green' : 'col-red') ?>"><?= $fetchClassUsedBehaviors["name"] ?></label>
+                                                </div>
+                                                <?php
+                                            }
+                                        }
+                                        ?>
+                                        <h4 class="media-heading m-t-10 p-b-5">
+                                            Filter by time:
+                                        </h4>
+                                        <select class="form-control" id="timefilter" name="timefilter">
+                                            <option value="0">All time</option>
+                                            <option value="1">Today</option>
+                                            <option value="2">Yesterday</option>
+                                            <option value="3">This week</option>
+                                            <option value="4">Last week</option>
+                                            <option value="5">This month (<?= date("F") ?>)</option>
+                                            <option value="6">Last month (<?= date("F", strtotime('-1 month')) ?>)
+                                            </option>
+                                            <?php
+                                            if ($fetchSchool['quarter1st'] != NULL && $fetchSchool['quarter1fn'] != NULL) {
+                                                echo '<option value="8">1st Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter2st'] != NULL && $fetchSchool['quarter2fn'] != NULL) {
+                                                echo '<option value="9">2nd Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter3st'] != NULL && $fetchSchool['quarter3fn'] != NULL) {
+                                                echo '<option value="10">3rd Quarter</option>';
+                                            }
+                                            if ($fetchSchool['quarter4st'] != NULL && $fetchSchool['quarter4fn'] != NULL) {
+                                                echo '<option value="11">4rd Quarter</option>';
+                                            }
+                                            ?>
+                                            <option value="7">Custom date range</option>
+                                        </select>
+                                        <div class="custom-range-filter m-t-15" style="display:none;">
+                                            <h4 class="media-heading p-b-5">
+                                                Custom date range:
+                                            </h4>
+                                            <div class="row">
+                                                <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">date_range</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input type="text" class="form-control date1">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon">
+                                                            <i class="material-icons">compare_arrows</i>
+                                                        </span>
+                                                        <div class="form-line">
+                                                            <input type="text" class="form-control date2">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                    <button type="button"
+                                                            class="btn btn-success btn-block btn-sm waves-effect applytimefilter">
+                                                        Apply
+                                                    </button>
+                                                </div>
+                                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                                                    <div id="apply-alert"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="classReportContent"></div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="reportChartDiv">
+                        <div class="card">
+                            <div class="body">
+                                <canvas id="reportChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-8 col-xl-8" id="classReportContent2"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div id="reportChartContainer"></div>
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="plugins/jquery-slimscroll/jquery.slimscroll.js"></script>
+    <script src="plugins/node-waves/waves.min.js"></script>
+    <script src="plugins/oldsweetalert/sweetalert.min.js"></script>
+    <script src="plugins/jquery-inputmask/jquery.inputmask.bundle.min.js"></script>
+    <script src="plugins/jquery-sparkline/jquery.sparkline.js"></script>
+    <script src="plugins/jquery-datatable/jquery.dataTables.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/dataTables.responsive.min.js"></script>
+    <script src="plugins/jquery-datatable/skin/bootstrap/js/responsive.bootstrap.min.js"></script>
+    <script src="plugins/jquery-datepicker/datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="plugins/chartjs/chart-js.min.js"></script>
+    <script src="js/main.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.date1').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $('.date2').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            $.ajaxSetup({
+                headers: {'sbmtoken': $('meta[name="sbmtoken"]').attr('content')}
+            });
+            $.ajax(
+                {
+                    url: "get-class-report-<?=$classId?>",
+                    type: "GET",
+                    contentType: false,
+                    cache: false,
+                    processData: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        $('#reportChartContainer').html(data.chart);
+                        createChart('reportChart');
+                        $("#classReportContent").html(data.general);
+                        $("#classReportContent2").html(data.table);
+                        $.each($('.chart.chart-pie'), function (i, key) {
+                            $(key).sparkline(undefined, {
+                                type: 'pie',
+                                height: '50px',
+                                sliceColors: ['#4CAF50', '#F44336']
+                            });
+                        });
+                        $('.report-behavior-list2').DataTable({
+                            responsive: {
+                                details: {
+                                    display: $.fn.dataTable.Responsive.display.modal({
+                                        header: function (row) {
+                                            return 'Details:';
+                                        }
+                                    }),
+                                    renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                        tableClass: 'table'
+                                    })
+                                }
+                            }
+                        });
+                    }
+                });
+            $('.custom-range-filter').find('.date1').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('.custom-range-filter').find('.date2').inputmask('yyyy-mm-dd', {
+                placeholder: '____-__-__',
+                clearIncomplete: true
+            });
+            $('body').on('click', '#reportChartToggle', function() {
+                if ($(this).is(':checked')) {
+                    $('#reportChartDiv').fadeIn(500);
+                } else {
+                    $('#reportChartDiv').fadeOut(500);
+                }
+            });
+            $('body').on('click', '.behaviorCheckBox', function (e) {
+                var idSelector2 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector2).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                $.ajax(
+                    {
+                        url: "get-class-report-<?=$classId?>?behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2,
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#classReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#classReportContent").html(data.general);
+                                $("#classReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+            $('body').on("change", 'select#timefilter', function (event) {
+                if ($("select#timefilter").val() === "7") {
+                    $('.custom-range-filter').show();
+                    return false;
+                } else {
+                    if ($('.custom-range-filter').is(":visible")) {
+                        $('.custom-range-filter').hide();
+                    }
+                }
+                var idSelector3 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector3).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                $.ajax(
+                    {
+                        url: "get-class-report-<?=$classId?>?behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, ''),
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#classReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#classReportContent").html(data.general);
+                                $("#classReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+            $('body').on("click", '.applytimefilter', function (event) {
+                if ($("select#timefilter").val() !== "7") return false;
+                $('#apply-alert').html("");
+                if ($("input.date1").val().length === 0 || $("input.date2").val().length === 0) {
+                    $('#apply-alert').html("<div class='alert alert-danger m-t-10'>Please fill the time range you want to filter.</div>");
+                    return false;
+                }
+                var idSelector4 = function () {
+                    return $(this).data("behavior-id");
+                };
+                var checkedBehaviors = $("input[type='checkbox'].behaviorCheckBox:checked").map(idSelector4).get();
+                var timefilter = $("select#timefilter").val();
+                var regexp = /[^0-9]/g;
+                var date1 = $("input.date1").val();
+                var date2 = $("input.date2").val();
+                $.ajax(
+                    {
+                        url: "get-class-report-<?=$classId?>?behaviors=" + checkedBehaviors + "&timefilter=" + timefilter.replace(regexp, '') + "&date1=" + date1 + "&date2=" + date2,
+                        type: "GET",
+                        contentType: false,
+                        cache: false,
+                        processData: false,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            $('.page-loader-wrapper').fadeIn(100);
+                        },
+                        success: function (data) {
+                            $('.page-loader-wrapper').fadeOut();
+                            if (data == 0) {
+                                $("#classReportContent2").html("<div class='col-xs-12 col-sm-12 col-md-12 col-lg-4'><div class='alert alert-danger'><strong>Error:</strong> There was a technical problem. Please try again.</div></div>");
+                            } else {
+                                $('#reportChartContainer').html(data.chart);
+                                window.reportChart.config = getChartJs('reportChart');
+                                window.reportChart.update();
+                                $("#classReportContent").html(data.general);
+                                $("#classReportContent2").html(data.table);
+                                $.each($('.chart.chart-pie'), function (i, key) {
+                                    $(key).sparkline(undefined, {
+                                        type: 'pie',
+                                        height: '50px',
+                                        sliceColors: ['#4CAF50', '#F44336']
+                                    });
+                                });
+                                $('.report-behavior-list2').DataTable({
+                                    responsive: {
+                                        details: {
+                                            display: $.fn.dataTable.Responsive.display.modal({
+                                                header: function (row) {
+                                                    return 'Details:';
+                                                }
+                                            }),
+                                            renderer: $.fn.dataTable.Responsive.renderer.tableAll({
+                                                tableClass: 'table'
+                                            })
+                                        }
+                                    }
+                                });
+                            }
                         }
                     });
             });

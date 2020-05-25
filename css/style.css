@@ -8950,3 +8950,6 @@ button.fixedCreateGroupButton {
 .group-give-points {
   cursor: pointer;
 }
+.datepicker-container {
+  z-index: 999999!important;
+}

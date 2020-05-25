@@ -87,9 +87,9 @@ else
 
         <link href="plugins/oldsweetalert/sweetalert.min.css" rel="stylesheet" />
 
-        <?php if(!isset($page_request) || $page_request == "report" || $page_request == "class" || $page_request == "redeem-items") { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
+        <?php if(!isset($page_request) || $page_request == "report" || $page_request == "class" || $page_request == "redeem-items" || $page_request == 'teacher-report' || $page_request == 'class-report') { ?><link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.min.css" rel="stylesheet"><link href="plugins/jquery-datatable/skin/bootstrap/css/responsive.bootstrap.min.css" rel="stylesheet"><?php } ?>
 
-        <?php if($page_request == "report" || $page_request == "stats") { ?><link href="plugins/jquery-datepicker/datepicker.min.css" rel="stylesheet" /><?php } ?>
+        <link href="plugins/jquery-datepicker/datepicker.min.css" rel="stylesheet" />
 	</head>
 	<body class="theme-<?=$sinifrenk?>">
 		<div class="page-loader-wrapper">
@@ -398,7 +398,7 @@ else
         <?php
         }
         if ($uyerol == 'admin') {
-            $dateTypeQuery = $DB_con->prepare("SELECT name,date_type FROM schools WHERE id = :id");
+            $dateTypeQuery = $DB_con->prepare("SELECT name,date_type,quarter1st,quarter2st,quarter3st,quarter4st,quarter1fn,quarter2fn,quarter3fn,quarter4fn FROM schools WHERE id = :id");
             $dateTypeQuery->execute(array(":id"=>$uyeokul));
             $dateType = $dateTypeQuery->fetch(PDO::FETCH_ASSOC);
             ?>
@@ -411,9 +411,9 @@ else
                         <div class="modal-body">
                             <form id="editSchoolForm">
                                 <div class="form-group">
-                                    <label for="name">Name:</label>
+                                    <label for="schoolName">Name:</label>
                                     <div class="form-line">
-                                        <input class="form-control" name="name" id="name" type="text" value="<?=$dateType["name"]?>">
+                                        <input class="form-control" name="name" id="schoolName" type="text" value="<?=$dateType["name"]?>">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -426,6 +426,96 @@ else
                                             <option value="4" <?php if ($dateType['date_type'] === 4) { ?> selected <?php } ?>>Month D, Yr H:i:s</option>
                                             <option value="5" <?php if ($dateType['date_type'] === 5) { ?> selected <?php } ?>>D Month, Yr H:i:s</option>
                                         </select>
+                                    </div>
+                                </div>
+                                <div class="row quarterDates">
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">1st Quarter (Start Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">date_range</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter1DateSt" id="quarter1DateSt" name="quarter1DateSt" value="<?=$dateType['quarter1st']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">1st Quarter (Finish Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">compare_arrows</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter1DateFn" id="quarter1DateFn" name="quarter1DateFn" value="<?=$dateType['quarter1fn']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter2DateSt">2nd Quarter (Start Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">date_range</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter2DateSt" id="quarter2DateSt" name="quarter2DateSt" value="<?=$dateType['quarter2st']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">2nd Quarter (Finish Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">compare_arrows</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter2DateFn" id="quarter2DateFn" name="quarter2DateFn" value="<?=$dateType['quarter2fn']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">3rd Quarter (Start Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">date_range</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter3DateSt" id="quarter3DateSt" name="quarter3DateSt" value="<?=$dateType['quarter3st']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">3rd Quarter (Finish Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">compare_arrows</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter3DateFn" id="quarter3DateFn" name="quarter3DateFn" value="<?=$dateType['quarter3fn']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">4th Quarter (Start Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">date_range</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter4DateSt" id="quarter4DateSt" name="quarter4DateSt" value="<?=$dateType['quarter4st']?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+                                        <label for="quarter1DateSt">4th Quarter (Finish Date)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">
+                                                <i class="material-icons">compare_arrows</i>
+                                            </span>
+                                            <div class="form-line">
+                                                <input type="text" class="form-control quarter4DateFn" id="quarter4DateFn" name="quarter4DateFn" value="<?=$dateType['quarter4fn']?>">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-group">

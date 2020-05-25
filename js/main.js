@@ -550,6 +550,9 @@ $(function () {
                             if (data == 3) {
                                 $("#editSchoolResult").html("<div class='alert alert-danger'><strong>Error:</strong> School name can have a minimum of 3 characters and a maximum of 64 characters.</div>");
                             }
+                            if (data == 4) {
+                                $("#editSchoolResult").html("<div class='alert alert-danger'><strong>Error:</strong> The start and end dates must be entered together.</div>");
+                            }
                         }, 1000);
                     }
                 });
@@ -692,5 +695,12 @@ $(function () {
                     }
                 });
         }
+        $('.quarterDates').find('.quarter1DateSt, .quarter2DateSt, .quarter3DateSt, .quarter4DateSt, .quarter1DateFn, .quarter2DateFn, .quarter3DateFn, .quarter4DateFn').inputmask('yyyy-mm-dd', {
+            placeholder: '____-__-__',
+            clearIncomplete: true
+        });
+        $('.quarterDates').find('.quarter1DateSt, .quarter2DateSt, .quarter3DateSt, .quarter4DateSt, .quarter1DateFn, .quarter2DateFn, .quarter3DateFn, .quarter4DateFn').datepicker({
+            format: 'yyyy-mm-dd'
+        });
 	});
 });
